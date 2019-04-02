@@ -23,7 +23,8 @@ package org.libreplan.business.resources.entities;
 
 import java.util.List;
 
-import org.hibernate.validator.AssertTrue;
+import javax.validation.constraints.AssertTrue;
+
 import org.libreplan.business.common.Registry;
 
 
@@ -90,16 +91,14 @@ public class VirtualWorker extends Worker {
 
     @AssertTrue
     @Override
-    public boolean checkConstraintUniqueFiscalCode() {
+    public boolean isUniqueFiscalCodeConstraint() {
         return true;
     }
 
     @AssertTrue(message = "Virtual worker group name must be unique")
-    public boolean checkConstraintUniqueVirtualGroupName() {
+    public boolean isUniqueVirtualGroupNameConstraint() {
 
-        List<Worker> list = Registry.getWorkerDAO()
-                .findByFirstNameAnotherTransactionCaseInsensitive(
-                        this.getFirstName());
+        List<Worker> list = Registry.getWorkerDAO().findByFirstNameAnotherTransactionCaseInsensitive(this.getFirstName());
 
         if ((isNewObject() && list.isEmpty()) || list.isEmpty()) {
             return true;

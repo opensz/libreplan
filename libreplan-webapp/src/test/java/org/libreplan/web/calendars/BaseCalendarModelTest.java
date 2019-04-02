@@ -22,6 +22,7 @@
 package org.libreplan.web.calendars;
 
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
 import static org.libreplan.business.BusinessGlobalNames.BUSINESS_SPRING_CONFIG_FILE;
 import static org.libreplan.business.workingday.EffortDuration.hours;
@@ -31,6 +32,8 @@ import static org.libreplan.web.test.WebappGlobalNames.WEBAPP_SPRING_CONFIG_TEST
 import static org.libreplan.web.test.WebappGlobalNames.WEBAPP_SPRING_SECURITY_CONFIG_TEST_FILE;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import javax.annotation.Resource;
@@ -44,12 +47,12 @@ import org.libreplan.business.calendars.daos.IBaseCalendarDAO;
 import org.libreplan.business.calendars.entities.BaseCalendar;
 import org.libreplan.business.calendars.entities.CalendarData.Days;
 import org.libreplan.business.calendars.entities.Capacity;
+import org.libreplan.business.common.BaseEntity;
 import org.libreplan.business.common.IAdHocTransactionService;
 import org.libreplan.business.common.IOnTransaction;
 import org.libreplan.business.common.exceptions.ValidationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.test.annotation.NotTransactional;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
@@ -61,11 +64,10 @@ import org.springframework.transaction.annotation.Transactional;
  * @author Diego Pino Garcia <dpino@igalia.com>
  */
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(locations = { BUSINESS_SPRING_CONFIG_FILE,
+@ContextConfiguration(locations = {
+        BUSINESS_SPRING_CONFIG_FILE,
         WEBAPP_SPRING_CONFIG_FILE, WEBAPP_SPRING_CONFIG_TEST_FILE,
-        WEBAPP_SPRING_SECURITY_CONFIG_FILE,
-        WEBAPP_SPRING_SECURITY_CONFIG_TEST_FILE })
-@Transactional
+        WEBAPP_SPRING_SECURITY_CONFIG_FILE, WEBAPP_SPRING_SECURITY_CONFIG_TEST_FILE })
 public class BaseCalendarModelTest {
 
     @Autowired
@@ -82,9 +84,8 @@ public class BaseCalendarModelTest {
     private IDataBootstrap configurationBootstrap;
 
     @Before
-    public void loadRequiredaData() {
+    public void loadRequiredData() {
         transactionService.runOnAnotherTransaction(new IOnTransaction<Void>() {
-
             @Override
             public Void execute() {
                 configurationBootstrap.loadRequiredData();
@@ -94,6 +95,7 @@ public class BaseCalendarModelTest {
     }
 
     @Test
+    @Transactional
     public void testCreateAndSave() {
         int previous = baseCalendarModel.getBaseCalendars().size();
         baseCalendarModel.initCreate();
@@ -102,14 +104,12 @@ public class BaseCalendarModelTest {
         Capacity capacity = Capacity.create(hours(8));
         setCapacity(baseCalendar, capacity);
         baseCalendarModel.confirmSave();
-        List<BaseCalendar> currentCalendars = baseCalendarModel
-                .getBaseCalendars();
+        Map<Long, Set<BaseCalendar>> currentCalendars = BaseEntity.byId(baseCalendarModel.getBaseCalendars());
         assertThat(currentCalendars.size(), equalTo(previous + 1));
 
-        BaseCalendar createdCalendar = currentCalendars.get(previous);
-        assertThat(createdCalendar.getId(), equalTo(baseCalendar.getId()));
-        assertThat(createdCalendar.getCapacityConsideringCalendarDatasOn(
-                new LocalDate(), Days.MONDAY), equalTo(capacity));
+        BaseCalendar createdCalendar = currentCalendars.get(baseCalendar.getId()).iterator().next();
+        assertThat(createdCalendar, notNullValue());
+        assertThat(createdCalendar.getCapacityConsideringCalendarDataOn(new LocalDate(), Days.MONDAY), equalTo(capacity));
     }
 
     private void setCapacity(BaseCalendar baseCalendar, Capacity capacity) {
@@ -119,43 +119,40 @@ public class BaseCalendarModelTest {
     }
 
     @Test
-    @NotTransactional
     public void testEditAndSave() throws ValidationException {
         final Capacity capacity = Capacity.create(hours(4));
-        doEditsSaveAndThenAsserts(new IOnExistentCalendar() {
 
-            @Override
-            public void onExistentCalendar(BaseCalendar calendar) {
-                setCapacity(calendar, capacity);
-            }
-        }, new IOnExistentCalendar() {
-
-            @Override
-            public void onExistentCalendar(BaseCalendar calendar) {
-                assertThat(calendar.getCapacityConsideringCalendarDatasOn(
-                        new LocalDate(), Days.MONDAY), equalTo(capacity));
-            }
-        });
+        doEditsSaveAndThenAsserts(
+                new IOnExistentCalendar() {
+                    @Override
+                    public void onExistentCalendar(BaseCalendar calendar) {
+                        setCapacity(calendar, capacity);
+                    }
+                },
+                new IOnExistentCalendar() {
+                    @Override
+                    public void onExistentCalendar(BaseCalendar calendar) {
+                        assertThat(calendar.getCapacityConsideringCalendarDataOn(new LocalDate(), Days.MONDAY),
+                                equalTo(capacity));
+                    }
+                });
     }
 
     private interface IOnExistentCalendar {
 
-        public void onExistentCalendar(BaseCalendar calendar);
+        void onExistentCalendar(BaseCalendar calendar);
 
     }
 
-    private void doEditsSaveAndThenAsserts(final IOnExistentCalendar edits,
-            final IOnExistentCalendar asserts) {
-        final BaseCalendar baseCalendar = transactionService
-                .runOnTransaction(new IOnTransaction<BaseCalendar>() {
+    private void doEditsSaveAndThenAsserts(final IOnExistentCalendar edits, final IOnExistentCalendar asserts) {
+        final BaseCalendar baseCalendar = transactionService.runOnTransaction(new IOnTransaction<BaseCalendar>() {
+            @Override
+            public BaseCalendar execute() {
+                return saveOneCalendar();
+            }
+        });
 
-                @Override
-                    public BaseCalendar execute() {
-                        return saveOneCalendar();
-                    }
-                });
         transactionService.runOnTransaction(new IOnTransaction<Void>() {
-
             @Override
             public Void execute() {
                 baseCalendarModel.initEdit(baseCalendar);
@@ -164,12 +161,11 @@ public class BaseCalendarModelTest {
                 return null;
             }
         });
-        transactionService.runOnReadOnlyTransaction(new IOnTransaction<Void>() {
 
+        transactionService.runOnReadOnlyTransaction(new IOnTransaction<Void>() {
             @Override
             public Void execute() {
-                BaseCalendar calendar = calendarDAO
-                        .findExistingEntity(baseCalendar.getId());
+                BaseCalendar calendar = calendarDAO.findExistingEntity(baseCalendar.getId());
                 asserts.onExistentCalendar(calendar);
                 return null;
             }
@@ -177,62 +173,58 @@ public class BaseCalendarModelTest {
     }
 
     @Test
+    @Transactional
     public void testEditAndNewVersion() {
         final Capacity capacity = Capacity.create(hours(4));
         final LocalDate date = new LocalDate().plusWeeks(1);
-        doEditsSaveAndThenAsserts(new IOnExistentCalendar() {
 
-            @Override
-            public void onExistentCalendar(BaseCalendar calendar) {
-                baseCalendarModel.createNewVersion(date, null, null);
-                setCapacity(baseCalendarModel.getBaseCalendar(), capacity);
-            }
-        }, new IOnExistentCalendar() {
-
-            @Override
-            public void onExistentCalendar(BaseCalendar calendar) {
-                assertThat(calendar.getCapacityConsideringCalendarDatasOn(date,
-                        Days.MONDAY), equalTo(capacity));
-                assertThat(calendar.getCalendarDataVersions().size(),
-                        equalTo(2));
-            }
-        });
+        doEditsSaveAndThenAsserts(
+                new IOnExistentCalendar() {
+                    @Override
+                    public void onExistentCalendar(BaseCalendar calendar) {
+                        baseCalendarModel.createNewVersion(date, null, null);
+                        setCapacity(baseCalendarModel.getBaseCalendar(), capacity);
+                    }
+                },
+                new IOnExistentCalendar() {
+                    @Override
+                    public void onExistentCalendar(BaseCalendar calendar) {
+                        assertThat(calendar.getCapacityConsideringCalendarDataOn(date, Days.MONDAY), equalTo(capacity));
+                        assertThat(calendar.getCalendarDataVersions().size(), equalTo(2));
+                    }
+                });
     }
 
     private BaseCalendar saveOneCalendar() {
         baseCalendarModel.initCreate();
-        baseCalendarModel.getBaseCalendar().setName(
-                "Test" + UUID.randomUUID().toString());
-        setCapacity(baseCalendarModel.getBaseCalendar(),
-                Capacity.create(hours(8)));
+        baseCalendarModel.getBaseCalendar().setName("Test" + UUID.randomUUID().toString());
+        setCapacity(baseCalendarModel.getBaseCalendar(), Capacity.create(hours(8)));
         baseCalendarModel.confirmSave();
         return baseCalendarModel.getBaseCalendar();
     }
 
     @Test
+    @Transactional
     public void testRemove() {
         int previous = baseCalendarModel.getBaseCalendars().size();
         saveOneCalendar();
 
-        BaseCalendar baseCalendar = baseCalendarModel.getBaseCalendars().get(
-                previous);
+        BaseCalendar baseCalendar = baseCalendarModel.getBaseCalendars().get(previous);
         baseCalendarModel.initRemove(baseCalendar);
         baseCalendarModel.confirmRemove(baseCalendar);
-        assertThat(baseCalendarModel.getBaseCalendars().size(),
-                equalTo(previous));
+        assertThat(baseCalendarModel.getBaseCalendars().size(), equalTo(previous));
     }
 
     @Test
+    @Transactional
     public void testPossibleParentCalendars() throws ValidationException {
         int previous = baseCalendarModel.getPossibleParentCalendars().size();
 
         baseCalendarModel.initCreate();
         baseCalendarModel.getBaseCalendar().setName("Test");
-        setCapacity(baseCalendarModel.getBaseCalendar(),
-                Capacity.create(hours(8)));
+        setCapacity(baseCalendarModel.getBaseCalendar(), Capacity.create(hours(8)));
         BaseCalendar parent = baseCalendarModel.getBaseCalendar();
-        baseCalendarModel.createNewVersion(new LocalDate().plusMonths(1), null,
-                null);
+        baseCalendarModel.createNewVersion(new LocalDate().plusMonths(1), null, null);
         BaseCalendar parentNewVersion = baseCalendarModel.getBaseCalendar();
         baseCalendarModel.confirmSave();
 
@@ -242,18 +234,17 @@ public class BaseCalendarModelTest {
         baseCalendarModel.confirmSave();
 
         baseCalendarModel.initEdit(child);
-        List<BaseCalendar> possibleParentCalendars = baseCalendarModel
-                .getPossibleParentCalendars();
+        List<BaseCalendar> possibleParentCalendars = baseCalendarModel.getPossibleParentCalendars();
 
         assertThat(possibleParentCalendars.size(), equalTo(previous + 1));
         BaseCalendar calendarComparison = null;
+
         for (BaseCalendar calendar : possibleParentCalendars)
             if (calendar.getId().equals(parentNewVersion.getId()))
                 calendarComparison = calendar;
-        assertThat(calendarComparison.getId(),
-                equalTo(parentNewVersion.getId()));
-        assertThat(calendarComparison.getCalendarDataVersions().size(),
-                equalTo(2));
+
+        assertThat(calendarComparison.getId(), equalTo(parentNewVersion.getId()));
+        assertThat(calendarComparison.getCalendarDataVersions().size(), equalTo(2));
     }
 
 }

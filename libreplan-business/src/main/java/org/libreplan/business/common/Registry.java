@@ -40,6 +40,8 @@ import org.libreplan.business.expensesheet.daos.IExpenseSheetLineDAO;
 import org.libreplan.business.externalcompanies.daos.IExternalCompanyDAO;
 import org.libreplan.business.labels.daos.ILabelDAO;
 import org.libreplan.business.labels.daos.ILabelTypeDAO;
+import org.libreplan.business.logs.daos.IIssueLogDAO;
+import org.libreplan.business.logs.daos.IRiskLogDAO;
 import org.libreplan.business.materials.daos.IMaterialCategoryDAO;
 import org.libreplan.business.materials.daos.IMaterialDAO;
 import org.libreplan.business.materials.daos.IUnitTypeDAO;
@@ -68,10 +70,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * A registry, AKA service locator, for objects in which dependency injection
- * (DI) is not directly supported by Spring (e.g. entities) must use this class
- * to access DAOs. For the rest of classes (e.g. services, tests, etc.), Spring
- * DI is a more convenient option. The DAOs or services are added to the
- * registry as needed.
+ * (DI) is not directly supported by Spring (e.g. entities) must use this class to access DAOs.
+ * For the rest of classes (e.g. services, tests, etc.), Spring DI is a more convenient option.
+ * The DAOs or services are added to the registry as needed.
  *
  * @author Óscar González Fernández <ogonzalez@igalia.com>
  * @author Fernando Bellas Permuy <fbellas@udc.es>
@@ -91,7 +92,6 @@ public class Registry {
     private ICriterionTypeDAO criterionTypeDAO;
 
     @Autowired
-
     private IUserDAO userDAO;
 
     @Autowired
@@ -161,8 +161,7 @@ public class Registry {
     private ICriterionSatisfactionDAO criterionSatisfactionDAO;
 
     @Autowired
-    private IResourcesCostCategoryAssignmentDAO
-        resourcesCostCategoryAssignmentDAO;
+    private IResourcesCostCategoryAssignmentDAO resourcesCostCategoryAssignmentDAO;
 
     @Autowired
     private IOrderElementTemplateDAO orderElementTemplateDAO;
@@ -201,6 +200,12 @@ public class Registry {
     private IExpenseSheetDAO expenseSheetDAO;
 
     @Autowired
+    private IIssueLogDAO issueLogDAO;
+
+    @Autowired
+    private IRiskLogDAO riskLogDAO;
+
+    @Autowired
     private IExpenseSheetLineDAO expenseSheetLineDAO;
 
     @Autowired
@@ -218,8 +223,7 @@ public class Registry {
     @Autowired
     private IAdHocTransactionService transactionServiceDAO;
 
-    private Registry() {
-    }
+    private Registry() {}
 
     public static Registry getInstance() {
         return singleton;
@@ -328,11 +332,8 @@ public class Registry {
         return getInstance().criterionSatisfactionDAO;
     }
 
-    public static IResourcesCostCategoryAssignmentDAO
-        getResourcesCostCategoryAssignmentDAO() {
-
+    public static IResourcesCostCategoryAssignmentDAO getResourcesCostCategoryAssignmentDAO() {
         return getInstance().resourcesCostCategoryAssignmentDAO;
-
     }
 
     public static IOrderElementTemplateDAO getOrderElementTemplateDAO() {
@@ -381,6 +382,14 @@ public class Registry {
 
     public static IExpenseSheetDAO getExpenseSheetDAO() {
         return getInstance().expenseSheetDAO;
+    }
+
+    public static IIssueLogDAO getIssueLogDAO() {
+        return getInstance().issueLogDAO;
+    }
+
+    public static IRiskLogDAO getRiskLogDAO() {
+        return getInstance().riskLogDAO;
     }
 
     public static IExpenseSheetLineDAO getExpenseSheetLineDAO() {

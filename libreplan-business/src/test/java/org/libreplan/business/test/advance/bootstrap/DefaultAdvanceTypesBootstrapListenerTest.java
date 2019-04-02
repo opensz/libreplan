@@ -43,7 +43,6 @@ import org.springframework.transaction.annotation.Transactional;
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = { BUSINESS_SPRING_CONFIG_FILE,
         BUSINESS_SPRING_CONFIG_TEST_FILE })
-@Transactional
 public class DefaultAdvanceTypesBootstrapListenerTest {
 
     @Autowired
@@ -53,13 +52,12 @@ public class DefaultAdvanceTypesBootstrapListenerTest {
     private IAdvanceTypeDAO advanceTypeDAO;
 
     private IDataBootstrap getAdvanceTypeBootstrap() {
-        String simpleName = DefaultAdvanceTypesBootstrapListener.class
-                .getSimpleName();
-        return dataBootstraps.get(simpleName.substring(0, 1).toLowerCase()
-                + simpleName.substring(1));
+        String simpleName = DefaultAdvanceTypesBootstrapListener.class.getSimpleName();
+        return dataBootstraps.get(simpleName.substring(0, 1).toLowerCase() + simpleName.substring(1));
     }
 
     @Test
+    @Transactional
     public void theBootstrapensuresExistenceOfPredefinedAdvanceTypes() {
         getAdvanceTypeBootstrap().loadRequiredData();
         for (PredefinedAdvancedTypes p : PredefinedAdvancedTypes.values()) {
@@ -68,6 +66,7 @@ public class DefaultAdvanceTypesBootstrapListenerTest {
     }
 
     @Test
+    @Transactional
     public void getAdvanceTypeFromEnum() {
         getAdvanceTypeBootstrap().loadRequiredData();
         for (PredefinedAdvancedTypes p : PredefinedAdvancedTypes.values()) {

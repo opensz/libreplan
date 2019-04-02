@@ -21,6 +21,7 @@ package org.libreplan.business.common.entities;
 
 import org.libreplan.business.common.daos.IConnectorDAO;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,7 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @author Manuel Rego Casasnovas <rego@igalia.com>
  */
 @Component
-@Scope("singleton")
+@Scope(BeanDefinition.SCOPE_SINGLETON)
 public class ConnectorBootstrap implements IConnectorBootstrap {
 
     @Autowired
@@ -41,12 +42,11 @@ public class ConnectorBootstrap implements IConnectorBootstrap {
     @Override
     @Transactional
     public void loadRequiredData() {
-        for (PredefinedConnectors predefinedConnector : PredefinedConnectors
-                .values()) {
+        for (PredefinedConnectors predefinedConnector : PredefinedConnectors.values()) {
             String name = predefinedConnector.getName();
 
             Connector connector = connectorDAO.findUniqueByName(name);
-            if (connector == null) {
+            if ( connector == null ) {
                 connector = Connector.create(name);
                 connector.setProperties(predefinedConnector.getProperties());
                 connectorDAO.save(connector);

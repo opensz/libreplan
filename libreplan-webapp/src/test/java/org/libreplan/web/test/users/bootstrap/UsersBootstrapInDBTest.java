@@ -48,11 +48,14 @@ import org.springframework.transaction.annotation.Transactional;
  * @author Fernando Bellas Permuy <fbellas@udc.es>
  */
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(locations = { BUSINESS_SPRING_CONFIG_FILE,
-        WEBAPP_SPRING_CONFIG_FILE, WEBAPP_SPRING_CONFIG_TEST_FILE,
+@ContextConfiguration(locations = {
+        BUSINESS_SPRING_CONFIG_FILE,
+
+        WEBAPP_SPRING_CONFIG_FILE,
+        WEBAPP_SPRING_CONFIG_TEST_FILE,
+
         WEBAPP_SPRING_SECURITY_CONFIG_FILE,
         WEBAPP_SPRING_SECURITY_CONFIG_TEST_FILE })
-@Transactional
 public class UsersBootstrapInDBTest {
 
     @Autowired
@@ -68,6 +71,7 @@ public class UsersBootstrapInDBTest {
     private IUserDAO userDAO;
 
     @Test
+    @Transactional
     public void testMandatoryUsersCreated() throws InstanceNotFoundException {
         configurationBootstrap.loadRequiredData();
         profileBootstrap.loadRequiredData();

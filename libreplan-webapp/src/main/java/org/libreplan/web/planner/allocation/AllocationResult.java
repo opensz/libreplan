@@ -26,7 +26,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.commons.lang.Validate;
+import org.apache.commons.lang3.Validate;
 import org.joda.time.LocalDate;
 import org.libreplan.business.planner.entities.AggregateOfResourceAllocations;
 import org.libreplan.business.planner.entities.CalculatedValue;
@@ -50,7 +50,7 @@ public class AllocationResult {
             Integer newWorkableDays) {
         List<ResourceAllocation<?>> newAllocations = AllocationRow
                 .getNewFrom(rows);
-        List<ModifiedAllocation> modified = AllocationRow.getModifiedFrom(rows);
+        List<ModifiedAllocation> modified = AllocationRow.getModificationsDone(rows);
         return new AllocationResult(task, newWorkableDays, calculatedValue,
                 createAggregate(newAllocations, modified), newAllocations,
                 modified);

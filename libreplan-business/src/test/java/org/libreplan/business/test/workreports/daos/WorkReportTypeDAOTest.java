@@ -21,9 +21,9 @@
 
 package org.libreplan.business.test.workreports.daos;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertFalse;
-import static junit.framework.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.libreplan.business.BusinessGlobalNames.BUSINESS_SPRING_CONFIG_FILE;
 import static org.libreplan.business.test.BusinessGlobalNames.BUSINESS_SPRING_CONFIG_TEST_FILE;
 
@@ -45,13 +45,13 @@ import org.springframework.transaction.annotation.Transactional;
 /*
  * @author Diego Pino García <dpino@igalia.com>
  */
-@Transactional
 public class WorkReportTypeDAOTest extends AbstractWorkReportTest {
 
     @Autowired
     private IWorkReportTypeDAO workReportTypeDAO;
 
     @Test
+    @Transactional
     public void testSaveWorkReportType() {
         WorkReportType workReportType = createValidWorkReportType();
         workReportTypeDAO.save(workReportType);
@@ -59,6 +59,7 @@ public class WorkReportTypeDAOTest extends AbstractWorkReportTest {
     }
 
     @Test
+    @Transactional
     public void testRemoveWorkReportType() throws InstanceNotFoundException {
         WorkReportType workReportType = createValidWorkReportType();
         workReportTypeDAO.save(workReportType);
@@ -67,6 +68,7 @@ public class WorkReportTypeDAOTest extends AbstractWorkReportTest {
     }
 
     @Test
+    @Transactional
     public void testListWorkReportType() {
         int previous = workReportTypeDAO.list(WorkReportType.class).size();
 

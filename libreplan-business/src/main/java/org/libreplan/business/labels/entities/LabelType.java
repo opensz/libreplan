@@ -25,11 +25,11 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.Validate;
-import org.hibernate.validator.AssertTrue;
-import org.hibernate.validator.NotEmpty;
-import org.hibernate.validator.NotNull;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Validate;
+import javax.validation.constraints.AssertTrue;
+import org.hibernate.validator.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import org.libreplan.business.common.IHumanIdentifiable;
 import org.libreplan.business.common.IntegrationEntity;
 import org.libreplan.business.common.Registry;
@@ -44,20 +44,18 @@ import org.libreplan.business.labels.daos.ILabelTypeDAO;
  *
  * @author Diego Pino Garcia<dpino@igalia.com>
  */
-public class LabelType extends IntegrationEntity implements Comparable,
-        IHumanIdentifiable {
+
+public class LabelType extends IntegrationEntity implements Comparable, IHumanIdentifiable {
 
     @NotEmpty(message = "name not specified")
     private String name;
 
-    private Set<Label> labels = new HashSet<Label>();
+    private Set<Label> labels = new HashSet<>();
 
     private Integer lastLabelSequenceCode = 0;
 
-    // Default constructor, needed by Hibernate
-    // At least package visibility, https://www.hibernate.org/116.html#A6
+    // Default constructor, needed by Hibernate; at least package visibility
     protected LabelType() {
-
     }
 
     public static LabelType create(String name) {
@@ -96,7 +94,7 @@ public class LabelType extends IntegrationEntity implements Comparable,
 
     @Override
     public int compareTo(Object arg0) {
-        if (getName() != null) {
+        if ( getName() != null ) {
             return getName().compareTo(((LabelType) arg0).getName());
         }
         return -1;
@@ -108,12 +106,12 @@ public class LabelType extends IntegrationEntity implements Comparable,
     }
 
     @AssertTrue(message = "label names must be unique inside a label type")
-    public boolean checkConstraintNonRepeatedLabelNames() {
-        Set<String> labelNames = new HashSet<String>();
+    public boolean isNonRepeatedLabelNamesConstraint() {
+        Set<String> labelNames = new HashSet<>();
 
         for (Label label : labels) {
-            if (!StringUtils.isBlank(label.getName())) {
-                if (labelNames.contains(label.getName().toLowerCase())) {
+            if ( !StringUtils.isBlank(label.getName()) ) {
+                if ( labelNames.contains(label.getName().toLowerCase()) ) {
                     return false;
                 } else {
                     labelNames.add(label.getName().toLowerCase());
@@ -125,19 +123,19 @@ public class LabelType extends IntegrationEntity implements Comparable,
     }
 
     @AssertTrue(message = "label type name is already in use")
-    public boolean checkConstraintUniqueLabelTypeName() {
-        if (!firstLevelValidationsPassed()) {
+    public boolean isUniqueLabelTypeNameConstraint() {
+        if ( !firstLevelValidationsPassed() ) {
             return true;
         }
 
         ILabelTypeDAO labelTypeDAO = Registry.getLabelTypeDAO();
 
-        if (isNewObject()) {
+        if ( isNewObject() ) {
             return !labelTypeDAO.existsByNameAnotherTransaction(this);
         } else {
             try {
-                LabelType c = labelTypeDAO
-                        .findUniqueByNameAnotherTransaction(name);
+                LabelType c = labelTypeDAO.findUniqueByNameAnotherTransaction(name);
+
                 return c.getId().equals(getId());
             } catch (InstanceNotFoundException e) {
                 return true;
@@ -150,24 +148,24 @@ public class LabelType extends IntegrationEntity implements Comparable,
     }
 
     public void updateUnvalidated(String name) {
-        if (!StringUtils.isBlank(name)) {
+        if ( !StringUtils.isBlank(name) ) {
             this.name = name;
         }
     }
 
     @AssertTrue(message = "label code is already being used")
-    public boolean checkConstraintNonRepeatedMaterialCodes() {
+    public boolean isNonRepeatedMaterialCodesConstraint() {
         return getFirstRepeatedCode(this.getLabels()) == null;
     }
 
     public Label getLabelByCode(String code) throws InstanceNotFoundException {
 
-        if (StringUtils.isBlank(code)) {
+        if ( StringUtils.isBlank(code) ) {
             throw new InstanceNotFoundException(code, Label.class.getName());
         }
 
         for (Label l : labels) {
-            if (l.getCode().equalsIgnoreCase(StringUtils.trim(code))) {
+            if ( l.getCode().equalsIgnoreCase(StringUtils.trim(code)) ) {
                 return l;
             }
         }
@@ -177,20 +175,24 @@ public class LabelType extends IntegrationEntity implements Comparable,
     }
 
     public void generateLabelCodes(int numberOfDigits) {
+        boolean condition;
+
         for (Label label : this.getLabels()) {
-            if ((label.getCode() == null) || (label.getCode().isEmpty())
-                    || (!label.getCode().startsWith(this.getCode()))) {
+
+            condition = (label.getCode() == null) ||
+                    (label.getCode().isEmpty()) ||
+                    (!label.getCode().startsWith(this.getCode()));
+
+            if ( condition ) {
                 this.incrementLastLabelSequenceCode();
-                String labelCode = EntitySequence.formatValue(numberOfDigits,
-                        this.getLastLabelSequenceCode());
-                label.setCode(this.getCode()
-                        + EntitySequence.CODE_SEPARATOR_CHILDREN + labelCode);
+                String labelCode = EntitySequence.formatValue(numberOfDigits, this.getLastLabelSequenceCode());
+                label.setCode(this.getCode() + EntitySequence.CODE_SEPARATOR_CHILDREN + labelCode);
             }
         }
     }
 
     public void incrementLastLabelSequenceCode() {
-        if (this.lastLabelSequenceCode == null) {
+        if ( this.lastLabelSequenceCode == null ) {
             this.lastLabelSequenceCode = 0;
         }
         this.lastLabelSequenceCode++;

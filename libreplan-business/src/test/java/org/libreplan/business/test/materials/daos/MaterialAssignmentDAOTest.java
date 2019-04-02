@@ -48,15 +48,12 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(locations = { BUSINESS_SPRING_CONFIG_FILE,
-        BUSINESS_SPRING_CONFIG_TEST_FILE })
+@ContextConfiguration(locations = { BUSINESS_SPRING_CONFIG_FILE, BUSINESS_SPRING_CONFIG_TEST_FILE })
 /**
- * Test for {@ResourcesCostCategoryDAO}
+ * Test for {@ResourcesCostCategoryDAO}.
  *
  * @author Jacobo Aragunde Perez <jaragunde@igalia.com>
- *
  */
-@Transactional
 public class MaterialAssignmentDAOTest {
 
     @Autowired
@@ -91,18 +88,17 @@ public class MaterialAssignmentDAOTest {
     }
 
     private MaterialAssignment createValidMaterialAssignment() {
-        MaterialAssignment assignment =
-            MaterialAssignment.create(createValidMaterial());
-        return assignment;
+        return MaterialAssignment.create(createValidMaterial());
     }
 
     @Before
-    public void loadRequiredaData() {
+    public void loadRequiredData() {
         configurationBootstrap.loadRequiredData();
         unitTypeBootstrap.loadRequiredData();
     }
 
     @Test
+    @Transactional
     public void testGetByMaterial() {
         MaterialAssignment assignment1 = createValidMaterialAssignment();
         MaterialAssignment assignment2 = createValidMaterialAssignment();

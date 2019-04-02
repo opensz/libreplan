@@ -26,7 +26,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.hibernate.Criteria;
 import org.hibernate.Query;
 import org.hibernate.criterion.Restrictions;
@@ -64,7 +64,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Dao for {@link Order}
+ * DAO for {@link Order}.
  *
  * @author Óscar González Fernández <ogonzalez@igalia.com>
  * @author Lorenzo Tilve Álvaro <ltilve@igalia.com>
@@ -72,8 +72,7 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Repository
 @Scope(BeanDefinition.SCOPE_SINGLETON)
-public class OrderDAO extends IntegrationEntityDAO<Order> implements
-        IOrderDAO {
+public class OrderDAO extends IntegrationEntityDAO<Order> implements IOrderDAO {
 
     @Autowired
     private ITaskSourceDAO taskSourceDAO;
@@ -89,6 +88,8 @@ public class OrderDAO extends IntegrationEntityDAO<Order> implements
 
     @Autowired
     private IAdHocTransactionService transactionService;
+
+    private String STATE_PARAMETER = "state";
 
     @Override
     public List<Order> getOrders() {
@@ -111,34 +112,39 @@ public class OrderDAO extends IntegrationEntityDAO<Order> implements
         return false;
     }
 
-    private boolean matchFilterCriterion(OrderElement orderElement,
-            List<Criterion> criterions) {
+    private boolean matchFilterCriterion(OrderElement orderElement, List<Criterion> criterions) {
         if ((criterions != null) && (!criterions.isEmpty())) {
-            List<OrderElement> orderElements = new ArrayList<OrderElement>();
+
+            List<OrderElement> orderElements = new ArrayList<>();
             orderElements.add(orderElement);
             List<Task> tasks = this.getFilteredTask(orderElements, criterions);
-            return (!tasks.isEmpty());
+
+            return !tasks.isEmpty();
         }
         return true;
     }
 
     @Transactional(readOnly = true)
     public List<OrderCostsPerResourceDTO> getOrderCostsPerResource(
-            List<Order> orders, Date startingDate, Date endingDate,
+            List<Order> orders,
+            Date startingDate,
+            Date endingDate,
             List<Criterion> criterions) {
 
-        String strQuery = "SELECT new org.libreplan.business.reports.dtos.OrderCostsPerResourceDTO(worker, wrl) "
-                + "FROM Worker worker, WorkReportLine wrl "
-                + "LEFT OUTER JOIN wrl.resource resource "
-                + "WHERE resource.id = worker.id ";
+        String strQuery = "SELECT new org.libreplan.business.reports.dtos.OrderCostsPerResourceDTO(worker, wrl) " +
+                "FROM Worker worker, WorkReportLine wrl " +
+                "LEFT OUTER JOIN wrl.resource resource " +
+                "WHERE resource.id = worker.id ";
 
         // Set date range
         if (startingDate != null && endingDate != null) {
             strQuery += "AND wrl.date BETWEEN :startingDate AND :endingDate ";
         }
+
         if (startingDate != null && endingDate == null) {
             strQuery += "AND wrl.date >= :startingDate ";
         }
+
         if (startingDate == null && endingDate != null) {
             strQuery += "AND wrl.date <= :endingDate ";
         }
@@ -151,34 +157,32 @@ public class OrderDAO extends IntegrationEntityDAO<Order> implements
         if (startingDate != null) {
             query.setParameter("startingDate", startingDate);
         }
+
         if (endingDate != null) {
             query.setParameter("endingDate", endingDate);
         }
 
         List<OrderCostsPerResourceDTO> list = query.list();
 
-        List<OrderCostsPerResourceDTO> filteredList = new ArrayList<OrderCostsPerResourceDTO>();
+        List<OrderCostsPerResourceDTO> filteredList = new ArrayList<>();
         for (OrderCostsPerResourceDTO each : list) {
 
             Order order = loadOrderAvoidingProxyFor(each.getOrderElement());
 
             // Apply filtering
-            if (matchFilterCriterion(each.getOrderElement(), criterions)
-                    && isOrderContained(order, orders)) {
+            if (matchFilterCriterion(each.getOrderElement(), criterions) && isOrderContained(order, orders)) {
 
-                // Attach ordername value
+                // Attach orderName value
                 each.setOrderName(order.getName());
                 each.setOrderCode(order.getCode());
+
                 // Attach calculated pricePerHour
-                BigDecimal pricePerHour = CostCategoryDAO
-                        .getPriceByResourceDateAndHourType(each.getWorker(),
-                                new LocalDate(each.getDate()), each
-                                        .getHoursTypeCode());
+                BigDecimal pricePerHour = CostCategoryDAO.getPriceByResourceDateAndHourType(
+                        each.getWorker(), new LocalDate(each.getDate()), each.getHoursTypeCode());
+
                 if (pricePerHour == null) {
-                    for (TypeOfWorkHours defaultprice : typeOfWorkHoursDAO
-                            .list(TypeOfWorkHours.class)) {
-                        if (defaultprice.getCode().equals(
-                                each.getHoursTypeCode())) {
+                    for (TypeOfWorkHours defaultprice : typeOfWorkHoursDAO.list(TypeOfWorkHours.class)) {
+                        if (defaultprice.getCode().equals(each.getHoursTypeCode())) {
                             pricePerHour = defaultprice.getDefaultPrice();
                         }
                     }
@@ -194,21 +198,24 @@ public class OrderDAO extends IntegrationEntityDAO<Order> implements
 
     @Override
     public List<Order> getOrdersByReadAuthorization(User user) {
-        if (user.isInRole(UserRole.ROLE_SUPERUSER)
-                || user.isInRole(UserRole.ROLE_READ_ALL_PROJECTS)
-                || user.isInRole(UserRole.ROLE_EDIT_ALL_PROJECTS)) {
+        if (user.isInRole(UserRole.ROLE_SUPERUSER) ||
+                user.isInRole(UserRole.ROLE_READ_ALL_PROJECTS) ||
+                user.isInRole(UserRole.ROLE_EDIT_ALL_PROJECTS)) {
+
             return getOrders();
         }
         else {
-            List<Order> orders = new ArrayList<Order>();
+            List<Order> orders = new ArrayList<>();
             List<OrderAuthorization> authorizations = orderAuthorizationDAO.listByUserAndItsProfiles(user);
             for(OrderAuthorization authorization : authorizations) {
+
                 if (authorization.getAuthorizationType() == OrderAuthorizationType.READ_AUTHORIZATION ||
-                    authorization.getAuthorizationType() == OrderAuthorizationType.WRITE_AUTHORIZATION) {
+                        authorization.getAuthorizationType() == OrderAuthorizationType.WRITE_AUTHORIZATION) {
 
                     Order order = authorization.getOrder();
-                    if(!orders.contains(order)) {
-                        order.getName(); //this lines forces the load of the basic attributes of the order
+                    if (!orders.contains(order)) {
+                        // These lines forces the load of the basic attributes of the order
+                        order.getName();
                         orders.add(order);
                     }
                 }
@@ -218,11 +225,16 @@ public class OrderDAO extends IntegrationEntityDAO<Order> implements
     }
 
     private List<Order> getOrdersByReadAuthorizationBetweenDatesByLabelsCriteriaCustomerAndState(
-            User user, Date startDate, Date endDate, List<Label> labels,
-            List<Criterion> criteria, ExternalCompany customer,
-            OrderStatusEnum state) {
-        List<Long> ordersIdsFiltered = getOrdersIdsFiltered(user, labels,
-                criteria, customer, state);
+            User user,
+            Date startDate,
+            Date endDate,
+            List<Label> labels,
+            List<Criterion> criteria,
+            ExternalCompany customer,
+            OrderStatusEnum state,
+            Boolean excludeFinishedProject) {
+
+        List<Long> ordersIdsFiltered = getOrdersIdsFiltered(user, labels, criteria, customer, state, excludeFinishedProject);
         if (ordersIdsFiltered != null && ordersIdsFiltered.isEmpty()) {
             return Collections.emptyList();
         }
@@ -232,19 +244,22 @@ public class OrderDAO extends IntegrationEntityDAO<Order> implements
             return Collections.emptyList();
         }
 
-        List<Long> ordersIdsUnscheduled = getOrdersIdsUnscheduled(startDate,
-                endDate);
+        List<Long> ordersIdsUnscheduled = getOrdersIdsUnscheduled(startDate, endDate);
 
         Criteria c = getSession().createCriteria(Order.class);
+
         if (ordersIdsFiltered != null && ordersIdsByDates != null) {
+
             org.hibernate.criterion.Criterion and = Restrictions.and(
                     Restrictions.in("id", ordersIdsFiltered),
                     Restrictions.in("id", ordersIdsByDates));
+
             c.add(and);
         } else {
             if (ordersIdsFiltered != null) {
                 c.add(Restrictions.in("id", ordersIdsFiltered));
             }
+
             if (ordersIdsByDates != null) {
                 if (ordersIdsUnscheduled.isEmpty()) {
                     c.add(Restrictions.in("id", ordersIdsByDates));
@@ -258,13 +273,15 @@ public class OrderDAO extends IntegrationEntityDAO<Order> implements
 
         c.addOrder(org.hibernate.criterion.Order.desc("initDate"));
         c.addOrder(org.hibernate.criterion.Order.asc("infoComponent.name"));
+
         return c.list();
     }
 
     private List<Long> getOrdersIdsUnscheduled(Date startDate, Date endDate) {
-        String strQuery = "SELECT s.orderElement.id "
-                + "FROM SchedulingDataForVersion s "
-                + "WHERE s.schedulingStateType = :type";
+        String strQuery = "SELECT s.orderElement.id " +
+                "FROM SchedulingDataForVersion s " +
+                "WHERE s.schedulingStateType = :type";
+
         Query query = getSession().createQuery(strQuery);
         query.setParameter("type", SchedulingState.Type.NO_SCHEDULED);
 
@@ -273,9 +290,7 @@ public class OrderDAO extends IntegrationEntityDAO<Order> implements
             return Collections.emptyList();
         }
 
-        String strQueryDates = "SELECT o.id "
-                + "FROM Order o "
-                + "WHERE o.id IN (:ids) ";
+        String strQueryDates = "SELECT o.id " + "FROM Order o " + "WHERE o.id IN (:ids) ";
 
         if (startDate != null) {
             strQueryDates += "AND o.initDate >= :startDate ";
@@ -298,28 +313,32 @@ public class OrderDAO extends IntegrationEntityDAO<Order> implements
 
     /**
      * If both params are <code>null</code> it returns <code>null</code>.
-     * Otherwise it filters the list of tasks to return the ones wihtout parent
-     * between the dates.
+     * Otherwise it filters the list of tasks to return the ones without parent between the dates.
      */
     private List<Long> getOrdersIdsByDates(Date startDate, Date endDate) {
         if (startDate == null && endDate == null) {
+            /* Don't replace null with Collections.emptyList(), as the prompt says (sometimes), because it breaks logic */
             return null;
         }
 
         String strQuery = "SELECT t.taskSource.schedulingData.orderElement.id "
                 + "FROM TaskElement t "
                 + "WHERE t.parent IS NULL ";
+
         if (endDate != null) {
             strQuery += "AND t.startDate.date <= :endDate ";
         }
+
         if (startDate != null) {
             strQuery += "AND t.endDate.date >= :startDate ";
         }
 
         Query query = getSession().createQuery(strQuery);
+
         if (startDate != null) {
             query.setParameter("startDate", LocalDate.fromDateFields(startDate));
         }
+
         if (endDate != null) {
             query.setParameter("endDate", LocalDate.fromDateFields(endDate));
         }
@@ -328,13 +347,17 @@ public class OrderDAO extends IntegrationEntityDAO<Order> implements
     }
 
     /**
-     * If user has permissions over all orders and not filters are passed it
-     * returns <code>null</code>. Otherwise, it returns the list of orders
+     * If user has permissions over all orders and not filters are passed it returns <code>null</code>.
+     * Otherwise, it returns the list of orders
      * identifiers for which the user has read permissions and the filters pass.
      */
-    private List<Long> getOrdersIdsFiltered(User user, List<Label> labels,
-            List<Criterion> criteria, ExternalCompany customer,
-            OrderStatusEnum state) {
+    private List<Long> getOrdersIdsFiltered(User user,
+                                            List<Label> labels,
+                                            List<Criterion> criteria,
+                                            ExternalCompany customer,
+                                            OrderStatusEnum state,
+                                            Boolean excludeFinishedProject) {
+
         List<Long> ordersIdsByReadAuthorization = getOrdersIdsByReadAuthorization(user);
 
         String strQuery = "SELECT o.id ";
@@ -384,13 +407,21 @@ public class OrderDAO extends IntegrationEntityDAO<Order> implements
             where += "o.state = :state ";
         }
 
+        if (excludeFinishedProject != null && excludeFinishedProject == true) {
+            if (where.isEmpty()) {
+                where += "WHERE ";
+            } else {
+                where += "AND ";
+            }
+            where += "o.state <> '" + OrderStatusEnum.FINISHED.getIndex() + "'";
+        }
+
         // If not restrictions by labels, criteria, customer or state
         if (where.isEmpty()) {
             return ordersIdsByReadAuthorization;
         }
 
-        if (ordersIdsByReadAuthorization != null
-                && !ordersIdsByReadAuthorization.isEmpty()) {
+        if (ordersIdsByReadAuthorization != null && !ordersIdsByReadAuthorization.isEmpty()) {
             if (where.isEmpty()) {
                 where += "WHERE ";
             } else {
@@ -401,6 +432,7 @@ public class OrderDAO extends IntegrationEntityDAO<Order> implements
 
         strQuery += where + whereFinal;
         Query query = getSession().createQuery(strQuery);
+
         if (labels != null && !labels.isEmpty()) {
             int i = 0;
             for (Label label : labels) {
@@ -408,6 +440,7 @@ public class OrderDAO extends IntegrationEntityDAO<Order> implements
                 i++;
             }
         }
+
         if (criteria != null && !criteria.isEmpty()) {
             query.setParameterList("criteria", criteria);
             query.setParameter("criteriaSize", (long) criteria.size());
@@ -418,11 +451,10 @@ public class OrderDAO extends IntegrationEntityDAO<Order> implements
         }
 
         if (state != null) {
-            query.setParameter("state", state);
+            query.setParameter(STATE_PARAMETER, state);
         }
 
-        if (ordersIdsByReadAuthorization != null
-                && !ordersIdsByReadAuthorization.isEmpty()) {
+        if (ordersIdsByReadAuthorization != null && !ordersIdsByReadAuthorization.isEmpty()) {
             query.setParameterList("ids", ordersIdsByReadAuthorization);
         }
 
@@ -431,18 +463,19 @@ public class OrderDAO extends IntegrationEntityDAO<Order> implements
 
     /**
      * If user has permissions over all orders it returns <code>null</code>.
-     * Otherwise, it returns the list of orders identifiers for which the user
-     * has read permissions.
+     * Otherwise, it returns the list of orders identifiers for which the user has read permissions.
      */
     private List<Long> getOrdersIdsByReadAuthorization(User user) {
-        if (user.isInRole(UserRole.ROLE_SUPERUSER)
-                || user.isInRole(UserRole.ROLE_READ_ALL_PROJECTS)
-                || user.isInRole(UserRole.ROLE_EDIT_ALL_PROJECTS)) {
+        if (user.isInRole(UserRole.ROLE_SUPERUSER) ||
+                user.isInRole(UserRole.ROLE_READ_ALL_PROJECTS) ||
+                user.isInRole(UserRole.ROLE_EDIT_ALL_PROJECTS)) {
+
             return null;
         } else {
-            String strQuery = "SELECT oa.order.id "
-                    + "FROM OrderAuthorization oa "
-                    + "WHERE oa.user = :user ";
+            String strQuery = "SELECT oa.order.id " +
+                    "FROM OrderAuthorization oa " +
+                    "WHERE oa.user = :user ";
+
             if (!user.getProfiles().isEmpty()) {
                 strQuery += "OR oa.profile IN (:profiles) ";
             }
@@ -459,18 +492,17 @@ public class OrderDAO extends IntegrationEntityDAO<Order> implements
 
     @Override
     public List<Order> getOrdersByWriteAuthorization(User user) {
-        if (user.isInRole(UserRole.ROLE_SUPERUSER)
-                || user.isInRole(UserRole.ROLE_EDIT_ALL_PROJECTS)) {
+        if (user.isInRole(UserRole.ROLE_SUPERUSER) || user.isInRole(UserRole.ROLE_EDIT_ALL_PROJECTS)) {
             return getOrders();
         }
         else {
-            List<Order> orders = new ArrayList<Order>();
+            List<Order> orders = new ArrayList<>();
             List<OrderAuthorization> authorizations = orderAuthorizationDAO.listByUserAndItsProfiles(user);
             for(OrderAuthorization authorization : authorizations) {
                 if (authorization.getAuthorizationType() == OrderAuthorizationType.WRITE_AUTHORIZATION) {
                     Order order = authorization.getOrder();
-                    if(!orders.contains(order)) {
-                        order.getName(); //this lines forces the load of the basic attributes of the order
+                    if (!orders.contains(order)) {
+                        order.getName(); // this lines forces the load of the basic attributes of the order
                         orders.add(order);
                     }
                 }
@@ -481,8 +513,10 @@ public class OrderDAO extends IntegrationEntityDAO<Order> implements
 
     @Override
     public List<Order> findAll() {
-        return getSession().createCriteria(getEntityClass()).addOrder(
-                org.hibernate.criterion.Order.asc("infoComponent.code")).list();
+        return getSession()
+                .createCriteria(getEntityClass())
+                .addOrder(org.hibernate.criterion.Order.asc("infoComponent.code"))
+                .list();
     }
 
     @SuppressWarnings("unchecked")
@@ -491,18 +525,16 @@ public class OrderDAO extends IntegrationEntityDAO<Order> implements
     public Order findByCode(String code) throws InstanceNotFoundException {
 
         if (StringUtils.isBlank(code)) {
-            throw new InstanceNotFoundException(null, getEntityClass()
-                    .getName());
+            throw new InstanceNotFoundException(null, getEntityClass().getName());
         }
 
-        Order entity = (Order) getSession().createCriteria(getEntityClass())
-                .add(
-                        Restrictions.eq("infoComponent.code", code.trim())
-                                .ignoreCase()).uniqueResult();
+        Order entity = (Order) getSession()
+                .createCriteria(getEntityClass())
+                .add(Restrictions.eq("infoComponent.code", code.trim()).ignoreCase())
+                .uniqueResult();
 
         if (entity == null) {
-            throw new InstanceNotFoundException(code, getEntityClass()
-                    .getName());
+            throw new InstanceNotFoundException(code, getEntityClass().getName());
         } else {
             return entity;
         }
@@ -510,8 +542,7 @@ public class OrderDAO extends IntegrationEntityDAO<Order> implements
     }
 
     @Override
-    public List<Order> getOrdersByReadAuthorizationByScenario(String username,
-            Scenario scenario) {
+    public List<Order> getOrdersByReadAuthorizationByScenario(String username, Scenario scenario) {
         User user;
         try {
             user = userDAO.findByLoginName(username);
@@ -523,23 +554,28 @@ public class OrderDAO extends IntegrationEntityDAO<Order> implements
 
     @Override
     public List<Order> getOrdersByReadAuthorizationBetweenDatesByLabelsCriteriaCustomerAndState(
-            String username, Scenario scenario, Date startDate, Date endDate,
-            List<Label> labels, List<Criterion> criteria,
-            ExternalCompany customer, OrderStatusEnum state) {
+            String username,
+            Scenario scenario,
+            Date startDate,
+            Date endDate,
+            List<Label> labels,
+            List<Criterion> criteria,
+            ExternalCompany customer,
+            OrderStatusEnum state,
+            Boolean excludeFinishedProject) {
+
         User user;
         try {
             user = userDAO.findByLoginName(username);
         } catch (InstanceNotFoundException e) {
             throw new RuntimeException(e);
         }
-        return existsInScenario(
-                getOrdersByReadAuthorizationBetweenDatesByLabelsCriteriaCustomerAndState(
-                        user, startDate, endDate, labels, criteria, customer,
-                        state), scenario);
+        return existsInScenario(getOrdersByReadAuthorizationBetweenDatesByLabelsCriteriaCustomerAndState(
+                user, startDate, endDate, labels, criteria, customer, state, excludeFinishedProject), scenario);
     }
 
     private List<Order> existsInScenario(List<Order> orders, Scenario scenario) {
-        List<Order> result = new ArrayList<Order>();
+        List<Order> result = new ArrayList<>();
         for (Order each : orders) {
             if (scenario.contains(each)) {
                 result.add(each);
@@ -549,28 +585,24 @@ public class OrderDAO extends IntegrationEntityDAO<Order> implements
     }
 
     @Transactional(readOnly = true, propagation = Propagation.REQUIRES_NEW)
-    public Order findByNameAnotherTransaction(String name)
-            throws InstanceNotFoundException {
-
+    public Order findByNameAnotherTransaction(String name) throws InstanceNotFoundException {
         return findByName(name);
-
     }
 
     @SuppressWarnings("unchecked")
     private Order findByName(String name) throws InstanceNotFoundException {
 
         if (StringUtils.isBlank(name)) {
-            throw new InstanceNotFoundException(null,
-                getEntityClass().getName());
+            throw new InstanceNotFoundException(null, getEntityClass().getName());
         }
 
-        Order order = (Order) getSession().createCriteria(getEntityClass())
+        Order order = (Order) getSession()
+                .createCriteria(getEntityClass())
                 .add(Restrictions.eq("infoComponent.name", name).ignoreCase())
                 .uniqueResult();
 
         if (order == null) {
-            throw new InstanceNotFoundException(
-                name, getEntityClass().getName());
+            throw new InstanceNotFoundException(name, getEntityClass().getName());
         } else {
             return order;
         }
@@ -584,26 +616,25 @@ public class OrderDAO extends IntegrationEntityDAO<Order> implements
 
     @Override
     @Transactional(readOnly = true)
-    public List<Task> getFilteredTask(List<OrderElement> orderElements,
-            List<Criterion> criterions) {
+    public List<Task> getFilteredTask(List<OrderElement> orderElements, List<Criterion> criterions) {
 
         if (orderElements == null || orderElements.isEmpty()) {
-            return new ArrayList<Task>();
+            return new ArrayList<>();
         }
 
 
-        String strQuery = "SELECT taskSource.task "
-                + "FROM OrderElement orderElement, TaskSource taskSource, Task task "
-                + "LEFT OUTER JOIN taskSource.schedulingData.orderElement taskSourceOrderElement "
-                + "LEFT OUTER JOIN taskSource.task taskElement "
-                + "WHERE taskSourceOrderElement.id = orderElement.id "
-                + "AND taskElement.id = task.id  AND orderElement IN (:orderElements) ";
+        String strQuery = "SELECT taskSource.task " +
+                "FROM OrderElement orderElement, TaskSource taskSource, Task task " +
+                "LEFT OUTER JOIN taskSource.schedulingData.orderElement taskSourceOrderElement " +
+                "LEFT OUTER JOIN taskSource.task taskElement " +
+                "WHERE taskSourceOrderElement.id = orderElement.id " +
+                "AND taskElement.id = task.id  AND orderElement IN (:orderElements) ";
 
         // Set Criterions
         if (criterions != null && !criterions.isEmpty()) {
-            strQuery += " AND (EXISTS (FROM task.resourceAllocations as allocation, GenericResourceAllocation as generic "
-                    + " WHERE generic.id = allocation.id "
-                    + " AND EXISTS( FROM generic.criterions criterion WHERE criterion IN (:criterions))))";
+            strQuery += " AND (EXISTS (FROM task.resourceAllocations as allocation, GenericResourceAllocation as generic " +
+                    " WHERE generic.id = allocation.id " +
+                    " AND EXISTS( FROM generic.criterions criterion WHERE criterion IN (:criterions))))";
         }
 
         // Order by
@@ -614,29 +645,24 @@ public class OrderDAO extends IntegrationEntityDAO<Order> implements
         query.setParameterList("orderElements", orderElements);
 
         if (criterions != null && !criterions.isEmpty()) {
-            query.setParameterList("criterions",
-                    Criterion.withAllDescendants(criterions));
+            query.setParameterList("criterions", Criterion.withAllDescendants(criterions));
         }
 
-        // Get result
         return query.list();
     }
 
     @Override
     public Order loadOrderAvoidingProxyFor(final OrderElement orderElement) {
-        return loadOrdersAvoidingProxyFor(
-                Collections.singletonList(orderElement)).get(0);
+        return loadOrdersAvoidingProxyFor(Collections.singletonList(orderElement)).get(0);
     }
 
     @Override
-    public List<Order> loadOrdersAvoidingProxyFor(
-            final List<OrderElement> orderElements) {
-        List<OrderElement> orders = transactionService
-                .runOnAnotherTransaction(new IOnTransaction<List<OrderElement>>() {
-
+    public List<Order> loadOrdersAvoidingProxyFor(final List<OrderElement> orderElements) {
+        List<OrderElement> orders =
+                transactionService.runOnAnotherTransaction(new IOnTransaction<List<OrderElement>>() {
                     @Override
                     public List<OrderElement> execute() {
-                        List<OrderElement> result = new ArrayList<OrderElement>();
+                        List<OrderElement> result = new ArrayList<>();
                         for (OrderElement each : orderElements) {
                             if (each.isNewObject()) {
                                 result.add(each.getOrder());
@@ -650,6 +676,7 @@ public class OrderDAO extends IntegrationEntityDAO<Order> implements
                     private OrderElement orderFrom(OrderElement initial) {
                         OrderElement current = initial;
                         OrderElement result = current;
+
                         while (current != null) {
                             result = current;
                             current = findParent(current);
@@ -659,14 +686,14 @@ public class OrderDAO extends IntegrationEntityDAO<Order> implements
 
                     private OrderElement findParent(OrderElement orderElement) {
                         Query query = getSession()
-                                .createQuery(
-                                        "select e.parent from OrderElement e where e.id = :id")
+                                .createQuery("select e.parent from OrderElement e where e.id = :id")
                                 .setParameter("id", orderElement.getId());
+
                         return (OrderElement) query.uniqueResult();
                     }
-
                 });
-        List<Order> result = new ArrayList<Order>();
+
+        List<Order> result = new ArrayList<>();
         for (OrderElement each : orders) {
             if (each != null) {
                 result.add(findExistingEntity(each.getId()));
@@ -681,8 +708,7 @@ public class OrderDAO extends IntegrationEntityDAO<Order> implements
     @Transactional(readOnly = true, propagation = Propagation.REQUIRES_NEW)
     public boolean existsByNameAnotherTransaction(String name) {
         try {
-            Order order = findByName(name);
-            return order != null;
+            return findByName(name)!= null;
         } catch (InstanceNotFoundException e) {
             return false;
         }
@@ -692,26 +718,31 @@ public class OrderDAO extends IntegrationEntityDAO<Order> implements
     @SuppressWarnings("unchecked")
     public List<Order> getActiveOrders() {
         Criteria criteria = getSession().createCriteria(getEntityClass());
-        criteria.add(Restrictions.not(Restrictions.eq("state", OrderStatusEnum.CANCELLED)));
-        criteria.add(Restrictions.not(Restrictions.eq("state", OrderStatusEnum.STORED)));
+        criteria.add(Restrictions.not(Restrictions.eq(STATE_PARAMETER, OrderStatusEnum.CANCELLED)));
+        criteria.add(Restrictions.not(Restrictions.eq(STATE_PARAMETER, OrderStatusEnum.STORED)));
+
         return criteria.list();
     }
 
     @Override
-    public List<CostExpenseSheetDTO> getCostExpenseSheet(List<Order> orders, Date startingDate,
-            Date endingDate, List<Criterion> criterions) {
+    public List<CostExpenseSheetDTO> getCostExpenseSheet(List<Order> orders,
+                                                         Date startingDate,
+                                                         Date endingDate,
+                                                         List<Criterion> criterions) {
 
-        String strQuery = "SELECT new org.libreplan.business.reports.dtos.CostExpenseSheetDTO(expense) "
-                + "FROM OrderElement orderElement, ExpenseSheetLine expense "
-                + "LEFT OUTER JOIN expense.orderElement exp_ord "
-                + "WHERE orderElement.id = exp_ord.id ";
+        String strQuery = "SELECT new org.libreplan.business.reports.dtos.CostExpenseSheetDTO(expense) " +
+                "FROM OrderElement orderElement, ExpenseSheetLine expense " +
+                "LEFT OUTER JOIN expense.orderElement exp_ord " +
+                "WHERE orderElement.id = exp_ord.id ";
 
         if (startingDate != null && endingDate != null) {
             strQuery += "AND expense.date BETWEEN :startingDate AND :endingDate ";
         }
+
         if (startingDate != null && endingDate == null) {
             strQuery += "AND expense.date >= :startingDate ";
         }
+
         if (startingDate == null && endingDate != null) {
             strQuery += "AND expense.date <= :endingDate ";
         }
@@ -725,23 +756,33 @@ public class OrderDAO extends IntegrationEntityDAO<Order> implements
         if (startingDate != null) {
             query.setParameter("startingDate", new LocalDate(startingDate));
         }
+
         if (endingDate != null) {
             query.setParameter("endingDate", new LocalDate(endingDate));
         }
 
         List<CostExpenseSheetDTO> list = query.list();
 
-        List<CostExpenseSheetDTO> filteredList = new ArrayList<CostExpenseSheetDTO>();
+        List<CostExpenseSheetDTO> filteredList = new ArrayList<>();
         for (CostExpenseSheetDTO each : list) {
             Order order = loadOrderAvoidingProxyFor(each.getOrderElement());
+
             // Apply filtering
-            if (matchFilterCriterion(each.getOrderElement(), criterions)
-                    && isOrderContained(order, orders)) {
+            if (matchFilterCriterion(each.getOrderElement(), criterions) && isOrderContained(order, orders)) {
                 each.setOrder(order);
                 filteredList.add(each);
             }
         }
         return filteredList;
+    }
+
+    @Override
+    public List<Order> getOrdersWithNotEmptyCustomersReferences() {
+        return getSession()
+                .createCriteria(Order.class)
+                .add(Restrictions.isNotNull("customerReference"))
+                .add(Restrictions.ne("customerReference", ""))
+                .list();
     }
 
 }

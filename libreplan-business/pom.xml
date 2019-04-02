@@ -1,11 +1,12 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.libreplan</groupId>
         <artifactId>libreplan</artifactId>
-        <version>1.4.0</version>
+        <version>1.6.0</version>
     </parent>
     <artifactId>libreplan-business</artifactId>
     <packaging>jar</packaging>
@@ -14,52 +15,84 @@
     <dependencies>
         <!-- Gettext commons -->
         <dependency>
-            <groupId>org.xnap.commons</groupId>
+            <groupId>com.googlecode.gettext-commons</groupId>
             <artifactId>gettext-commons</artifactId>
         </dependency>
+
+        <!-- Spring ORM -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-orm</artifactId>
+        </dependency>
+
+        <!-- Hibernate -->
+        <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-ehcache</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-validator</artifactId>
+        </dependency>
+
+        <!-- Javax EL -->
+        <dependency>
+            <groupId>javax.el</groupId>
+            <artifactId>javax.el-api</artifactId>
+        </dependency>
+
+        <!-- Usertype.Core -->
+        <dependency>
+	      <groupId>org.jadira.usertype</groupId>
+	      <artifactId>usertype.core</artifactId>
+        </dependency>
+
         <!-- JDBC driver -->
         <dependency>
             <groupId>${jdbcDriver.groupId}</groupId>
             <artifactId>${jdbcDriver.artifactId}</artifactId>
+            <scope>test</scope>
         </dependency>
-        <!-- Hibernate -->
         <dependency>
-            <groupId>org.hibernate</groupId>
-            <artifactId>hibernate</artifactId>
+            <groupId>org.jboss.spec.javax.transaction</groupId>
+            <artifactId>jboss-transaction-api_1.2_spec</artifactId>
         </dependency>
+
+        <!-- Spring -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context-support</artifactId>
+        </dependency>
+
+        <!-- AspectJWeaver -->
+        <dependency>
+            <groupId>org.aspectj</groupId>
+            <artifactId>aspectjweaver</artifactId>
+        </dependency>
+
         <!-- JUnit -->
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
         </dependency>
-        <!-- datasource for testing -->
+
+        <!-- Datasource for testing -->
         <dependency>
            <groupId>com.jolbox</groupId>
            <artifactId>bonecp</artifactId>
         </dependency>
-        <!-- Spring -->
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.geronimo.specs</groupId>
-            <artifactId>geronimo-jta_1.0.1B_spec</artifactId>
-        </dependency>
+
+        <!-- Spring Test -->
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-test</artifactId>
         </dependency>
-        <!-- Spring AOP support -->
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-aop</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.aspectj</groupId>
-            <artifactId>aspectjtools</artifactId>
-        </dependency>
 
+        <!-- Easymock -->
         <dependency>
             <groupId>org.easymock</groupId>
             <artifactId>easymock</artifactId>
@@ -70,53 +103,37 @@
             <artifactId>easymockclassextension</artifactId>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.hibernate</groupId>
-            <artifactId>hibernate-validator</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.hibernate</groupId>
-            <artifactId>hibernate-annotations</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>net.sf.json-lib</groupId>
-            <artifactId>json-lib</artifactId>
-            <classifier>jdk15</classifier>
-        </dependency>
-        <dependency>
-            <groupId>commons-lang</groupId>
-            <artifactId>commons-lang</artifactId>
-        </dependency>
+
         <!-- Commons Math-->
         <dependency>
-            <groupId>commons-math</groupId>
-            <artifactId>commons-math</artifactId>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-math3</artifactId>
         </dependency>
+
+        <!-- Commons Lang -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-collections4</artifactId>
+        </dependency>
+
+        <!-- Log4j -->
+        <dependency>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-log4j12</artifactId>
+        </dependency>
+
         <!-- Joda Time -->
         <dependency>
             <groupId>joda-time</groupId>
             <artifactId>joda-time</artifactId>
         </dependency>
-        <dependency>
-            <groupId>joda-time</groupId>
-            <artifactId>joda-time-hibernate</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.dbunit</groupId>
-            <artifactId>dbunit</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>net.sf.ehcache</groupId>
-            <artifactId>ehcache</artifactId>
-        </dependency>
+
+        <!-- Liquibase -->
         <dependency>
             <groupId>org.liquibase</groupId>
             <artifactId>liquibase-core</artifactId>
@@ -125,21 +142,23 @@
             <groupId>org.liquibase</groupId>
             <artifactId>liquibase-maven-plugin</artifactId>
         </dependency>
+
     </dependencies>
 
     <profiles>
+
         <profile>
             <!-- LiquiBase liquibase:update -->
-        <id>liquibase-update</id>
-        <activation>
-            <activeByDefault>true</activeByDefault>
-        </activation>
-        <build>
-            <plugins>
-                <plugin>
-                    <groupId>org.liquibase</groupId>
-                    <artifactId>liquibase-maven-plugin</artifactId>
-                        <version>2.0.5</version>
+            <id>liquibase-update</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.liquibase</groupId>
+                        <artifactId>liquibase-maven-plugin</artifactId>
+                        <version>3.5.1</version>
                         <executions>
                             <execution>
                                 <phase>process-resources</phase>
@@ -152,22 +171,23 @@
                                 </goals>
                             </execution>
                         </executions>
-                </plugin>
-        </plugins>
-        </build>
-    </profile>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
         <profile>
             <!-- LiquiBase liquibase:updateSQL -->
-        <id>liquibase-updatesql</id>
-        <activation>
-            <activeByDefault>false</activeByDefault>
-        </activation>
-        <build>
-            <plugins>
-                <plugin>
-                    <groupId>org.liquibase</groupId>
-                    <artifactId>liquibase-maven-plugin</artifactId>
-                        <version>2.0.5</version>
+            <id>liquibase-updatesql</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.liquibase</groupId>
+                        <artifactId>liquibase-maven-plugin</artifactId>
+                        <version>3.5.1</version>
                         <executions>
                             <execution>
                                 <phase>process-resources</phase>
@@ -180,14 +200,14 @@
                                 </goals>
                             </execution>
                         </executions>
-                </plugin>
-        </plugins>
-        </build>
-    </profile>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
     </profiles>
 
     <build>
-
         <!-- Filtering -->
         <resources>
             <resource>
@@ -195,35 +215,5 @@
                 <filtering>true</filtering>
             </resource>
         </resources>
-
-        <pluginManagement>
-            <plugins>
-            <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
-              <plugin>
-                <groupId>org.eclipse.m2e</groupId>
-                <artifactId>lifecycle-mapping</artifactId>
-                <version>1.0.0</version>
-                <configuration>
-                  <lifecycleMappingMetadata>
-                    <pluginExecutions>
-                      <pluginExecution>
-                        <pluginExecutionFilter>
-                          <groupId>org.liquibase</groupId>
-                          <artifactId>liquibase-maven-plugin</artifactId>
-                          <versionRange>[2.0.5,)</versionRange>
-                          <goals>
-                            <goal>update</goal>
-                          </goals>
-                        </pluginExecutionFilter>
-                        <action>
-                          <ignore></ignore>
-                        </action>
-                      </pluginExecution>
-                    </pluginExecutions>
-                  </lifecycleMappingMetadata>
-                </configuration>
-              </plugin>
-            </plugins>
-        </pluginManagement>
     </build>
 </project>

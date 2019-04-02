@@ -23,7 +23,7 @@ package org.libreplan.web.planner.reassign;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.lang.Validate;
+import org.apache.commons.lang3.Validate;
 import org.joda.time.LocalDate;
 import org.libreplan.business.workingday.IntraDayDate;
 import org.libreplan.web.planner.TaskElementAdapter;
@@ -35,11 +35,6 @@ import org.zkoss.ganttz.data.Task;
  */
 public class ReassignConfiguration {
 
-    public static ReassignConfiguration create(Type type,
-            LocalDate date) {
-        return new ReassignConfiguration(type, date);
-    }
-
     private Type type;
 
     private LocalDate date;
@@ -50,26 +45,28 @@ public class ReassignConfiguration {
         this.date = date == null ? new LocalDate() : date;
     }
 
+    public static ReassignConfiguration create(Type type, LocalDate date) {
+        return new ReassignConfiguration(type, date);
+    }
+
     public List<Task> filterForReassignment(List<Task> list) {
-        List<Task> result = new ArrayList<Task>();
+        List<Task> result = new ArrayList<>();
         for (Task each : list) {
-            if (each.isLeaf() && isChoosenForReassignation(each)) {
+            if (each.isLeaf() && isChosenForReassignation(each)) {
                 result.add(each);
             }
         }
         return result;
     }
 
-    private boolean isChoosenForReassignation(Task each) {
-        if (each.isUpdatedFromTimesheets()) {
-            return false;
-        }
-        return type == Type.ALL || isAfterDate(each);
+    private boolean isChosenForReassignation(Task each) {
+        return !each.isUpdatedFromTimesheets() && (type == Type.ALL || isAfterDate(each));
     }
 
     private boolean isAfterDate(Task each) {
         IntraDayDate start = TaskElementAdapter.toIntraDay(each.getBeginDate());
         IntraDayDate end = TaskElementAdapter.toIntraDay(each.getEndDate());
+
         return start.compareTo(date) > 0 || end.compareTo(date) > 0;
     }
 

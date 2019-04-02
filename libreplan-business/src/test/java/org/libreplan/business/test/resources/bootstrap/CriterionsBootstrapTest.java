@@ -48,9 +48,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(locations = { BUSINESS_SPRING_CONFIG_FILE,
-        BUSINESS_SPRING_CONFIG_TEST_FILE })
-@Transactional
+@ContextConfiguration(locations = {BUSINESS_SPRING_CONFIG_FILE, BUSINESS_SPRING_CONFIG_TEST_FILE })
 public class CriterionsBootstrapTest {
 
     @Resource
@@ -71,7 +69,7 @@ public class CriterionsBootstrapTest {
     private List<Criterion> somePredefinedCriterions;
 
     @Before
-    public void loadRequiredaData() {
+    public void loadRequiredData() {
         // Load data
         configurationBootstrap.loadRequiredData();
         cleanCriteria();
@@ -80,8 +78,7 @@ public class CriterionsBootstrapTest {
     private void cleanCriteria() {
         try {
 
-            List<org.libreplan.business.resources.entities.Resource> resources = resourceDAO
-                    .findAll();
+            List<org.libreplan.business.resources.entities.Resource> resources = resourceDAO.findAll();
             for (org.libreplan.business.resources.entities.Resource resource : resources) {
                 resourceDAO.remove(resource.getId());
             }
@@ -101,14 +98,16 @@ public class CriterionsBootstrapTest {
     }
 
     private List<Criterion> getSomePredefinedCriterions() {
-        List<Criterion> result = new ArrayList<Criterion>();
+        List<Criterion> result = new ArrayList<>();
         for (CategoryCriteria category : CategoryCriteria.values()) {
             result.add(category.criterion());
         }
+
         return result;
     }
 
     @Test
+    @Transactional
     public void testBootstrap() {
         givenNoSomePredefinedCriterionExists();
         criterionsBootstrap.loadRequiredData();
@@ -128,7 +127,7 @@ public class CriterionsBootstrapTest {
     }
 
     private void remove(Criterion criterion) {
-        if (criterionDAO.existsByNameAndType(criterion)) {
+        if ( criterionDAO.existsByNameAndType(criterion) ) {
             criterionDAO.removeByNameAndType(criterion);
         }
     }

@@ -21,13 +21,14 @@
 
 package org.libreplan.business.workreports.valueobjects;
 
-import org.hibernate.validator.Min;
-import org.hibernate.validator.NotEmpty;
-import org.hibernate.validator.NotNull;
+import javax.validation.constraints.Min;
+import org.hibernate.validator.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import org.libreplan.business.INewObject;
 
 /**
- * Value Object <br />
+ * Value Object.
+ * <br />
  * @author Susana Montes Pedreira <smontes@wirelessgalicia.com>
  */
 
@@ -39,9 +40,8 @@ public class DescriptionField implements INewObject {
         return descriptionField;
     }
 
-    public static DescriptionField create(String fieldName, Integer lenght) {
-        DescriptionField descriptionField = new DescriptionField(fieldName,
-                lenght);
+    public static DescriptionField create(String fieldName, Integer length) {
+        DescriptionField descriptionField = new DescriptionField(fieldName, length);
         descriptionField.setNewObject(true);
         return descriptionField;
     }
@@ -49,9 +49,9 @@ public class DescriptionField implements INewObject {
     public DescriptionField() {
     }
 
-    private DescriptionField(String fieldName, Integer lenght) {
+    private DescriptionField(String fieldName, Integer length) {
         this.fieldName = fieldName;
-        this.length = lenght;
+        this.length = length;
     }
 
     private String fieldName;
@@ -83,11 +83,9 @@ public class DescriptionField implements INewObject {
         return length;
     }
 
-    public void setLength(Integer lenght) {
-        this.length = lenght;
+    public void setLength(Integer length) {
+        this.length = length;
     }
-
-    /* Methos for the index */
 
     private Integer positionNumber;
 

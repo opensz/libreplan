@@ -37,7 +37,6 @@ import java.util.List;
 import javax.annotation.Resource;
 
 import org.hibernate.SessionFactory;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.libreplan.business.IDataBootstrap;
@@ -55,20 +54,22 @@ import org.libreplan.ws.materials.api.MaterialCategoryDTO;
 import org.libreplan.ws.materials.api.MaterialCategoryListDTO;
 import org.libreplan.ws.materials.api.MaterialDTO;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.transaction.BeforeTransaction;
 import org.springframework.transaction.annotation.Transactional;
 /**
  * Tests for <code>IMaterialService</code>.
+ *
  * @author Susana Montes Pedreira <smontes@wirelessgalicia.com>
  */
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(locations = { BUSINESS_SPRING_CONFIG_FILE,
-        WEBAPP_SPRING_CONFIG_FILE, WEBAPP_SPRING_CONFIG_TEST_FILE,
+@ContextConfiguration(locations = {
+        BUSINESS_SPRING_CONFIG_FILE,
+        WEBAPP_SPRING_CONFIG_FILE,
+        WEBAPP_SPRING_CONFIG_TEST_FILE,
         WEBAPP_SPRING_SECURITY_CONFIG_FILE,
         WEBAPP_SPRING_SECURITY_CONFIG_TEST_FILE })
-@Transactional
 public class MaterialServiceTest {
 
     @Autowired
@@ -95,12 +96,8 @@ public class MaterialServiceTest {
     @Resource
     private IDataBootstrap unitTypeBootstrap;
 
-    private String unitTypeCodeA = "unitTypeCodeA";
-
-    private String unitTypeCodeB = "unitTypeCodeB";
-
-    @Before
-    public void loadRequiredaData() {
+    @BeforeTransaction
+    public void loadRequiredData() {
         IOnTransaction<Void> load = new IOnTransaction<Void>() {
 
             @Override
@@ -108,19 +105,24 @@ public class MaterialServiceTest {
                 configurationBootstrap.loadRequiredData();
                 materialCategoryBootstrap.loadRequiredData();
                 unitTypeBootstrap.loadRequiredData();
+                createUnitTypes();
+
                 return null;
             }
         };
 
         transactionService.runOnAnotherTransaction(load);
-
     }
 
-    @Test
-    @Rollback(false)
-    public void CreateUnitType() {
-        UnitType entityA = UnitType.create(unitTypeCodeA, getUniqueName());
-        UnitType entityB = UnitType.create(unitTypeCodeB, getUniqueName());
+    private UnitType entityA;
+
+    private String getUnitTypeCodeA() {
+        return entityA.getCode();
+    }
+
+    private void createUnitTypes() {
+        entityA = UnitType.create(getUniqueName(), getUniqueName());
+        UnitType entityB = UnitType.create(getUniqueName(), getUniqueName());
         unitTypeDAO.save(entityA);
         unitTypeDAO.save(entityB);
         unitTypeDAO.flush();
@@ -129,46 +131,46 @@ public class MaterialServiceTest {
     }
 
     @Test
+    @Transactional
     public void testAddAndGetMaterialCategories() {
-        /* Build materialCategory (0 constraint violations). */
-        // Missing material name and the unit type.
-        MaterialDTO m1 = new MaterialDTO(null, new BigDecimal(13),
-                unitTypeCodeA, true);
-        // Missing default unit price
-        MaterialDTO m2 = new MaterialDTO("material 2", null, unitTypeCodeA,
-                true);
-        // Missing unit type
-        MaterialDTO m3 = new MaterialDTO("material 3", new BigDecimal(13),
-                null, true);
-        // Missing unit type, same name
-        MaterialDTO m4 = new MaterialDTO("material 3", new BigDecimal(13),
-                unitTypeCodeA, null);
+        /* Build materialCategory (0 constraint violations) */
 
-        List<MaterialDTO> materialDTOs = new ArrayList<MaterialDTO>();
+        // Missing material name and the unit type
+        MaterialDTO m1 = new MaterialDTO(null, new BigDecimal(13), getUnitTypeCodeA(), true);
+
+        // Missing default unit price
+        MaterialDTO m2 = new MaterialDTO("material 2", null, getUnitTypeCodeA(), true);
+
+        // Missing unit type
+        MaterialDTO m3 = new MaterialDTO("material 3", new BigDecimal(13), null, true);
+
+        // Missing unit type, same name
+        MaterialDTO m4 = new MaterialDTO("material 3", new BigDecimal(13), getUnitTypeCodeA(), null);
+
+        List<MaterialDTO> materialDTOs = new ArrayList<>();
         materialDTOs.add(m1);
         materialDTOs.add(m2);
         materialDTOs.add(m3);
         materialDTOs.add(m4);
 
-        MaterialCategoryDTO materialCategoryDTO = new MaterialCategoryDTO(
-                "categoryA", null, null, materialDTOs);
+        MaterialCategoryDTO materialCategoryDTO = new MaterialCategoryDTO("categoryA", null, null, materialDTOs);
 
         MaterialCategoryListDTO materialCategoryListDTO = createMaterialCategoryListDTO(materialCategoryDTO);
 
-        List<InstanceConstraintViolationsDTO> instanceConstraintViolationsList = materialService
-                .addMaterials(materialCategoryListDTO).instanceConstraintViolationsList;
+        List<InstanceConstraintViolationsDTO> instanceConstraintViolationsList =
+                materialService.addMaterials(materialCategoryListDTO).instanceConstraintViolationsList;
 
-        assertTrue(instanceConstraintViolationsList.toString(),
-                instanceConstraintViolationsList.size() == 1);
+        assertTrue(instanceConstraintViolationsList.toString(), instanceConstraintViolationsList.size() == 1);
     }
 
     @Test
+    @Transactional
     public void testAddMaterialRepeatedCodes() {
-        /* Build material with same code (1 constraint violations). */
+        /* Build material with same code (1 constraint violations) */
         MaterialDTO m1 = new MaterialDTO("CodeA", "material1", new BigDecimal(
-                13), unitTypeCodeA, true);
+                13), getUnitTypeCodeA(), true);
         MaterialDTO m2 = new MaterialDTO("CodeA", "material2", new BigDecimal(
-                13), unitTypeCodeA, true);
+                13), getUnitTypeCodeA(), true);
 
         List<MaterialDTO> materialDTOs = new ArrayList<MaterialDTO>();
         materialDTOs.add(m1);
@@ -187,133 +189,106 @@ public class MaterialServiceTest {
     }
 
     @Test
+    @Transactional
     public void testAddValidMaterialCategory() {
-        /* Build material (0 constraint violations). */
-        MaterialDTO m1 = new MaterialDTO("CodeM1", "material1", new BigDecimal(
-                13), unitTypeCodeA, true);
-        MaterialDTO m2 = new MaterialDTO("CodeM2", "material2", new BigDecimal(
-                13), unitTypeCodeA, true);
+        /* Build material (0 constraint violations) */
+        MaterialDTO m1 = new MaterialDTO("CodeM1", "material1", new BigDecimal(13), getUnitTypeCodeA(), true);
+        MaterialDTO m2 = new MaterialDTO("CodeM2", "material2", new BigDecimal(13), getUnitTypeCodeA(), true);
 
-        List<MaterialDTO> materialDTOs1 = new ArrayList<MaterialDTO>();
-        List<MaterialDTO> materialDTOs2 = new ArrayList<MaterialDTO>();
+        List<MaterialDTO> materialDTOs1 = new ArrayList<>();
+        List<MaterialDTO> materialDTOs2 = new ArrayList<>();
         materialDTOs1.add(m1);
         materialDTOs2.add(m2);
 
         /* Build material (0 constraint violations). */
-        MaterialCategoryDTO mc1 = new MaterialCategoryDTO("CodeMC1",
-                "subCategory1", "mainMaterialCode", null, materialDTOs1);
-        MaterialCategoryDTO mc2 = new MaterialCategoryDTO("CodeMC2",
-                "subCategory2", null, null, materialDTOs2);
-        MaterialCategoryListDTO subCategoryListDTO = createMaterialCategoryListDTO(
-                mc1, mc2);
+        MaterialCategoryDTO mc1 =
+                new MaterialCategoryDTO("CodeMC1", "subCategory1", "mainMaterialCode", null, materialDTOs1);
+
+        MaterialCategoryDTO mc2 = new MaterialCategoryDTO("CodeMC2", "subCategory2", null, null, materialDTOs2);
+        MaterialCategoryListDTO subCategoryListDTO = createMaterialCategoryListDTO(mc1, mc2);
 
         /* Build main material category */
-        MaterialCategoryDTO materialCategoryDTO = new MaterialCategoryDTO(
-                "mainMaterialCode", "mainCategory1", null, subCategoryListDTO,
-                null);
+        MaterialCategoryDTO materialCategoryDTO =
+                new MaterialCategoryDTO("mainMaterialCode", "mainCategory1", null, subCategoryListDTO, null);
 
         MaterialCategoryListDTO materialCategoryListDTO = createMaterialCategoryListDTO(materialCategoryDTO);
 
-        List<InstanceConstraintViolationsDTO> instanceConstraintViolationsList = materialService
-                .addMaterials(materialCategoryListDTO).instanceConstraintViolationsList;
+        List<InstanceConstraintViolationsDTO> instanceConstraintViolationsList =
+                materialService.addMaterials(materialCategoryListDTO).instanceConstraintViolationsList;
 
-        assertTrue(instanceConstraintViolationsList.toString(),
-                instanceConstraintViolationsList.size() == 0);
+        assertTrue(instanceConstraintViolationsList.toString(), instanceConstraintViolationsList.size() == 0);
     }
 
     @Test
+    @Transactional
     public void testAddMaterialCategoryWithSameName() {
-        /* Build material (0 constraint violations). */
-        MaterialCategoryDTO mc1 = new MaterialCategoryDTO("subMC1",
-                "subCategory", "subMC2", null, null);
+        /* Build material (0 constraint violations) */
+        MaterialCategoryDTO mc1 = new MaterialCategoryDTO("subMC1", "subCategory", "subMC2", null, null);
         MaterialCategoryListDTO subCategoryListDTOC = createMaterialCategoryListDTO(mc1);
 
-        MaterialCategoryDTO mc2 = new MaterialCategoryDTO("subMC2",
-                "subCategory", null, subCategoryListDTOC, null);
+        MaterialCategoryDTO mc2 = new MaterialCategoryDTO("subMC2", "subCategory", null, subCategoryListDTOC, null);
         MaterialCategoryListDTO subCategoryListDTOB = createMaterialCategoryListDTO(mc2);
 
         /* Build main material category */
-        MaterialCategoryDTO materialCategoryDTO = new MaterialCategoryDTO(
-                "mainMaterialCode", "mainCategory1", null, subCategoryListDTOB,
-                null);
+        MaterialCategoryDTO materialCategoryDTO =
+                new MaterialCategoryDTO("mainMaterialCode", "mainCategory1", null, subCategoryListDTOB, null);
 
         MaterialCategoryListDTO materialCategoryListDTOA = createMaterialCategoryListDTO(materialCategoryDTO);
 
         List<InstanceConstraintViolationsDTO> instanceConstraintViolationsList = materialService
                 .addMaterials(materialCategoryListDTOA).instanceConstraintViolationsList;
 
-        assertTrue(instanceConstraintViolationsList.toString(),
-                instanceConstraintViolationsList.size() == 1);
+        assertTrue(instanceConstraintViolationsList.toString(), instanceConstraintViolationsList.size() == 1);
     }
 
     @Test
+    @Transactional
     public void testAddMaterialCategoryWithInconsistentParent() {
-        /* Build material (0 constraint violations). */
-        MaterialCategoryDTO mc1 = new MaterialCategoryDTO("subMCX1",
-                "subCategoryC", "mainMaterialCode", null, null);
+        /* Build material (0 constraint violations) */
+        MaterialCategoryDTO mc1 = new MaterialCategoryDTO("subMCX1", "subCategoryC", "mainMaterialCode", null, null);
         MaterialCategoryListDTO subCategoryListDTOC = createMaterialCategoryListDTO(mc1);
 
-        MaterialCategoryDTO mc2 = new MaterialCategoryDTO("subMCX2",
-                "subCategoryB", null, subCategoryListDTOC, null);
+        MaterialCategoryDTO mc2 = new MaterialCategoryDTO("subMCX2", "subCategoryB", null, subCategoryListDTOC, null);
         MaterialCategoryListDTO subCategoryListDTOB = createMaterialCategoryListDTO(mc2);
 
         /* Build main material category */
-        MaterialCategoryDTO materialCategoryDTO = new MaterialCategoryDTO(
-                "mainMaterialCodeX", "mainCategory1", null,
-                subCategoryListDTOB,
-                null);
+        MaterialCategoryDTO materialCategoryDTO =
+                new MaterialCategoryDTO("mainMaterialCodeX", "mainCategory1", null, subCategoryListDTOB, null);
 
         MaterialCategoryListDTO materialCategoryListDTOA = createMaterialCategoryListDTO(materialCategoryDTO);
 
         List<InstanceConstraintViolationsDTO> instanceConstraintViolationsList = materialService
                 .addMaterials(materialCategoryListDTOA).instanceConstraintViolationsList;
 
-        assertTrue(instanceConstraintViolationsList.toString(),
-                instanceConstraintViolationsList.size() == 1);
+        assertTrue(instanceConstraintViolationsList.toString(), instanceConstraintViolationsList.size() == 1);
     }
 
     @Test
+    @Transactional
     public void testAddAndUpdateMaterialCategory() {
 
-        String unitTypeCodeA = getUniqueName();
-        String unitTypeCodeB = getUniqueName();
-        UnitType entityA = UnitType.create(unitTypeCodeA, "UnitTypeA");
-        UnitType entityB = UnitType.create(unitTypeCodeB, "UnitTypeB");
-        unitTypeDAO.save(entityA);
-        unitTypeDAO.save(entityB);
-        unitTypeDAO.flush();
-        sessionFactory.getCurrentSession().evict(entityA);
-        sessionFactory.getCurrentSession().evict(entityB);
+        /* Build material (0 constraint violations) */
+        MaterialDTO m1 = new MaterialDTO(
+                "M-1", "tornillos", new BigDecimal(13), UnitTypeBootstrap.getDefaultUnitType().getCode(), true);
 
-        /* Build material (0 constraint violations). */
-        MaterialDTO m1 = new MaterialDTO("M-1", "tornillos",
-                new BigDecimal(13), UnitTypeBootstrap.getDefaultUnitType()
-                        .getCode(), true);
-
-        List<MaterialDTO> materialDTOs1 = new ArrayList<MaterialDTO>();
+        List<MaterialDTO> materialDTOs1 = new ArrayList<>();
         materialDTOs1.add(m1);
 
-        MaterialCategoryDTO mc1 = new MaterialCategoryDTO("MC-C", "MC-C",
-                "MC-B",
-                null, null);
+        MaterialCategoryDTO mc1 = new MaterialCategoryDTO("MC-C", "MC-C", "MC-B", null, null);
         MaterialCategoryListDTO subCategoryListDTOC = createMaterialCategoryListDTO(mc1);
 
-        MaterialCategoryDTO mc2 = new MaterialCategoryDTO("MC-B", "MC-B",
-                "C-A",
-                subCategoryListDTOC, materialDTOs1);
+        MaterialCategoryDTO mc2 = new MaterialCategoryDTO("MC-B", "MC-B", "C-A", subCategoryListDTOC, materialDTOs1);
         MaterialCategoryListDTO subCategoryListDTOB = createMaterialCategoryListDTO(mc2);
 
         /* Build main material category */
-        MaterialCategoryDTO materialCategoryDTO = new MaterialCategoryDTO(
-                "C-A", "C-A", null, subCategoryListDTOB, null);
+        MaterialCategoryDTO materialCategoryDTO = new MaterialCategoryDTO("C-A", "C-A", null, subCategoryListDTOB, null);
 
         MaterialCategoryListDTO materialCategoryListDTOA = createMaterialCategoryListDTO(materialCategoryDTO);
 
         List<InstanceConstraintViolationsDTO> instanceConstraintViolationsList = materialService
                 .addMaterials(materialCategoryListDTOA).instanceConstraintViolationsList;
 
-        assertTrue(instanceConstraintViolationsList.toString(),
-                instanceConstraintViolationsList.size() == 0);
+        assertTrue(instanceConstraintViolationsList.toString(), instanceConstraintViolationsList.size() == 0);
 
         try {
             MaterialCategory mc = materialCategoryDAO.findByCode("MC-B");
@@ -328,10 +303,9 @@ public class MaterialServiceTest {
 
     }
 
-    private MaterialCategoryListDTO createMaterialCategoryListDTO(
-            MaterialCategoryDTO... materialCategoryDTOs) {
+    private MaterialCategoryListDTO createMaterialCategoryListDTO(MaterialCategoryDTO... materialCategoryDTOs) {
 
-        List<MaterialCategoryDTO> materialCategoryList = new ArrayList<MaterialCategoryDTO>();
+        List<MaterialCategoryDTO> materialCategoryList = new ArrayList<>();
 
         for (MaterialCategoryDTO c : materialCategoryDTOs) {
             materialCategoryList.add(c);

@@ -43,8 +43,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.libreplan.business.IDataBootstrap;
-import org.libreplan.business.common.IAdHocTransactionService;
-import org.libreplan.business.common.IOnTransaction;
 import org.libreplan.business.externalcompanies.daos.IExternalCompanyDAO;
 import org.libreplan.business.externalcompanies.entities.ExternalCompany;
 import org.libreplan.business.orders.daos.IOrderDAO;
@@ -70,11 +68,10 @@ import org.springframework.transaction.annotation.Transactional;
  * @author Manuel Rego Casasnovas <mrego@igalia.com>
  */
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(locations = { BUSINESS_SPRING_CONFIG_FILE,
+@ContextConfiguration(locations = {
+        BUSINESS_SPRING_CONFIG_FILE,
         WEBAPP_SPRING_CONFIG_FILE, WEBAPP_SPRING_CONFIG_TEST_FILE,
-        WEBAPP_SPRING_SECURITY_CONFIG_FILE,
-        WEBAPP_SPRING_SECURITY_CONFIG_TEST_FILE })
-@Transactional
+        WEBAPP_SPRING_SECURITY_CONFIG_FILE, WEBAPP_SPRING_SECURITY_CONFIG_TEST_FILE })
 public class SubcontractServiceTest {
 
     @Resource
@@ -87,7 +84,7 @@ public class SubcontractServiceTest {
     private IScenariosBootstrap scenariosBootstrap;
 
     @Before
-    public void loadRequiredaData() {
+    public void loadRequiredData() {
         defaultAdvanceTypesBootstrapListener.loadRequiredData();
         configurationBootstrap.loadRequiredData();
         scenariosBootstrap.loadRequiredData();
@@ -109,14 +106,12 @@ public class SubcontractServiceTest {
         OrderLineDTO orderLineDTO = new OrderLineDTO();
         orderLineDTO.name = "Test";
         orderLineDTO.code = orderLineCode;
-        orderLineDTO.initDate = DateConverter
-                .toXMLGregorianCalendar(new Date());
+        orderLineDTO.initDate = DateConverter.toXMLGregorianCalendar(new Date());
 
         return orderLineDTO;
     }
 
-    private ExternalCompany getClientExternalCompanySaved(String name,
-            String nif) {
+    private ExternalCompany getClientExternalCompanySaved(String name, String nif) {
         ExternalCompany externalCompany = ExternalCompany.create(name, nif);
         externalCompany.setClient(true);
 
@@ -130,14 +125,15 @@ public class SubcontractServiceTest {
     }
 
     @Test
+    @Transactional
     @Rollback(false)
     public void testNotRollback() {
         // Just to do not make rollback in order to have the default
-        // configuration, needed for prepareForCreate in order to autogenerate
-        // the order code
+        // configuration, needed for prepareForCreate in order to autogenerate the order code
     }
 
     @Test
+    @Transactional
     public void invalidSubcontractedTaskDataWithoutExternalCompanyNif() {
         int previous = orderDAO.getOrders().size();
 
@@ -148,39 +144,42 @@ public class SubcontractServiceTest {
         SubcontractedTaskDataDTO subcontractedTaskDataDTO = new SubcontractedTaskDataDTO();
         subcontractedTaskDataDTO.orderElementDTO = orderElementDTO;
 
-        List<InstanceConstraintViolationsDTO> instanceConstraintViolationsList = subcontractService
-                .subcontract(subcontractedTaskDataDTO).instanceConstraintViolationsList;
+        List<InstanceConstraintViolationsDTO> instanceConstraintViolationsList =
+                subcontractService.subcontract(subcontractedTaskDataDTO).instanceConstraintViolationsList;
+
         assertThat(instanceConstraintViolationsList.size(), equalTo(1));
 
         assertThat(orderDAO.getOrders().size(), equalTo(previous));
     }
 
     @Test
+    @Transactional
     public void invalidSubcontractedTaskDataWithoutOrderElement() {
         int previous = orderDAO.getOrders().size();
 
-        ExternalCompany externalCompany = getClientExternalCompanySaved(
-                "Company", "company-nif");
+        ExternalCompany externalCompany = getClientExternalCompanySaved("Company", "company-nif");
 
         SubcontractedTaskDataDTO subcontractedTaskDataDTO = new SubcontractedTaskDataDTO();
         subcontractedTaskDataDTO.externalCompanyNif = externalCompany.getNif();
 
-        List<InstanceConstraintViolationsDTO> instanceConstraintViolationsList = subcontractService
-                .subcontract(subcontractedTaskDataDTO).instanceConstraintViolationsList;
+        List<InstanceConstraintViolationsDTO> instanceConstraintViolationsList =
+                subcontractService.subcontract(subcontractedTaskDataDTO).instanceConstraintViolationsList;
+
         assertThat(instanceConstraintViolationsList.size(), equalTo(1));
 
         assertThat(orderDAO.getOrders().size(), equalTo(previous));
     }
 
     @Test
+    @Transactional
+    /** FIXME Test could fail sometimes */
     public void validSubcontractedTaskData() {
         int previous = orderDAO.getOrders().size();
 
         String orderLineCode = "order-line-code";
 
         OrderElementDTO orderElementDTO = givenBasicOrderLineDTO(orderLineCode);
-        ExternalCompany externalCompany = getClientExternalCompanySaved(
-                "Company", "company-nif");
+        ExternalCompany externalCompany = getClientExternalCompanySaved("Company", "company-nif");
 
         SubcontractedTaskDataDTO subcontractedTaskDataDTO = new SubcontractedTaskDataDTO();
         subcontractedTaskDataDTO.orderElementDTO = orderElementDTO;
@@ -193,8 +192,9 @@ public class SubcontractServiceTest {
         subcontractedTaskDataDTO.subcontractedCode = orderCustomerReference;
         subcontractedTaskDataDTO.subcontractPrice = orderBudget;
 
-        List<InstanceConstraintViolationsDTO> instanceConstraintViolationsList = subcontractService
-                .subcontract(subcontractedTaskDataDTO).instanceConstraintViolationsList;
+        List<InstanceConstraintViolationsDTO> instanceConstraintViolationsList =
+                subcontractService.subcontract(subcontractedTaskDataDTO).instanceConstraintViolationsList;
+
         assertThat(instanceConstraintViolationsList.size(), equalTo(0));
 
         assertThat(orderDAO.getOrders().size(), equalTo(previous + 1));
@@ -204,15 +204,12 @@ public class SubcontractServiceTest {
         assertTrue(order.isCodeAutogenerated());
         assertNotNull(order.getExternalCode());
         assertThat(order.getExternalCode(), equalTo(orderLineCode));
-        assertThat(order.getState(),
-                equalTo(OrderStatusEnum.OUTSOURCED));
+        assertThat(order.getState(), equalTo(OrderStatusEnum.OUTSOURCED));
         assertThat(order.getWorkHours(), equalTo(0));
-        assertThat(order.getCustomer().getId(),
-                equalTo(externalCompany.getId()));
+        assertThat(order.getCustomer().getId(), equalTo(externalCompany.getId()));
         assertThat(order.getName(), equalTo(orderName));
-        assertThat(order.getCustomerReference(),
-                equalTo(orderCustomerReference));
-        assertThat(order.getResourcesBudget(), equalTo(orderBudget));
+        assertThat(order.getCustomerReference(), equalTo(orderCustomerReference));
+        assertThat(order.getTotalManualBudget(), equalTo(orderBudget));
 
         List<OrderElement> children = order.getChildren();
         assertThat(children.size(), equalTo(1));

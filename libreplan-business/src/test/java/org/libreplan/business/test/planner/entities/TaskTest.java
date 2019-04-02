@@ -25,9 +25,9 @@ import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.expectLastCall;
 import static org.easymock.EasyMock.getCurrentArguments;
 import static org.easymock.EasyMock.isA;
-import static org.easymock.classextension.EasyMock.createNiceMock;
-import static org.easymock.classextension.EasyMock.replay;
-import static org.easymock.classextension.EasyMock.resetToNice;
+import static org.easymock.EasyMock.createNiceMock;
+import static org.easymock.EasyMock.replay;
+import static org.easymock.EasyMock.resetToNice;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -40,7 +40,7 @@ import static org.libreplan.business.workingday.EffortDuration.hours;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 
 import javax.annotation.Resource;
@@ -87,12 +87,11 @@ import org.springframework.transaction.annotation.Transactional;
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = { BUSINESS_SPRING_CONFIG_FILE,
         BUSINESS_SPRING_CONFIG_TEST_FILE })
-@Transactional
 public class TaskTest {
 
     private static final OrderVersion mockedOrderVersion = mockOrderVersion();
 
-    public static final OrderVersion mockOrderVersion() {
+    public static OrderVersion mockOrderVersion() {
         OrderVersion result = createNiceMock(OrderVersion.class);
         replay(result);
         return result;
@@ -112,7 +111,7 @@ public class TaskTest {
     private IDataBootstrap defaultAdvanceTypesBootstrapListener;
 
     @Before
-    public void loadRequiredaData() {
+    public void loadRequiredData() {
         // Load data
         defaultAdvanceTypesBootstrapListener.loadRequiredData();
 
@@ -125,34 +124,33 @@ public class TaskTest {
         OrderLine orderLine = OrderLine.create();
         order.add(orderLine);
         order.setCalendar(stubCalendar());
-        SchedulingDataForVersion version = TaskElementTest
-                .mockSchedulingDataForVersion(orderLine);
-        TaskSource taskSource = TaskSource.create(version, Arrays
-                .asList(hoursGroup));
+        SchedulingDataForVersion version = TaskElementTest.mockSchedulingDataForVersion(orderLine);
+        TaskSource taskSource = TaskSource.create(version, Collections.singletonList(hoursGroup));
         task = Task.createTask(taskSource);
     }
 
     private BaseCalendar stubCalendar() {
         taskCalendar = createNiceMock(BaseCalendar.class);
-        expect(taskCalendar.getCapacityOn(isA(PartialDay.class)))
-                .andReturn(hours(8)).anyTimes();
-        expect(taskCalendar.getAvailability()).andReturn(
-                AvailabilityTimeLine.allValid()).anyTimes();
+        expect(taskCalendar.getCapacityOn(isA(PartialDay.class))).andReturn(hours(8)).anyTimes();
+        expect(taskCalendar.getAvailability()).andReturn(AvailabilityTimeLine.allValid()).anyTimes();
         replay(taskCalendar);
         return taskCalendar;
     }
 
     @Test
+    @Transactional
     public void taskIsASubclassOfTaskElement() {
         assertTrue(task instanceof TaskElement);
     }
 
     @Test
+    @Transactional
     public void taskHasHoursSpecifiedAtOrderComingFromItsHoursGroup() {
         assertThat(task.getHoursSpecifiedAtOrder(), equalTo(hoursGroup.getWorkingHours()));
     }
 
     @Test
+    @Transactional
     public void taskMustHaveOneHoursGroup() {
         HoursGroup hoursGroup = task.getHoursGroup();
         assertNotNull(hoursGroup);
@@ -166,10 +164,8 @@ public class TaskTest {
         order.useSchedulingDataFor(mockedOrderVersion);
         order.setInitDate(new Date());
         order.add(orderLine);
-        SchedulingDataForVersion version = TaskElementTest
-                .mockSchedulingDataForVersion(orderLine);
-        TaskSource taskSource = TaskSource.create(version, Arrays
-                .asList(hoursGroup));
+        SchedulingDataForVersion version = TaskElementTest.mockSchedulingDataForVersion(orderLine);
+        TaskSource taskSource = TaskSource.create(version, Collections.singletonList(hoursGroup));
         return Task.createTask(taskSource);
     }
 
@@ -180,13 +176,12 @@ public class TaskTest {
     }
 
     @Test
-    public void getResourceAllocationsDoesntRetrieveUnsatisfiedAllocations() {
+    @Transactional
+    public void getResourceAllocationsDoesNotRetrieveUnsatisfiedAllocations() {
         assertThat(task.getSatisfiedResourceAllocations().size(), equalTo(0));
 
-        SpecificResourceAllocation unsatisfied = SpecificResourceAllocation
-                .create(task);
-        assertTrue("in order to be meaningful this test needs an unsatisfied "
-                + "allocation", unsatisfied.isUnsatisfied());
+        SpecificResourceAllocation unsatisfied = SpecificResourceAllocation.create(task);
+        assertTrue("in order to be meaningful this test needs an unsatisfied " + "allocation", unsatisfied.isUnsatisfied());
         task.addResourceAllocation(unsatisfied);
 
         assertThat(task.getSatisfiedResourceAllocations().size(), equalTo(0));
@@ -194,21 +189,21 @@ public class TaskTest {
     }
 
     @Test
+    @Transactional
     public void addingNoEmptyResourceAllocationAddsIt() {
         assertThat(task.getSatisfiedResourceAllocations().size(), equalTo(0));
 
-        SpecificResourceAllocation resourceAllocation = stubResourceAllocationWithAssignedHours(
-                task, 500);
+        SpecificResourceAllocation resourceAllocation = stubResourceAllocationWithAssignedHours(task, 500);
         task.addResourceAllocation(resourceAllocation);
         assertThat(task.getSatisfiedResourceAllocations().size(), equalTo(1));
     }
 
     @Test
+    @Transactional
     public void taskRemoveResourceAllocation() {
         assertThat(task.getSatisfiedResourceAllocations().size(), equalTo(0));
 
-        SpecificResourceAllocation resourceAllocation = stubResourceAllocationWithAssignedHours(
-                task, 500);
+        SpecificResourceAllocation resourceAllocation = stubResourceAllocationWithAssignedHours(task, 500);
         task.addResourceAllocation(resourceAllocation);
 
         assertThat(task.getSatisfiedResourceAllocations().size(), equalTo(1));
@@ -218,93 +213,90 @@ public class TaskTest {
     }
 
     @Test
+    @Transactional
     public void aTaskWithoutAllocationsHasZeroAssignedHours() {
         assertThat(task.getAssignedHours(), equalTo(0));
     }
 
     @Test
+    @Transactional
     public void aTaskWithAllocationsReturnsTheSumOfItsAllocations() {
-        task.addResourceAllocation(stubResourceAllocationWithAssignedHours(
-                task, 5));
-        task.addResourceAllocation(stubResourceAllocationWithAssignedHours(
-                task, 3));
+        task.addResourceAllocation(stubResourceAllocationWithAssignedHours(task, 5));
+        task.addResourceAllocation(stubResourceAllocationWithAssignedHours(task, 3));
         assertThat(task.getAssignedHours(), equalTo(8));
     }
 
     @Test
+    @Transactional
     public void theWorkableDaysAreCalculatedBasedOnlyOnDatesNotHours() {
-        task.setIntraDayStartDate(IntraDayDate.create(
-                new LocalDate(2010, 1, 13), EffortDuration.hours(3)));
-        task.setIntraDayEndDate(IntraDayDate.startOfDay(new LocalDate(2010, 1,
-                14)));
+        task.setIntraDayStartDate(IntraDayDate.create(new LocalDate(2010, 1, 13), EffortDuration.hours(3)));
+        task.setIntraDayEndDate(IntraDayDate.startOfDay(new LocalDate(2010, 1, 14)));
         assertThat(task.getWorkableDays(), equalTo(1));
     }
 
     @Test
+    @Transactional
     public void atLeastOneWorkableDayEvenIfStartAndEndDatesAreAtTheSameDay() {
         LocalDate day = new LocalDate(2010, 1, 13);
-        task.setIntraDayStartDate(IntraDayDate.create(day,
-                EffortDuration.hours(3)));
-        task.setIntraDayEndDate(IntraDayDate.create(day,
-                EffortDuration.hours(4)));
+        task.setIntraDayStartDate(IntraDayDate.create(day, EffortDuration.hours(3)));
+        task.setIntraDayEndDate(IntraDayDate.create(day, EffortDuration.hours(4)));
         assertThat(task.getWorkableDays(), equalTo(1));
     }
 
     @Test
+    @Transactional
     public void ifTheEndIsInTheMiddleOfADayTheWholeDayIsCounted() {
         LocalDate start = new LocalDate(2010, 1, 13);
-        task.setIntraDayStartDate(IntraDayDate.create(start,
-                EffortDuration.hours(3)));
-        task.setIntraDayEndDate(IntraDayDate.create(start.plusDays(1),
-                EffortDuration.minutes(1)));
+        task.setIntraDayStartDate(IntraDayDate.create(start, EffortDuration.hours(3)));
+        task.setIntraDayEndDate(IntraDayDate.create(start.plusDays(1), EffortDuration.minutes(1)));
         assertThat(task.getWorkableDays(), equalTo(2));
     }
 
     @Test
+    @Transactional
     public void ifSomeDayIsNotWorkableIsNotCounted() {
         final LocalDate start = new LocalDate(2010, 1, 13);
 
         resetToNice(taskCalendar);
-        expect(taskCalendar.getCapacityOn(isA(PartialDay.class))).andAnswer(
-                new IAnswer<EffortDuration>() {
+
+        expect(taskCalendar.getCapacityOn(isA(PartialDay.class)))
+                .andAnswer(new IAnswer<EffortDuration>() {
                     @Override
                     public EffortDuration answer() throws Throwable {
                         Object[] args = getCurrentArguments();
                         PartialDay day = (PartialDay) args[0];
-                        return day.getDate().equals(start.plusDays(1)) ? hours(0)
-                                : hours(8);
+                        return day.getDate().equals(start.plusDays(1)) ? hours(0) : hours(8);
                     }
-                }).anyTimes();
+                })
+                .anyTimes();
+
         replay(taskCalendar);
 
-        task.setIntraDayStartDate(IntraDayDate.create(start,
-                EffortDuration.hours(3)));
-        task.setIntraDayEndDate(IntraDayDate.create(start.plusDays(1),
-                EffortDuration.minutes(1)));
+        task.setIntraDayStartDate(IntraDayDate.create(start, EffortDuration.hours(3)));
+        task.setIntraDayEndDate(IntraDayDate.create(start.plusDays(1), EffortDuration.minutes(1)));
         assertThat(task.getWorkableDays(), equalTo(1));
     }
 
     /**
      * @param task
      * @param hours
-     * @return
+     * @return {@link SpecificResourceAllocation}
      */
-    private SpecificResourceAllocation stubResourceAllocationWithAssignedHours(
-            Task task,
-            int hours) {
+    private SpecificResourceAllocation stubResourceAllocationWithAssignedHours(Task task, int hours) {
         SpecificResourceAllocation resourceAllocation = createNiceMock(SpecificResourceAllocation.class);
-        expect(resourceAllocation.getAssignedHours()).andReturn(hours)
-                .anyTimes();
+        expect(resourceAllocation.getAssignedHours()).andReturn(hours).anyTimes();
         expect(resourceAllocation.getTask()).andReturn(task).anyTimes();
         expect(resourceAllocation.hasAssignments()).andReturn(true).anyTimes();
         expect(resourceAllocation.isSatisfied()).andReturn(true).anyTimes();
         resourceAllocation.detach();
         expectLastCall().anyTimes();
         replay(resourceAllocation);
+
         return resourceAllocation;
     }
 
     @Test
+    @Transactional
     public void testIsLimiting() {
         LimitingResourceQueueElement element = LimitingResourceQueueElement.create();
         Task task = createValidTask();
@@ -315,6 +307,7 @@ public class TaskTest {
     }
 
     @Test
+    @Transactional
     public void testIsNonLimiting() {
         Task task = createValidTask();
         SpecificResourceAllocation resourceAllocation = SpecificResourceAllocation.create(task);
@@ -323,20 +316,25 @@ public class TaskTest {
     }
 
     @Test
+    @Transactional
     public void theoreticalHoursIsZeroIfNoResourcesAreAllocated() {
         assertThat(task.getTheoreticalCompletedTimeUntilDate(new Date()), equalTo(EffortDuration.zero()));
     }
 
     @Test
+    @Transactional
     public void theoreticalHoursIsTotalIfDateIsLaterThanEndDate() {
         prepareTaskForTheoreticalAdvanceTesting();
-        EffortDuration totalAllocatedTime = AggregateOfDayAssignments.create(
-                task.getDayAssignments(FilterType.KEEP_ALL)).getTotalTime();
+
+        EffortDuration totalAllocatedTime =
+                AggregateOfDayAssignments.create(task.getDayAssignments(FilterType.KEEP_ALL)).getTotalTime();
+
         assertThat(task.getTheoreticalCompletedTimeUntilDate(task.getEndDate()), equalTo(totalAllocatedTime));
 
     }
 
     @Test
+    @Transactional
     public void theoreticalHoursIsZeroIfDateIsEarlierThanStartDate() {
         prepareTaskForTheoreticalAdvanceTesting();
         assertThat(task.getTheoreticalCompletedTimeUntilDate(task.getStartDate()), equalTo(EffortDuration.zero()));
@@ -344,37 +342,38 @@ public class TaskTest {
     }
 
     @Test
+    @Transactional
     public void theoreticalHoursWithADateWithinStartAndEndDateHead() {
         prepareTaskForTheoreticalAdvanceTesting();
         LocalDate limit = task.getStartAsLocalDate().plusDays(1);
         EffortDuration expected = EffortDuration.hours(8);
-        assertThat(task.getTheoreticalCompletedTimeUntilDate(limit.toDateTimeAtStartOfDay().toDate()),
-                equalTo(expected));
+        assertThat(task.getTheoreticalCompletedTimeUntilDate(limit.toDateTimeAtStartOfDay().toDate()), equalTo(expected));
     }
 
     @Test
+    @Transactional
     public void theoreticalHoursWithADateWithinStartAndEndDateTail() {
         prepareTaskForTheoreticalAdvanceTesting();
         LocalDate limit = task.getEndAsLocalDate().minusDays(1);
         EffortDuration expected = EffortDuration.hours(32);
-        assertThat(task.getTheoreticalCompletedTimeUntilDate(limit.toDateTimeAtStartOfDay().toDate()),
-                equalTo(expected));
+        assertThat(task.getTheoreticalCompletedTimeUntilDate(limit.toDateTimeAtStartOfDay().toDate()), equalTo(expected));
     }
 
     @Test
+    @Transactional
     public void theoreticalAdvancePercentageIsZeroIfNoResourcesAreAllocated() {
         assertThat(task.getTheoreticalAdvancePercentageUntilDate(new Date()), equalTo(new BigDecimal(0)));
     }
 
     @Test
+    @Transactional
     public void theoreticalPercentageIsOneIfDateIsLaterThanEndDate() {
         prepareTaskForTheoreticalAdvanceTesting();
-        assertThat(task.getTheoreticalAdvancePercentageUntilDate(task.getEndDate()),
-                equalTo(new BigDecimal("1.00000000")));
-
+        assertThat(task.getTheoreticalAdvancePercentageUntilDate(task.getEndDate()), equalTo(new BigDecimal("1.00000000")));
     }
 
     @Test
+    @Transactional
     public void theoreticalPercentageWithADateWithinStartAndEndDateHead() {
         prepareTaskForTheoreticalAdvanceTesting();
         LocalDate limit = task.getStartAsLocalDate().plusDays(1);
@@ -383,7 +382,8 @@ public class TaskTest {
     }
 
     @Test
-    public void taskIsFinishedIfAdvancePertentageIsOne() {
+    @Transactional
+    public void taskIsFinishedIfAdvancePercentageIsOne() {
         task.setAdvancePercentage(BigDecimal.ONE);
         assertTrue(task.isFinished());
         assertFalse(task.isInProgress());
@@ -391,6 +391,7 @@ public class TaskTest {
     }
 
     @Test
+    @Transactional
     public void taskIsProgressIfAdvancePercentageIsLessThanOne() {
         task.setAdvancePercentage(new BigDecimal("0.9999", new MathContext(4)));
         assertFalse(task.isFinished());
@@ -399,6 +400,7 @@ public class TaskTest {
     }
 
     @Test
+    @Transactional
     public void taskIsProgressIfAdvancePercentageIsGreaterThanZero() {
         task.setAdvancePercentage(new BigDecimal("0.0001", new MathContext(4)));
         assertFalse(task.isFinished());
@@ -407,6 +409,7 @@ public class TaskTest {
     }
 
     @Test
+    @Transactional
     public void taskIsNotInProgressIfAdvancePercentageIsZeroAndNoWorkReportsAttached() {
         task.setAdvancePercentage(BigDecimal.ZERO);
         SumChargedEffort sumChargedEffort = task.getOrderElement().getSumChargedEffort();
@@ -416,9 +419,9 @@ public class TaskTest {
     }
 
     @Test
+    @Transactional
     public void taskIsInProgressIfAdvancePercentageIsZeroButWorkReportsAttached() {
-        SumChargedEffort sumChargedEffort = SumChargedEffort.create(task
-                .getOrderElement());
+        SumChargedEffort sumChargedEffort = SumChargedEffort.create(task.getOrderElement());
         sumChargedEffort.addDirectChargedEffort(EffortDuration.hours(1));
         task.getOrderElement().setSumChargedEffort(sumChargedEffort);
         assertFalse(task.isFinished());
@@ -427,6 +430,7 @@ public class TaskTest {
     }
 
     @Test
+    @Transactional
     public void taskIsReadyToStartIfAllEndStartDepsAreFinished() {
         Dependency dependency = mockDependency(Type.END_START);
         dependency.getOrigin().setAdvancePercentage(BigDecimal.ONE);
@@ -436,6 +440,7 @@ public class TaskTest {
     }
 
     @Test
+    @Transactional
     public void taskIsReadyToStartIfAllStartStartDepsAreInProgressOrFinished() {
         Dependency dependency1 = mockDependency(Type.START_START);
         dependency1.getOrigin().setAdvancePercentage(BigDecimal.ONE);
@@ -447,6 +452,7 @@ public class TaskTest {
     }
 
     @Test
+    @Transactional
     public void taskIsBlockedIfHasAnUnfinishedEndStartDependency() {
         Dependency dependency = mockDependency(Type.END_START);
         dependency.getOrigin().setAdvancePercentage(new BigDecimal("0.0001", new MathContext(4)));
@@ -456,6 +462,7 @@ public class TaskTest {
     }
 
     @Test
+    @Transactional
     public void taskIsBlockedIfHasANotStartedStartStartDependency() {
         Dependency dependency = mockDependency(Type.START_START);
         dependency.getOrigin().setAdvancePercentage(BigDecimal.ZERO);
@@ -465,6 +472,7 @@ public class TaskTest {
     }
 
     @Test
+    @Transactional
     public void taskStatusCalculationTakesIntoAccountDifferentDepType() {
         Dependency dependency1 = mockDependency(Type.END_START);
         dependency1.getOrigin().setAdvancePercentage(BigDecimal.ONE);
@@ -478,6 +486,7 @@ public class TaskTest {
     }
 
     @Test
+    @Transactional
     public void taskIsBlockedIfHasAnUnfinishedEndStartDependencyUsingGroup() {
          Task task1 = createValidTaskWithFullProgress();
          Task task2 = createValidTask();
@@ -492,6 +501,7 @@ public class TaskTest {
     }
 
     @Test
+    @Transactional
     public void taskDependenciesDontMatterIfProgressIsNotZero() {
          Task task1 = createValidTaskWithFullProgress();
          Task task2 = createValidTask();
@@ -508,6 +518,7 @@ public class TaskTest {
     }
 
     @Test
+    @Transactional
     public void taskStatusNotAffectedByEndEndDeps() {
         Dependency dependency = mockDependency(Type.END_END);
         dependency.getOrigin().setAdvancePercentage(BigDecimal.ZERO);
@@ -515,37 +526,37 @@ public class TaskTest {
     }
 
     @Test
+    @Transactional
     public void taskWithNoDeadlineHasCorrectDeadlineViolationStatus() {
         task.setDeadline(null);
-        assertTrue(task.getDeadlineViolationStatus() ==
-                TaskDeadlineViolationStatusEnum.NO_DEADLINE);
+        assertTrue(task.getDeadlineViolationStatus() == TaskDeadlineViolationStatusEnum.NO_DEADLINE);
     }
 
     @Test
+    @Transactional
     public void taskWithViolatedDeadlineHasCorrectDeadlineViolationStatus() {
         task.setDeadline(new LocalDate());
         LocalDate tomorrow = new LocalDate().plusDays(1);
         task.setEndDate(tomorrow.toDateTimeAtStartOfDay().toDate());
-        assertTrue(task.getDeadlineViolationStatus() ==
-                TaskDeadlineViolationStatusEnum.DEADLINE_VIOLATED);
+        assertTrue(task.getDeadlineViolationStatus() == TaskDeadlineViolationStatusEnum.DEADLINE_VIOLATED);
     }
 
     @Test
+    @Transactional
     public void taskWithUnviolatedDeadlineHasCorrectDeadlineViolationStatusJustInTime() {
         LocalDate now = new LocalDate();
         task.setDeadline(now);
         task.setEndDate(now.toDateTimeAtStartOfDay().toDate());
-        assertTrue(task.getDeadlineViolationStatus() ==
-                TaskDeadlineViolationStatusEnum.ON_SCHEDULE);
+        assertTrue(task.getDeadlineViolationStatus() == TaskDeadlineViolationStatusEnum.ON_SCHEDULE);
     }
 
     @Test
+    @Transactional
     public void taskWithUnviolatedDeadlineHasCorrectDeadlineViolationStatusMargin() {
         LocalDate now = new LocalDate();
         task.setDeadline(now);
         task.setEndDate(now.minusDays(1).toDateTimeAtStartOfDay().toDate());
-        assertTrue(task.getDeadlineViolationStatus() ==
-                TaskDeadlineViolationStatusEnum.ON_SCHEDULE);
+        assertTrue(task.getDeadlineViolationStatus() == TaskDeadlineViolationStatusEnum.ON_SCHEDULE);
     }
 
     private void prepareTaskForTheoreticalAdvanceTesting() {
@@ -578,8 +589,7 @@ public class TaskTest {
     }
 
     private void givenResourceCalendarAlwaysReturning(final int hours) {
-        this.workerCalendar = SpecificResourceAllocationTest.
-                createResourceCalendarAlwaysReturning(hours);
+        this.workerCalendar = SpecificResourceAllocationTest.createResourceCalendarAlwaysReturning(hours);
     }
 
     private Dependency mockDependency(Type type){
@@ -594,6 +604,7 @@ public class TaskTest {
         replay(dependency);
         origin.add(dependency);
         destination.add(dependency);
+
         return dependency;
     }
 }

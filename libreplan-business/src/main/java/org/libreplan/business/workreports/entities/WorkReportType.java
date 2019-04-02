@@ -26,11 +26,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.hibernate.NonUniqueResultException;
-import org.hibernate.validator.AssertTrue;
-import org.hibernate.validator.NotEmpty;
-import org.hibernate.validator.Valid;
+import javax.validation.constraints.AssertTrue;
+import org.hibernate.validator.constraints.NotEmpty;
+import javax.validation.Valid;
 import org.libreplan.business.common.IHumanIdentifiable;
 import org.libreplan.business.common.IntegrationEntity;
 import org.libreplan.business.common.Registry;
@@ -38,21 +38,14 @@ import org.libreplan.business.common.exceptions.InstanceNotFoundException;
 import org.libreplan.business.labels.entities.LabelType;
 import org.libreplan.business.workreports.daos.IWorkReportTypeDAO;
 import org.libreplan.business.workreports.valueobjects.DescriptionField;
-import org.springframework.orm.hibernate3.HibernateOptimisticLockingFailureException;
+import org.springframework.orm.hibernate5.HibernateOptimisticLockingFailureException;
+
 /**
  * @author Diego Pino García <dpino@igalia.com>
  * @author Susana Montes Pedreira <smontes@wirelessgalicia.com>
  */
 
-public class WorkReportType extends IntegrationEntity implements IHumanIdentifiable{
-
-    public static WorkReportType create() {
-        return create(new WorkReportType());
-    }
-
-    public static WorkReportType create(String name, String code) {
-        return create(new WorkReportType(name), code);
-    }
+public class WorkReportType extends IntegrationEntity implements IHumanIdentifiable {
 
     private String name;
 
@@ -62,14 +55,13 @@ public class WorkReportType extends IntegrationEntity implements IHumanIdentifia
 
     private Boolean orderElementIsSharedInLines = false;
 
-    private HoursManagementEnum hoursManagement = HoursManagementEnum
-            .getDefault();
+    private HoursManagementEnum hoursManagement = HoursManagementEnum.getDefault();
 
-    private Set<WorkReportLabelTypeAssigment> workReportLabelTypeAssigments = new HashSet<WorkReportLabelTypeAssigment>();
+    private Set<WorkReportLabelTypeAssignment> workReportLabelTypeAssignments = new HashSet<>();
 
-    private Set<DescriptionField> headingFields = new HashSet<DescriptionField>();
+    private Set<DescriptionField> headingFields = new HashSet<>();
 
-    private Set<DescriptionField> lineFields = new HashSet<DescriptionField>();
+    private Set<DescriptionField> lineFields = new HashSet<>();
 
     /**
      * Constructor for hibernate. Do not use!
@@ -80,6 +72,14 @@ public class WorkReportType extends IntegrationEntity implements IHumanIdentifia
 
     private WorkReportType(String name) {
         this.name = name;
+    }
+
+    public static WorkReportType create() {
+        return create(new WorkReportType());
+    }
+
+    public static WorkReportType create(String name, String code) {
+        return create(new WorkReportType(name), code);
     }
 
     @NotEmpty(message = "name not specified or empty")
@@ -100,8 +100,7 @@ public class WorkReportType extends IntegrationEntity implements IHumanIdentifia
     }
 
     public Boolean getResourceIsSharedInLines() {
-        return resourceIsSharedInLines == null ? false
-                : resourceIsSharedInLines;
+        return resourceIsSharedInLines == null ? false : resourceIsSharedInLines;
     }
 
     public void setResourceIsSharedInLines(Boolean resourceIsSharedInLines) {
@@ -109,12 +108,10 @@ public class WorkReportType extends IntegrationEntity implements IHumanIdentifia
     }
 
     public Boolean getOrderElementIsSharedInLines() {
-        return orderElementIsSharedInLines == null ? false
-                : orderElementIsSharedInLines;
+        return orderElementIsSharedInLines == null ? false : orderElementIsSharedInLines;
     }
 
-    public void setOrderElementIsSharedInLines(
-            Boolean orderElementIsSharedInLines) {
+    public void setOrderElementIsSharedInLines(Boolean orderElementIsSharedInLines) {
         this.orderElementIsSharedInLines = orderElementIsSharedInLines;
     }
 
@@ -127,13 +124,12 @@ public class WorkReportType extends IntegrationEntity implements IHumanIdentifia
     }
 
     @Valid
-    public Set<WorkReportLabelTypeAssigment> getWorkReportLabelTypeAssigments() {
-        return workReportLabelTypeAssigments;
+    public Set<WorkReportLabelTypeAssignment> getWorkReportLabelTypeAssignments() {
+        return workReportLabelTypeAssignments;
     }
 
-    public void setWorkReportLabelTypeAssigments(
-            Set<WorkReportLabelTypeAssigment> workReportLabelTypeAssigments) {
-        this.workReportLabelTypeAssigments = workReportLabelTypeAssigments;
+    public void setWorkReportLabelTypeAssignments(Set<WorkReportLabelTypeAssignment> workReportLabelTypeAssignments) {
+        this.workReportLabelTypeAssignments = workReportLabelTypeAssignments;
     }
 
     @Valid
@@ -156,16 +152,13 @@ public class WorkReportType extends IntegrationEntity implements IHumanIdentifia
 
     @SuppressWarnings("unused")
     @AssertTrue(message = "Value is not valid.\n Code cannot contain chars like '_'.")
-    public boolean checkConstraintWorkReportTypeCodeWithoutIncorrectCharacter() {
-        if ((getCode() == null) || (getCode().contains("_"))) {
-            return false;
-        }
-        return true;
+    public boolean isWorkReportTypeCodeWithoutIncorrectCharacterConstraint() {
+        return !((getCode() == null) || (getCode().contains("_")));
     }
 
     @SuppressWarnings("unused")
     @AssertTrue(message = "timesheet template name is already being used")
-    public boolean checkConstraintUniqueWorkReportTypeName() {
+    public boolean isUniqueWorkReportTypeNameConstraint() {
         IWorkReportTypeDAO workReportTypeDAO = Registry.getWorkReportTypeDAO();
         if (isNewObject()) {
             return !workReportTypeDAO.existsByNameAnotherTransaction(this);
@@ -173,345 +166,318 @@ public class WorkReportType extends IntegrationEntity implements IHumanIdentifia
             try {
                 WorkReportType c = workReportTypeDAO.findUniqueByName(name);
                 return c.getId().equals(getId());
-            } catch (InstanceNotFoundException e) {
+            } catch ( InstanceNotFoundException | HibernateOptimisticLockingFailureException e ) {
                 return true;
             } catch (NonUniqueResultException e) {
                 return false;
-            } catch (HibernateOptimisticLockingFailureException e) {
-                return true;
             }
         }
     }
 
     @SuppressWarnings("unused")
     @AssertTrue(message = "The field name must be unique.")
-    public boolean checkConstraintUniqueNamesDescriptionFields() {
+    public boolean isUniqueNamesDescriptionFieldsConstraint() {
         for (DescriptionField descriptionField : getDescriptionFields()) {
-            if (existSameFieldName(descriptionField)) {
+            if ( existSameFieldName(descriptionField) ) {
                 return false;
             }
         }
+
         return true;
     }
 
     @SuppressWarnings("unused")
     @AssertTrue(message = "Assigned Label Type cannot be repeated in a Timesheet Template.")
-    public boolean checkConstraintNotExistRepeatedLabelTypes() {
-        for (WorkReportLabelTypeAssigment assignedLabelType : this.workReportLabelTypeAssigments) {
-            if (existRepeatedLabelType(assignedLabelType)) {
+    public boolean isNotExistRepeatedLabelTypesConstraint() {
+        for (WorkReportLabelTypeAssignment assignedLabelType : this.workReportLabelTypeAssignments) {
+            if ( existRepeatedLabelType(assignedLabelType) ) {
                 return false;
             }
         }
+
         return true;
     }
 
-    public boolean existRepeatedLabelType(
-            WorkReportLabelTypeAssigment assignedLabelType) {
-        for (WorkReportLabelTypeAssigment oldAssignedLabelType : this.workReportLabelTypeAssigments) {
-            if ((!oldAssignedLabelType.equals(assignedLabelType))
-                    && (isTheSameLabelType(oldAssignedLabelType.getLabelType(),
-                            assignedLabelType.getLabelType()))) {
+    public boolean existRepeatedLabelType(WorkReportLabelTypeAssignment assignedLabelType) {
+        boolean condition;
+        for (WorkReportLabelTypeAssignment oldAssignedLabelType : this.workReportLabelTypeAssignments) {
+
+            condition = (!oldAssignedLabelType.equals(assignedLabelType) ) &&
+                    (isTheSameLabelType(oldAssignedLabelType.getLabelType(), assignedLabelType.getLabelType()));
+
+            if ( condition ) {
                 return true;
             }
         }
         return false;
     }
 
-    public boolean isTheSameLabelType(LabelType oldLabelType,
-            LabelType newLabelType) {
-        if ((oldLabelType != null) && (newLabelType != null)
-                && (oldLabelType.equals(newLabelType))) {
-            return true;
-        }
-        return false;
+    public boolean isTheSameLabelType(LabelType oldLabelType, LabelType newLabelType) {
+        return (oldLabelType != null) && (newLabelType != null) && (oldLabelType.equals(newLabelType));
     }
 
     public boolean existSameFieldName(DescriptionField descriptionField) {
+        boolean condition;
         for (DescriptionField oldDescriptionField : getDescriptionFields()) {
-            if ((!oldDescriptionField.equals(descriptionField))
-                    && (isTheSameFieldName(oldDescriptionField.getFieldName(),
-                            descriptionField.getFieldName()))) {
+
+            condition = (!oldDescriptionField.equals(descriptionField)) &&
+                    (isTheSameFieldName(oldDescriptionField.getFieldName(), descriptionField.getFieldName()));
+
+            if ( condition ) {
                 return true;
             }
         }
+
         return false;
     }
 
     private boolean isTheSameFieldName(String oldName, String newName) {
-        if ((oldName != null) && (newName != null) && (!oldName.isEmpty())
-                && (!newName.isEmpty()) && (oldName.equals(newName))) {
-            return true;
-        }
-        return false;
+        return (oldName != null) &&
+                (newName != null) &&
+                (!oldName.isEmpty()) &&
+                (!newName.isEmpty()) &&
+                (oldName.equals(newName));
     }
 
     public Set<DescriptionField> getDescriptionFields() {
-        Set<DescriptionField> descriptionFields = new HashSet<DescriptionField>();
+        Set<DescriptionField> descriptionFields = new HashSet<>();
         descriptionFields.addAll(this.getHeadingFields());
         descriptionFields.addAll(this.getLineFields());
+
         return descriptionFields;
     }
 
-    /* Operation to manage the index */
-
     public void addDescriptionFieldToEndLine(DescriptionField descriptionField) {
-        addDescriptionFieldToLine(descriptionField, getLineFieldsAndLabels()
-                .size());
+        addDescriptionFieldToLine(descriptionField, getLineFieldsAndLabels().size());
     }
 
     public void addDescriptionFieldToEndHead(DescriptionField descriptionField) {
-        addDescriptionFieldToHead(descriptionField, getHeadingFieldsAndLabels()
-                .size());
+        addDescriptionFieldToHead(descriptionField, getHeadingFieldsAndLabels().size());
     }
 
-    public void addLabelAssigmentToEndHead(
-            WorkReportLabelTypeAssigment workReportLabelTypeAssigment) {
-        addLabelAssigmentToHead(workReportLabelTypeAssigment,
-                getHeadingFieldsAndLabels().size());
+    public void addLabelAssignmentToEndHead(WorkReportLabelTypeAssignment workReportLabelTypeAssignment) {
+        addLabelAssignmentToHead(workReportLabelTypeAssignment, getHeadingFieldsAndLabels().size());
     }
 
-    public void addLabelAssigmentToEndLine(
-            WorkReportLabelTypeAssigment workReportLabelTypeAssigment) {
-        addLabelAssigmentToLine(workReportLabelTypeAssigment,
-                getLineFieldsAndLabels().size());
+    public void addLabelAssignmentToEndLine(WorkReportLabelTypeAssignment workReportLabelTypeAssignment) {
+        addLabelAssignmentToLine(workReportLabelTypeAssignment, getLineFieldsAndLabels().size());
     }
 
-    public void addDescriptionFieldToLine(DescriptionField descriptionField,
-            int position) {
-        if (isValidIndexToAdd(position, getLineFieldsAndLabels())) {
+    public void addDescriptionFieldToLine(DescriptionField descriptionField, int position) {
+        if ( isValidIndexToAdd(position, getLineFieldsAndLabels()) ) {
             updateIndexFromPosition(getLineFieldsAndLabels(), position, 1);
             descriptionField.setPositionNumber(position);
             getLineFields().add(descriptionField);
         }
     }
 
-    public void addDescriptionFieldToHead(DescriptionField descriptionField,
-            int position) {
-        if (isValidIndexToAdd(position, getHeadingFieldsAndLabels())) {
+    public void addDescriptionFieldToHead(DescriptionField descriptionField, int position) {
+        if ( isValidIndexToAdd(position, getHeadingFieldsAndLabels()) ) {
             updateIndexFromPosition(getHeadingFieldsAndLabels(), position, 1);
             descriptionField.setPositionNumber(position);
             getHeadingFields().add(descriptionField);
         }
     }
 
-    public void addLabelAssigmentToHead(
-            WorkReportLabelTypeAssigment workReportLabelTypeAssigment,
-            int position) {
-        if (isValidIndexToAdd(position, getHeadingFieldsAndLabels())) {
+    public void addLabelAssignmentToHead(WorkReportLabelTypeAssignment workReportLabelTypeAssignment, int position) {
+        if ( isValidIndexToAdd(position, getHeadingFieldsAndLabels()) ) {
             updateIndexFromPosition(getHeadingFieldsAndLabels(), position, 1);
-            workReportLabelTypeAssigment.setLabelsSharedByLines(true);
-            workReportLabelTypeAssigment.setPositionNumber(position);
-            getWorkReportLabelTypeAssigments()
-                    .add(workReportLabelTypeAssigment);
+            workReportLabelTypeAssignment.setLabelsSharedByLines(true);
+            workReportLabelTypeAssignment.setPositionNumber(position);
+            getWorkReportLabelTypeAssignments().add(workReportLabelTypeAssignment);
         }
     }
 
-    public void addLabelAssigmentToLine(
-            WorkReportLabelTypeAssigment workReportLabelTypeAssigment,
-            int position) {
-        if (isValidIndexToAdd(position, getLineFieldsAndLabels())) {
+    public void addLabelAssignmentToLine(WorkReportLabelTypeAssignment workReportLabelTypeAssignment, int position) {
+        if ( isValidIndexToAdd(position, getLineFieldsAndLabels()) ) {
             updateIndexFromPosition(getLineFieldsAndLabels(), position, 1);
-            workReportLabelTypeAssigment.setLabelsSharedByLines(false);
-            workReportLabelTypeAssigment.setPositionNumber(
-
-            position);
-            getWorkReportLabelTypeAssigments()
-                    .add(workReportLabelTypeAssigment);
+            workReportLabelTypeAssignment.setLabelsSharedByLines(false);
+            workReportLabelTypeAssignment.setPositionNumber(position);
+            getWorkReportLabelTypeAssignments().add(workReportLabelTypeAssignment);
         }
     }
 
-    public void moveLabelToEndHead(
-            WorkReportLabelTypeAssigment workReportLabelTypeAssigment) {
-        moveLabelToHead(workReportLabelTypeAssigment,
-                getHeadingFieldsAndLabels().size() - 1);
+    public void moveLabelToEndHead(WorkReportLabelTypeAssignment workReportLabelTypeAssignment) {
+        moveLabelToHead(workReportLabelTypeAssignment, getHeadingFieldsAndLabels().size() - 1);
     }
 
-    public void moveLabelToEndLine(
-            WorkReportLabelTypeAssigment workReportLabelTypeAssigment) {
-        moveLabelToLine(workReportLabelTypeAssigment, getLineFieldsAndLabels()
-                .size() - 1);
+    public void moveLabelToEndLine(WorkReportLabelTypeAssignment workReportLabelTypeAssignment) {
+        moveLabelToLine(workReportLabelTypeAssignment, getLineFieldsAndLabels().size() - 1);
     }
 
     public void moveDescriptionFieldToEndHead(DescriptionField descriptionField) {
-        moveDescriptionFieldToHead(descriptionField,
-                getHeadingFieldsAndLabels().size() - 1);
+        moveDescriptionFieldToHead(descriptionField, getHeadingFieldsAndLabels().size() - 1);
     }
 
     public void moveDescriptionFieldToEndLine(DescriptionField descriptionField) {
-        moveDescriptionFieldToLine(descriptionField, getLineFieldsAndLabels()
-                .size() - 1);
+        moveDescriptionFieldToLine(descriptionField, getLineFieldsAndLabels().size() - 1);
     }
 
-    public void moveLabelToHead(
-            WorkReportLabelTypeAssigment workReportLabelTypeAssigment,
-            int position) {
-        if (isValidIndexToMove(position, getHeadingFieldsAndLabels())) {
-            removeLabel(workReportLabelTypeAssigment);
-            addLabelAssigmentToHead(workReportLabelTypeAssigment, position);
+    public void moveLabelToHead(WorkReportLabelTypeAssignment workReportLabelTypeAssignment, int position) {
+        if ( isValidIndexToMove(position, getHeadingFieldsAndLabels()) ) {
+            removeLabel(workReportLabelTypeAssignment);
+            addLabelAssignmentToHead(workReportLabelTypeAssignment, position);
         }
     }
 
-    public void moveLabelToLine(
-            WorkReportLabelTypeAssigment workReportLabelTypeAssigment,
-            int position) {
-        if (isValidIndexToMove(position, getLineFieldsAndLabels())) {
-            removeLabel(workReportLabelTypeAssigment);
-            addLabelAssigmentToLine(workReportLabelTypeAssigment, position);
+    public void moveLabelToLine(WorkReportLabelTypeAssignment workReportLabelTypeAssignment, int position) {
+        if ( isValidIndexToMove(position, getLineFieldsAndLabels()) ) {
+            removeLabel(workReportLabelTypeAssignment);
+            addLabelAssignmentToLine(workReportLabelTypeAssignment, position);
         }
     }
 
-    public void moveDescriptionFieldToHead(DescriptionField descriptionField,
-            int position) {
-        if (isValidIndexToMove(position, getHeadingFieldsAndLabels())) {
+    public void moveDescriptionFieldToHead(DescriptionField descriptionField, int position) {
+        if ( isValidIndexToMove(position, getHeadingFieldsAndLabels()) ) {
             removeDescriptionField(descriptionField);
             addDescriptionFieldToHead(descriptionField, position);
         }
     }
 
-    public void moveDescriptionFieldToLine(DescriptionField descriptionField,
-            int position) {
-        if (isValidIndexToMove(position, getLineFieldsAndLabels())) {
+    public void moveDescriptionFieldToLine(DescriptionField descriptionField, int position) {
+        if ( isValidIndexToMove(position, getLineFieldsAndLabels()) ) {
             removeDescriptionField(descriptionField);
             addDescriptionFieldToLine(descriptionField, position);
         }
     }
 
     public void removeDescriptionField(DescriptionField descriptionField){
-        if (getHeadingFields().contains(descriptionField)) {
+        if ( getHeadingFields().contains(descriptionField) ) {
             getHeadingFields().remove(descriptionField);
-            updateIndexFromPosition(getHeadingFieldsAndLabels(),
-                    descriptionField.getPositionNumber(), -1);
+            updateIndexFromPosition(getHeadingFieldsAndLabels(), descriptionField.getPositionNumber(), -1);
         } else {
             getLineFields().remove(descriptionField);
-            updateIndexFromPosition(getLineFieldsAndLabels(), descriptionField
-                    .getPositionNumber(), -1);
+            updateIndexFromPosition(getLineFieldsAndLabels(), descriptionField.getPositionNumber(), -1);
         }
 
     }
 
-    public void removeLabel(WorkReportLabelTypeAssigment workReportLabelTypeAssigment) {
-        getWorkReportLabelTypeAssigments().remove(workReportLabelTypeAssigment);
-        if (workReportLabelTypeAssigment.getLabelsSharedByLines()) {
-            updateIndexFromPosition(getHeadingFieldsAndLabels(),
-                    workReportLabelTypeAssigment.getPositionNumber(), -1);
+    public void removeLabel(WorkReportLabelTypeAssignment workReportLabelTypeAssignment) {
+        getWorkReportLabelTypeAssignments().remove(workReportLabelTypeAssignment);
+        if ( workReportLabelTypeAssignment.getLabelsSharedByLines() ) {
+            updateIndexFromPosition(getHeadingFieldsAndLabels(), workReportLabelTypeAssignment.getPositionNumber(), -1);
         } else {
-            updateIndexFromPosition(getLineFieldsAndLabels(),
-                    workReportLabelTypeAssigment.getPositionNumber(), -1);
+            updateIndexFromPosition(getLineFieldsAndLabels(), workReportLabelTypeAssignment.getPositionNumber(), -1);
         }
     }
 
     private void setIndex(Object object, Integer index) {
-        if (object instanceof DescriptionField) {
+        if ( object instanceof DescriptionField ) {
             ((DescriptionField) object).setPositionNumber(index);
         } else {
-            ((WorkReportLabelTypeAssigment) object).setPositionNumber(index);
+            ((WorkReportLabelTypeAssignment) object).setPositionNumber(index);
         }
     }
 
-    private void updateIndexFromPosition(List<Object> list, Integer position,
-            Integer change) {
-        for (int i = 0; i < list.size(); i++) {
-            if (getIndex(list.get(i)).compareTo(position) >= 0) {
-                setIndex(list.get(i), getIndex(list.get(i)) + change);
+    private void updateIndexFromPosition(List<Object> list, Integer position, Integer change) {
+        for (Object aList : list) {
+            if (getIndex(aList).compareTo(position) >= 0) {
+                setIndex(aList, getIndex(aList) + change);
             }
         }
     }
 
     @SuppressWarnings("unused")
     @AssertTrue(message = "In the heading part, index labels and fields must be unique and consecutive")
-    public boolean checkConstraintTheIndexHeadingFieldsAndLabelMustBeUniqueAndConsecutive() {
+    public boolean isTheIndexHeadingFieldsAndLabelMustBeUniqueAndConsecutiveConstraint() {
         return validateTheIndexFieldsAndLabels(getHeadingFieldsAndLabels());
     }
 
     @SuppressWarnings("unused")
     @AssertTrue(message = "In the lines part, index labels and fields must be unique and consecutive")
-    public boolean checkConstraintTheIndexLineFieldsAndLabelMustBeUniqueAndConsecutive() {
+    public boolean isTheIndexLineFieldsAndLabelMustBeUniqueAndConsecutiveConstraint() {
         return validateTheIndexFieldsAndLabels(getLineFieldsAndLabels());
     }
 
-    private boolean validateTheIndexFieldsAndLabels(
-            List<Object> listFieldsAndLabels) {
+    private boolean validateTheIndexFieldsAndLabels(List<Object> listFieldsAndLabels) {
         List<Object> result = getListToNull(listFieldsAndLabels);
         for (Object object : listFieldsAndLabels) {
+
             // Check if index is out of range
             Integer index = getIndex(object);
-            if ((index.compareTo(0) < 0)
-                    || (index.compareTo(result.size()) >= 0)) {
+            if ( (index.compareTo(0) < 0) || (index.compareTo(result.size()) >= 0) ) {
                 return false;
             }
+
             // Check if index is repeated
-            if (result.get(getIndex(object)) != null) {
+            if ( result.get(getIndex(object)) != null ) {
                 return false;
             }
+
             result.set(getIndex(object), object);
         }
 
-        // Check if the indexs are consecutives
+        // Check if the indexes are consecutive
         for (Object object : result) {
-            if (object == null) {
+            if ( object == null ) {
                 return false;
             }
         }
+
         return true;
     }
 
     public List<Object> getHeadingFieldsAndLabels() {
-        List<Object> result = new ArrayList<Object>();
+        List<Object> result = new ArrayList<>();
         result.addAll(getHeadingLabels());
         result.addAll(getHeadingFields());
+
         return result;
     }
 
     public List<Object> getLineFieldsAndLabels() {
-        List<Object> result = new ArrayList<Object>();
+        List<Object> result = new ArrayList<>();
         result.addAll(getLineLabels());
         result.addAll(getLineFields());
+
         return result;
     }
 
-    public List<WorkReportLabelTypeAssigment> getHeadingLabels() {
-        List<WorkReportLabelTypeAssigment> result = new ArrayList<WorkReportLabelTypeAssigment>();
-        for (WorkReportLabelTypeAssigment label : getWorkReportLabelTypeAssigments()) {
-            if (label.getLabelsSharedByLines()) {
+    public List<WorkReportLabelTypeAssignment> getHeadingLabels() {
+        List<WorkReportLabelTypeAssignment> result = new ArrayList<>();
+        for (WorkReportLabelTypeAssignment label : getWorkReportLabelTypeAssignments()) {
+            if ( label.getLabelsSharedByLines() ) {
                 result.add(label);
             }
         }
+
         return result;
     }
 
-    public List<WorkReportLabelTypeAssigment> getLineLabels() {
-        List<WorkReportLabelTypeAssigment> result = new ArrayList<WorkReportLabelTypeAssigment>();
-        for (WorkReportLabelTypeAssigment label : getWorkReportLabelTypeAssigments()) {
-            if (!label.getLabelsSharedByLines()) {
+    public List<WorkReportLabelTypeAssignment> getLineLabels() {
+        List<WorkReportLabelTypeAssignment> result = new ArrayList<>();
+        for (WorkReportLabelTypeAssignment label : getWorkReportLabelTypeAssignments()) {
+            if ( !label.getLabelsSharedByLines() ) {
                 result.add(label);
             }
         }
+
         return result;
     }
 
     private Integer getIndex(Object object) {
-        if (object instanceof DescriptionField) {
+        if ( object instanceof DescriptionField ) {
             return ((DescriptionField) object).getPositionNumber();
         } else {
-            return ((WorkReportLabelTypeAssigment) object).getPositionNumber();
+            return ((WorkReportLabelTypeAssignment) object).getPositionNumber();
         }
     }
 
     private List<Object> getListToNull(List<Object> list) {
-        List<Object> result = new ArrayList<Object>(list.size());
+        List<Object> result = new ArrayList<>(list.size());
         for (int i = 0; i < list.size(); i++) {
             result.add(null);
         }
+
         return result;
     }
 
     private boolean isValidIndexToMove(Integer position, List<Object> list) {
-        return ((position.compareTo(0) >= 0) && (position.compareTo(list.size()) < 0));
+        return position.compareTo(0) >= 0 && position.compareTo(list.size()) < 0;
     }
 
     private boolean isValidIndexToAdd(Integer position, List<Object> list) {
-        return ((position.compareTo(0) >= 0) && (position
-                .compareTo(list.size()) <= 0));
+        return position.compareTo(0) >= 0 && position.compareTo(list.size()) <= 0;
     }
 
     @Override
@@ -525,18 +491,11 @@ public class WorkReportType extends IntegrationEntity implements IHumanIdentifia
     }
 
     public boolean isPersonalTimesheetsType() {
-        if (StringUtils.isBlank(name)) {
-            return false;
-        }
-        return name.equals(PredefinedWorkReportTypes.PERSONAL_TIMESHEETS
-                .getName());
+        return !StringUtils.isBlank(name) && name.equals(PredefinedWorkReportTypes.PERSONAL_TIMESHEETS.getName());
     }
 
     public boolean isJiraTimesheetsType() {
-        if (StringUtils.isBlank(name)) {
-            return false;
-        }
-        return name.equals(PredefinedWorkReportTypes.JIRA_TIMESHEETS.getName());
+        return !StringUtils.isBlank(name) && name.equals(PredefinedWorkReportTypes.JIRA_TIMESHEETS.getName());
     }
 
 }

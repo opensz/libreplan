@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.libreplan.business.hibernate.notification.PredefinedDatabaseSnapshots;
 import org.libreplan.business.resources.entities.Criterion;
 import org.libreplan.business.resources.entities.CriterionType;
@@ -34,10 +34,9 @@ import org.libreplan.business.resources.entities.Resource;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
- * Implements all the methods needed to search the different criteria to filter
- * the {@link Resource}s.<br />
- * It provides the following criteria to filter: {@link Resource} and
- * {@link Criterion}.
+ * Implements all the methods needed to search the different criteria to filter the {@link Resource}.
+ * <br />
+ * It provides the following criteria to filter: {@link Resource} and {@link Criterion}.
  *
  * @author Manuel Rego Casasnovas <rego@igalia.com>
  */
@@ -47,6 +46,7 @@ public class ResourceMultipleFiltersFinderByResourceAndCriterion extends Multipl
     private PredefinedDatabaseSnapshots databaseSnapshots;
 
     protected ResourceMultipleFiltersFinderByResourceAndCriterion() {
+
     }
 
     @Override

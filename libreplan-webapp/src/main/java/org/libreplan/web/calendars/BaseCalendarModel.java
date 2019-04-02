@@ -21,6 +21,7 @@
 
 package org.libreplan.web.calendars;
 
+import static org.libreplan.business.common.exceptions.ValidationException.invalidValue;
 import static org.libreplan.web.I18nHelper._;
 
 import java.util.Date;
@@ -28,8 +29,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.commons.lang.Validate;
-import org.hibernate.validator.InvalidValue;
+import org.apache.commons.lang3.Validate;
 import org.joda.time.LocalDate;
 import org.libreplan.business.calendars.daos.IBaseCalendarDAO;
 import org.libreplan.business.calendars.daos.ICalendarExceptionTypeDAO;
@@ -67,8 +67,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Scope(BeanDefinition.SCOPE_PROTOTYPE)
 @Qualifier("main")
 @OnConcurrentModification(goToPage = "/calendars/calendars.zul")
-public class BaseCalendarModel extends IntegrationEntityModel implements
-        IBaseCalendarModel {
+public class BaseCalendarModel extends IntegrationEntityModel implements IBaseCalendarModel {
 
     /**
      * Conversation state
@@ -293,7 +292,7 @@ public class BaseCalendarModel extends IntegrationEntityModel implements
         if (getBaseCalendar() == null) {
             return Capacity.zero();
         }
-        return getBaseCalendar().getCapacityConsideringCalendarDatasOn(
+        return getBaseCalendar().getCapacityConsideringCalendarDataOn(
                 selectedDate, day);
     }
 
@@ -310,7 +309,7 @@ public class BaseCalendarModel extends IntegrationEntityModel implements
     public void unsetDefault(Days day) {
         if (getBaseCalendar() != null) {
             Capacity previousCapacity = getBaseCalendar()
-                    .getCapacityConsideringCalendarDatasOn(selectedDate, day);
+                    .getCapacityConsideringCalendarDataOn(selectedDate, day);
             getBaseCalendar()
                     .setCapacityAt(day, previousCapacity, selectedDate);
         }
@@ -599,11 +598,9 @@ public class BaseCalendarModel extends IntegrationEntityModel implements
     public void checkInvalidValuesCalendar(BaseCalendar entity)
             throws ValidationException {
         if (baseCalendarDAO.thereIsOtherWithSameName(entity)) {
-            InvalidValue[] invalidValues2 = { new InvalidValue(_(
-                    "{0} already exists", entity.getName()),
-                    BaseCalendar.class, "name", entity.getName(), entity) };
-            throw new ValidationException(invalidValues2,
-                    _("Could not save the new calendar"));
+            throw new ValidationException(_("Could not save the new calendar"),
+                    invalidValue(_("{0} already exists", entity.getName()),
+                            "name", entity.getName(), entity));
         }
     }
 

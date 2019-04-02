@@ -22,7 +22,7 @@ package org.libreplan.business.templates.entities;
 
 import static org.libreplan.business.i18n.I18nHelper._;
 
-import org.hibernate.validator.NotNull;
+import javax.validation.constraints.NotNull;
 import org.libreplan.business.calendars.entities.BaseCalendar;
 import org.libreplan.business.orders.entities.Order;
 import org.libreplan.business.orders.entities.OrderElement;
@@ -36,13 +36,14 @@ import org.libreplan.business.scenarios.entities.Scenario;
  */
 public class OrderTemplate extends OrderLineGroupTemplate {
 
+    private BaseCalendar calendar;
+
     public static OrderTemplate create(Order order) {
         OrderTemplate beingBuilt = new OrderTemplate();
         beingBuilt.calendar = order.getCalendar();
+
         return create(beingBuilt, order);
     }
-
-    private BaseCalendar calendar;
 
     @Override
     public OrderElement createElement(OrderLineGroup parent) {
@@ -51,11 +52,11 @@ public class OrderTemplate extends OrderLineGroupTemplate {
 
     public Order createOrder(Scenario currentScenario) {
         Order order = Order.create();
-        order.setVersionForScenario(currentScenario, OrderVersion
-                .createInitialVersion(currentScenario));
+        order.setVersionForScenario(currentScenario, OrderVersion.createInitialVersion(currentScenario));
         order.useSchedulingDataFor(currentScenario);
         order.setCalendar(calendar);
         order.initializeTemplate(this);
+
         return setupGroupParts(setupSchedulingStateType(order));
     }
 

@@ -21,11 +21,6 @@
 
 package org.libreplan.web.common;
 
-import static org.libreplan.web.I18nHelper._;
-
-import java.util.Collections;
-import java.util.List;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.libreplan.business.common.VersionInformation;
@@ -43,12 +38,19 @@ import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.Executions;
 import org.zkoss.zk.ui.SuspendNotAllowedException;
 import org.zkoss.zk.ui.util.GenericForwardComposer;
+import org.zkoss.zul.Image;
 import org.zkoss.zul.Window;
+
+import java.util.Collections;
+import java.util.List;
+
+import static org.libreplan.web.I18nHelper._;
 
 /**
  * Controller to manage UI operations from main template.
  *
  * @author Manuel Rego Casasnovas <mrego@igalia.com>
+ * @author Vova Perebykivskyi <vova@libreplan-enterprise.com>
  */
 @org.springframework.stereotype.Component
 @Scope(BeanDefinition.SCOPE_PROTOTYPE)
@@ -66,13 +68,17 @@ public class TemplateController extends GenericForwardComposer {
 
     private IMessagesForUser windowMessages;
 
+    private String lastVersionNumber = "";
+
+    private Image logo;
+
     @Override
     public void doAfterCompose(Component comp) throws Exception {
         super.doAfterCompose(comp);
-        if (templateModel.isScenariosVisible()) {
+
+        if ( templateModel.isScenariosVisible() ) {
             window = (Window) comp.getFellow("changeScenarioWindow");
-            windowMessages = new MessagesForUser(window
-                .getFellow("messagesContainer"));
+            windowMessages = new MessagesForUser(window.getFellow("messagesContainer"));
         }
     }
 
@@ -80,48 +86,53 @@ public class TemplateController extends GenericForwardComposer {
         return scenarioManager.getCurrent();
     }
 
-    public void changeScenario() throws SuspendNotAllowedException,
-            InterruptedException {
+    public void changeScenario() throws SuspendNotAllowedException, InterruptedException {
         window.doModal();
     }
 
     public List<Scenario> getScenarios() {
-        if (templateModel == null) {
-            return Collections.emptyList();
-        }
-        return templateModel.getScenarios();
+        return templateModel == null ? Collections.emptyList() : templateModel.getScenarios();
     }
 
     public String getCompanyLogoURL() {
-        if (templateModel == null || templateModel.getCompanyLogoURL() == null) {
-            return "";
+        return templateModel == null || templateModel.getCompanyLogoURL() == null
+                ? ""
+                : templateModel.getCompanyLogoURL().trim();
+    }
+
+    /**
+     * Setup logo from outside of Web Application Context.
+     * Should be public!
+     */
+    public void setupLogoFromOutside() {
+        if ( logo.getContent() == null ) {
+
+            /* Try to find logo */
+            if ( Util.logo == null ) {
+                Util.findLogo();
+            }
+
+            logo.setContent(Util.logo);
         }
-        return templateModel.getCompanyLogoURL().trim();
     }
 
     public void accept() {
-        BandboxSearch scenarioBandboxSearch = (BandboxSearch) window
-                .getFellow("scenarioBandboxSearch");
-        Scenario scenario = (Scenario) scenarioBandboxSearch
-                .getSelectedElement();
+        BandboxSearch scenarioBandboxSearch = (BandboxSearch) window.getFellow("scenarioBandboxSearch");
+        Scenario scenario = (Scenario) scenarioBandboxSearch.getSelectedElement();
 
-        templateModel.setScenario(SecurityUtils.getSessionUserLoginName(),
-                scenario, new IOnFinished() {
-                    @Override
-                    public void onWithoutErrorFinish() {
-                        window.setVisible(false);
-                        Executions.sendRedirect("/");
-                    }
+        templateModel.setScenario(SecurityUtils.getSessionUserLoginName(), scenario, new IOnFinished() {
+            @Override
+            public void onWithoutErrorFinish() {
+                window.setVisible(false);
+                Executions.sendRedirect("/");
+            }
 
-                    @Override
-                    public void errorHappened(Exception exceptionHappened) {
-                        LOG.error("error doing reassignation",
-                                exceptionHappened);
-                        windowMessages.showMessage(Level.ERROR, _(
-                                "error doing reassignment: {0}",
-                                exceptionHappened));
-                    }
-                });
+            @Override
+            public void errorHappened(Exception exceptionHappened) {
+                LOG.error("error doing reassignation", exceptionHappened);
+                windowMessages.showMessage(Level.ERROR, _("error doing reassignment: {0}", exceptionHappened));
+            }
+        });
     }
 
     public void cancel() {
@@ -164,20 +175,16 @@ public class TemplateController extends GenericForwardComposer {
         return notChangedPasswordWarningDisplayPropertyFor(PredefinedUsers.REPORTS);
     }
 
-    private String notChangedPasswordWarningDisplayPropertyFor(
-            PredefinedUsers mandatoryUser) {
-        return asDisplayProperty(templateModel
-                .hasChangedDefaultPassword(mandatoryUser));
+    private String notChangedPasswordWarningDisplayPropertyFor(PredefinedUsers mandatoryUser) {
+        return asDisplayProperty(templateModel.hasChangedDefaultPassword(mandatoryUser));
     }
-
 
     private String asDisplayProperty(boolean passwordChanged) {
         return passwordChanged ? "none" : "inline";
     }
 
     public String getDefaultPasswdVisible() {
-        return asDisplayProperty(!templateModel
-                .adminPasswordChangedAndSomeOtherNotChanged());
+        return asDisplayProperty(!templateModel.adminPasswordChangedAndSomeOtherNotChanged());
     }
 
     public String getIdAdminUser() {
@@ -193,8 +200,7 @@ public class TemplateController extends GenericForwardComposer {
     }
 
     public String getIdWssubcontractingUser() {
-        return templateModel.getIdUser(PredefinedUsers.WSSUBCONTRACTING
-                .getLoginName());
+        return templateModel.getIdUser(PredefinedUsers.WSSUBCONTRACTING.getLoginName());
     }
 
     public String getIdManagerUser() {
@@ -206,8 +212,7 @@ public class TemplateController extends GenericForwardComposer {
     }
 
     public String getIdOutsourcingUser() {
-        return templateModel
-                .getIdUser(PredefinedUsers.OUTSOURCING.getLoginName());
+        return templateModel.getIdUser(PredefinedUsers.OUTSOURCING.getLoginName());
     }
 
     public String getIdReportsUser() {
@@ -219,20 +224,25 @@ public class TemplateController extends GenericForwardComposer {
     }
 
     public boolean isNewVersionAvailable() {
-        if (!templateModel.isCheckNewVersionEnabled()) {
-            return false;
+        if ( templateModel.isCheckNewVersionEnabled() && VersionInformation.isNewVersionAvailable() ) {
+            lastVersionNumber = VersionInformation.getLastVersion();
+            return true;
         }
 
-        return VersionInformation.isNewVersionAvailable(templateModel
-                .isAllowToGatherUsageStatsEnabled());
+        return false;
     }
 
     public String getUsername() {
         CustomUser user = SecurityUtils.getLoggedUser();
-        if (user == null) {
-            return "";
-        }
-        return user.getUsername();
+        return (user == null) ? "" : user.getUsername();
+    }
+
+    /**
+     * Should be public!
+     * Used in template.zul
+     */
+    public String getVersionMessage() {
+        return _("A new version ") + lastVersionNumber + _(" of LibrePlan is available. Please check next link for more information:");
     }
 
 }

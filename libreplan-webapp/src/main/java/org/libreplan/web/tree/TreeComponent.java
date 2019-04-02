@@ -24,7 +24,7 @@ import static org.libreplan.web.I18nHelper._;
 
 import java.util.List;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.libreplan.business.trees.ITreeNode;
 import org.libreplan.web.orders.OrderElementTreeController;
 import org.zkoss.zk.ui.HtmlMacroComponent;
@@ -32,8 +32,8 @@ import org.zkoss.zk.ui.util.Composer;
 import org.zkoss.zul.Treeitem;
 
 /**
- * macro component for order elements tree and similar pages<br />
- *
+ * Macro component for order elements tree and similar pages.
+ * <br />
  * @author Óscar González Fernández <ogonzalez@igalia.com>
  * @author Lorenzo Tilve Álvaro <ltilve@igalia.com>
  */
@@ -41,7 +41,48 @@ public abstract class TreeComponent extends HtmlMacroComponent {
 
     private static final String CONTROLLER_NAME = "treeController";
 
-    public static abstract class Column {
+    protected Column codeColumn = new Column(_("Code"), "code") {
+        @Override
+        public <T extends ITreeNode<T>> void doCell(TreeController<T>.Renderer renderer, Treeitem item, T currentElement) {
+            renderer.addCodeCell(currentElement);
+        }
+    };
+
+    protected final Column nameAndDescriptionColumn = new Column(_("Name"), "name") {
+        @Override
+        public <T extends ITreeNode<T>> void doCell(TreeController<T>.Renderer renderer, Treeitem item, T currentElement) {
+            renderer.addDescriptionCell(currentElement);
+        }
+    };
+
+    protected final Column operationsColumn = new Column(_("Op."), "operations", _("Operations")) {
+        @Override
+        public <T extends ITreeNode<T>> void doCell(TreeController<T>.Renderer renderer, Treeitem item, T currentElement) {
+            renderer.addOperationsCell(item, currentElement);
+        }
+    };
+
+    protected final Column schedulingStateColumn = new Column(
+            _("Scheduling state"),
+            "scheduling_state",
+            _("Fully, Partially or Unscheduled. (Drag and drop to move tasks)")) {
+
+        @Override
+        public <T extends ITreeNode<T>> void doCell(TreeController<T>.Renderer renderer, Treeitem item, T currentElement) {
+            renderer.addSchedulingStateCell(currentElement);
+        }
+    };
+
+    private void doAfterComposeOnController(Composer controller) {
+        try {
+            controller.doAfterCompose(this);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public abstract static class Column {
+
         private String label;
 
         private String cssClass;
@@ -73,83 +114,46 @@ public abstract class TreeComponent extends HtmlMacroComponent {
             return tooltip;
         }
 
+        /* TODO remove me, if ZK Load on demand issue will be resolved */
         public String getHflex() {
-            return cssClass.equals("name") ? "1" : "min";
+            return "name".equals(cssClass) ? "1" : "min";
         }
 
-        public abstract <T extends ITreeNode<T>> void doCell(
-                TreeController<T>.Renderer renderer,
-                Treeitem item, T currentElement);
+        /* TODO remove me, if ZK Load on demand issue will be resolved */
+        public String getWidth() {
+            if (cssClass.contains("scheduling_state")) {
+                return "135px";
+            } else if ("code".equals(cssClass)) {
+                return "106px";
+            } else if ("name".equals(cssClass)) {
+                return "950px";
+            } else if ("hours".equals(cssClass) || "budget".equals(cssClass) || "operations".equals(cssClass)) {
+                return "50px";
+            } else if ("estimated_init".equals(cssClass) || "estimated_end".equals(cssClass)) {
+                return "100px";
+            }
+
+            return "";
+        }
+
+        public abstract <T extends ITreeNode<T>> void doCell(TreeController<T>.Renderer renderer, Treeitem item, T currentElement);
     }
-
-    protected final Column codeColumn = new Column(_("Code"), "code") {
-
-        @Override
-        public <T extends ITreeNode<T>> void doCell(
-                TreeController<T>.Renderer renderer,
-                Treeitem item, T currentElement) {
-            renderer.addCodeCell(currentElement);
-        }
-    };
-    protected final Column nameAndDescriptionColumn = new Column(_("Name"),
-            "name") {
-
-        @Override
-        public <T extends ITreeNode<T>> void doCell(
-                TreeController<T>.Renderer renderer,
-                Treeitem item, T currentElement) {
-            renderer.addDescriptionCell(currentElement);
-        }
-    };
-    protected final Column operationsColumn = new Column(_("Op."),
-            "operations", _("Operations")) {
-
-        @Override
-        public <T extends ITreeNode<T>> void doCell(
-                TreeController<T>.Renderer renderer,
-                Treeitem item, T currentElement) {
-            renderer.addOperationsCell(item, currentElement);
-        }
-    };
-
-    protected final Column schedulingStateColumn = new Column(
-            _("Scheduling state"),
-            "scheduling_state",
-            _("Fully, Partially or Unscheduled. (Drag and drop to move tasks)")) {
-
-        @Override
-        public <T extends ITreeNode<T>> void doCell(
-                TreeController<T>.Renderer renderer,
-                Treeitem item, T currentElement) {
-            renderer.addSchedulingStateCell(currentElement);
-        }
-
-    };
 
     public abstract List<Column> getColumns();
 
     public void clear() {
-        OrderElementTreeController controller = (OrderElementTreeController) getVariable(
-                CONTROLLER_NAME, true);
+        OrderElementTreeController controller = (OrderElementTreeController) getAttribute(CONTROLLER_NAME, true);
         controller.clear();
     }
 
     public void useController(TreeController<?> controller) {
         doAfterComposeOnController(controller);
         controller.setColumns(getColumns());
-        this.setVariable(CONTROLLER_NAME, controller, true);
+        this.setAttribute(CONTROLLER_NAME, controller, true);
     }
 
     public TreeController<?> getController() {
-        return (TreeController<?>) getVariable(CONTROLLER_NAME, true);
-    }
-
-    private void doAfterComposeOnController(Composer controller) {
-        try {
-            controller.doAfterCompose(this);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        return (TreeController<?>) getAttribute(CONTROLLER_NAME, true);
     }
 
     public String getAddElementLabel() {

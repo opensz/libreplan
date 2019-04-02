@@ -21,8 +21,8 @@
 
 package org.libreplan.business.calendars.entities;
 
-import org.apache.commons.lang.Validate;
-import org.hibernate.validator.NotNull;
+import org.apache.commons.lang3.Validate;
+import javax.validation.constraints.NotNull;
 import org.joda.time.LocalDate;
 import org.libreplan.business.calendars.daos.ICalendarExceptionDAO;
 import org.libreplan.business.common.IntegrationEntity;

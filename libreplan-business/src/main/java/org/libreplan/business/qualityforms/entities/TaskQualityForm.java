@@ -26,24 +26,23 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
-import org.apache.commons.lang.BooleanUtils;
-import org.apache.commons.lang.Validate;
-import org.hibernate.validator.AssertTrue;
-import org.hibernate.validator.NotNull;
-import org.hibernate.validator.Valid;
+import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.Validate;
+import javax.validation.constraints.AssertTrue;
+import javax.validation.constraints.NotNull;
+import javax.validation.Valid;
 import org.libreplan.business.common.BaseEntity;
 import org.libreplan.business.orders.entities.OrderElement;
 
 public class TaskQualityForm extends BaseEntity {
 
-    public static TaskQualityForm create(OrderElement orderElement,
-            QualityForm qualityForm) {
-        return create(new TaskQualityForm(orderElement, qualityForm));
-    }
+    private OrderElement orderElement;
 
-    protected TaskQualityForm() {
+    private QualityForm qualityForm;
 
-    }
+    private List<TaskQualityFormItem> taskQualityFormItems = new ArrayList<>();
+
+    private Boolean reportAdvance = false;
 
     private TaskQualityForm(OrderElement orderElement, QualityForm qualityForm) {
         this.orderElement = orderElement;
@@ -51,21 +50,21 @@ public class TaskQualityForm extends BaseEntity {
         createTaskQualityFormItems();
     }
 
-    private OrderElement orderElement;
+    protected TaskQualityForm() {
 
-    private QualityForm qualityForm;
+    }
 
-    private List<TaskQualityFormItem> taskQualityFormItems = new ArrayList<TaskQualityFormItem>();
-
-    private Boolean reportAdvance = false;
+    public static TaskQualityForm create(OrderElement orderElement,
+                                         QualityForm qualityForm) {
+        return create(new TaskQualityForm(orderElement, qualityForm));
+    }
 
     @Valid
     public List<TaskQualityFormItem> getTaskQualityFormItems() {
         return Collections.unmodifiableList(taskQualityFormItems);
     }
 
-    public void setTaskQualityFormItems(
-            List<TaskQualityFormItem> taskQualityFormItems) {
+    public void setTaskQualityFormItems(List<TaskQualityFormItem> taskQualityFormItems) {
         this.taskQualityFormItems = taskQualityFormItems;
     }
 
@@ -89,17 +88,15 @@ public class TaskQualityForm extends BaseEntity {
 
     private void createTaskQualityFormItems() {
         Validate.notNull(qualityForm);
-        for (QualityFormItem qualityFormItem : qualityForm
-                .getQualityFormItems()) {
-            TaskQualityFormItem taskQualityFormItem = TaskQualityFormItem
-                    .create(qualityFormItem);
+        for (QualityFormItem qualityFormItem : qualityForm.getQualityFormItems()) {
+            TaskQualityFormItem taskQualityFormItem = TaskQualityFormItem.create(qualityFormItem);
             taskQualityFormItems.add(taskQualityFormItem);
         }
     }
 
     @SuppressWarnings("unused")
     @AssertTrue(message = "Each date must be greater than the dates of the previous task quality form items.")
-    public boolean checkConstraintCorrectConsecutivesDate() {
+    public boolean isCorrectConsecutivesDateConstraint() {
         if (!isByItems()) {
             for (TaskQualityFormItem item : taskQualityFormItems) {
                 if (!isCorrectConsecutiveDate(item)) {
@@ -107,12 +104,13 @@ public class TaskQualityForm extends BaseEntity {
                 }
             }
         }
+
         return true;
     }
 
     @SuppressWarnings("unused")
     @AssertTrue(message = "items cannot be checked until the previous items are checked before.")
-    public boolean checkConstraintConsecutivePassedItems() {
+    public boolean isConsecutivePassedItemsConstraint() {
         if (!isByItems()) {
             for (TaskQualityFormItem item : taskQualityFormItems) {
                 if (!isCorrectConsecutivePassed(item)) {
@@ -120,52 +118,48 @@ public class TaskQualityForm extends BaseEntity {
                 }
             }
         }
+
         return true;
     }
 
     public boolean isCorrectConsecutivePassed(TaskQualityFormItem item) {
-        if (item.getPassed()) {
-            return (isPassedPreviousItem(item));
-        }
-        return true;
+        return !item.getPassed() || (isPassedPreviousItem(item));
+
     }
 
     public boolean isCorrectConsecutiveDate(TaskQualityFormItem item) {
         if (item.getPassed()) {
-            return ((isPassedPreviousItem(item)) && (isLaterToPreviousItemDate(item)));
+            return (isPassedPreviousItem(item)) && (isLaterToPreviousItemDate(item));
         }
-        return (item.getDate() == null);
+
+        return item.getDate() == null;
     }
 
     public boolean isPassedPreviousItem(TaskQualityFormItem item) {
         Integer previousPosition = item.getPosition() - 1;
+
         if ((previousPosition >= 0)
                 && (previousPosition < taskQualityFormItems.size())) {
             return taskQualityFormItems.get(previousPosition).getPassed();
         }
+
         return true;
     }
 
     public boolean isLaterToPreviousItemDate(TaskQualityFormItem item) {
         Integer previousPosition = item.getPosition() - 1;
-        if ((previousPosition >= 0)
-                && (previousPosition < taskQualityFormItems.size())) {
-            Date previousDate = taskQualityFormItems.get(previousPosition)
-                    .getDate();
-            return ((previousDate != null) && (item.getDate() != null) && ((previousDate
-                    .before(item.getDate())) || (previousDate.equals(item
-                    .getDate()))));
+        if ((previousPosition >= 0) && (previousPosition < taskQualityFormItems.size())) {
+            Date previousDate = taskQualityFormItems.get(previousPosition).getDate();
+            return (previousDate != null) && (item.getDate() != null) &&
+                    ((previousDate.before(item.getDate())) || (previousDate.equals(item.getDate())));
         }
+
         return true;
     }
 
     public boolean isByItems() {
-        if ((this.qualityForm != null)
-                && (this.qualityForm.getQualityFormType() != null)) {
-            return (this.qualityForm.getQualityFormType()
-                    .equals(QualityFormType.BY_ITEMS));
-        }
-        return true;
+        return !((this.qualityForm != null) && (this.qualityForm.getQualityFormType() != null)) ||
+                (this.qualityForm.getQualityFormType().equals(QualityFormType.BY_ITEMS));
     }
 
     @NotNull(message = "report progress not specified")
@@ -177,12 +171,11 @@ public class TaskQualityForm extends BaseEntity {
         this.reportAdvance = BooleanUtils.toBoolean(reportAdvance);
     }
 
-    public static TaskQualityForm copy(TaskQualityForm origin,
-            OrderElement orderElement) {
-        TaskQualityForm copy = TaskQualityForm.create(orderElement, origin
-                .getQualityForm());
+    public static TaskQualityForm copy(TaskQualityForm origin, OrderElement orderElement) {
+        TaskQualityForm copy = TaskQualityForm.create(orderElement, origin.getQualityForm());
         copy.setTaskQualityFormItems(origin.getTaskQualityFormItems());
         copy.setReportAdvance(origin.isReportAdvance());
+
         return copy;
     }
 

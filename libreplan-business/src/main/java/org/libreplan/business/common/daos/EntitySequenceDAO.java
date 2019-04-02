@@ -24,33 +24,28 @@ package org.libreplan.business.common.daos;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.lang.Validate;
+import org.apache.commons.lang3.Validate;
 import org.hibernate.NonUniqueResultException;
 import org.hibernate.criterion.Restrictions;
-import org.libreplan.business.common.IAdHocTransactionService;
 import org.libreplan.business.common.entities.EntityNameEnum;
 import org.libreplan.business.common.entities.EntitySequence;
 import org.libreplan.business.common.exceptions.InstanceNotFoundException;
 import org.libreplan.business.i18n.I18nHelper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.Scope;
-import org.springframework.orm.hibernate3.HibernateOptimisticLockingFailureException;
+import org.springframework.orm.hibernate5.HibernateOptimisticLockingFailureException;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
  * DAO for {@link EntitySequence}.
+ *
  * @author Susana Montes Pedreira <smontes@wirelessgalicia.com>
  */
 @Repository
 @Scope(BeanDefinition.SCOPE_SINGLETON)
-public class EntitySequenceDAO extends
-        GenericDAOHibernate<EntitySequence, Long> implements IEntitySequenceDAO {
-
-    @Autowired
-    private IAdHocTransactionService transactionService;
+public class EntitySequenceDAO extends GenericDAOHibernate<EntitySequence, Long> implements IEntitySequenceDAO {
 
     @Override
     public List<EntitySequence> getAll() {
@@ -59,27 +54,25 @@ public class EntitySequenceDAO extends
 
     @Override
     @SuppressWarnings("unchecked")
-    public List<EntitySequence> findEntitySquencesNotIn(
-            List<EntitySequence> entitySequences) {
-        List<Long> entitySequenceIds = new ArrayList<Long>();
+    public List<EntitySequence> findEntitySequencesNotIn(List<EntitySequence> entitySequences) {
+        List<Long> entitySequenceIds = new ArrayList<>();
         for (EntitySequence entitySequence : entitySequences) {
-            if (!entitySequence.isNewObject()) {
+            if ( !entitySequence.isNewObject() ) {
                 entitySequenceIds.add(entitySequence.getId());
             }
         }
 
-        return getSession().createCriteria(EntitySequence.class).add(
-                Restrictions.not(Restrictions.in("id", entitySequenceIds)))
+        return getSession()
+                .createCriteria(EntitySequence.class)
+                .add(Restrictions.not(Restrictions.in("id", entitySequenceIds)))
                 .list();
     }
 
     @Override
-    public void remove(final EntitySequence entitySequence)
-            throws InstanceNotFoundException, IllegalArgumentException {
-        if (entitySequence.getLastValue() > 0) {
+    public void remove(final EntitySequence entitySequence) throws InstanceNotFoundException, IllegalArgumentException {
+        if ( entitySequence.getLastValue() > 0 ) {
             throw new IllegalArgumentException(
-                    I18nHelper
-                            ._("Entity Sequence cannot be deleted. Entity Sequence already in use"));
+                    I18nHelper._("Entity Sequence cannot be deleted. Entity Sequence already in use"));
         }
 
         remove(entitySequence.getId());
@@ -88,15 +81,17 @@ public class EntitySequenceDAO extends
     @Override
     public EntitySequence getActiveEntitySequence(EntityNameEnum entityName)
             throws InstanceNotFoundException, NonUniqueResultException {
+
         EntitySequence entitySequence = (EntitySequence) getSession()
-                .createCriteria(
-                EntitySequence.class).add(
-                Restrictions.eq("entityName", entityName)).add(
-                Restrictions.eq("active", true)).uniqueResult();
-        if (entitySequence == null) {
-            throw new InstanceNotFoundException(entitySequence,
-                    "Entity sequence not exist");
+                .createCriteria(EntitySequence.class)
+                .add(Restrictions.eq("entityName", entityName))
+                .add(Restrictions.eq("active", true))
+                .uniqueResult();
+
+        if ( entitySequence == null ) {
+            throw new InstanceNotFoundException(entitySequence, "Entity sequence not exist");
         }
+
         return entitySequence;
     }
 
@@ -110,25 +105,18 @@ public class EntitySequenceDAO extends
         for (int i = 0; i < 5; i++) {
             try {
                 String code;
-                Integer cont = 0;
                 EntitySequence entitySequence = getActiveEntitySequence(entityName);
 
                 do {
                     entitySequence.incrementLastValue();
                     code = entitySequence.getCode();
-                    cont++;
-                } while (entityName.getIntegrationEntityDAO()
-                        .existsByCode(code)
-                        && cont < 100);
+                } while (entityName.getIntegrationEntityDAO().existsByCode(code));
 
                 save(entitySequence);
                 return code;
-            } catch (HibernateOptimisticLockingFailureException e) {
+
+            } catch (HibernateOptimisticLockingFailureException | InstanceNotFoundException | NonUniqueResultException e) {
                 // Do nothing (optimistic approach 5 attempts)
-            } catch (InstanceNotFoundException e) {
-
-            } catch (NonUniqueResultException e) {
-
             }
         }
 
@@ -136,13 +124,12 @@ public class EntitySequenceDAO extends
     }
 
     @Override
-    public boolean existOtherActiveSequenceByEntityNameForNewObject(
-            EntitySequence entitySequence) {
+    public boolean existOtherActiveSequenceByEntityNameForNewObject(EntitySequence entitySequence) {
         Validate.notNull(entitySequence);
         try {
-            EntitySequence t = getActiveEntitySequence(entitySequence
-                    .getEntityName());
+            EntitySequence t = getActiveEntitySequence(entitySequence.getEntityName());
             return (t != null && t != entitySequence);
+
         } catch (InstanceNotFoundException e) {
             return false;
         } catch (NonUniqueResultException e) {
@@ -152,15 +139,14 @@ public class EntitySequenceDAO extends
 
     @Override
     public Integer getNumberOfDigitsCode(EntityNameEnum entityName) {
-        int numberOfDigits = 5;
+        int numberOfDigits;
         try {
             EntitySequence entitySequence = getActiveEntitySequence(entityName);
             numberOfDigits = entitySequence.getNumberOfDigits();
-        } catch (InstanceNotFoundException e) {
-            throw new RuntimeException(e);
-        } catch (NonUniqueResultException e) {
+        } catch (InstanceNotFoundException | NonUniqueResultException e) {
             throw new RuntimeException(e);
         }
+
         return numberOfDigits;
     }
 }

@@ -25,8 +25,7 @@ import static org.libreplan.web.I18nHelper._;
 
 import java.util.List;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.libreplan.business.planner.entities.Task;
 import org.libreplan.business.planner.entities.TaskElement;
 import org.libreplan.web.common.Util;
 import org.libreplan.web.planner.order.PlanningStateCreator.PlanningState;
@@ -37,19 +36,18 @@ import org.zkoss.ganttz.extensions.IContextWithPlannerTask;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.SuspendNotAllowedException;
 import org.zkoss.zk.ui.util.GenericForwardComposer;
+import org.zkoss.zkplus.spring.SpringUtil;
 import org.zkoss.zul.Grid;
 import org.zkoss.zul.Window;
 
 /**
  * Controller for {@link Advance} consolidation view.
+ *
  * @author Susana Montes Pedreira <smontes@wirelessgailicia.com>
  */
 @org.springframework.stereotype.Component("advanceConsolidationController")
 @Scope(BeanDefinition.SCOPE_PROTOTYPE)
 public class AdvanceConsolidationController extends GenericForwardComposer {
-
-    private static final Log LOG = LogFactory
-            .getLog(AdvanceConsolidationController.class);
 
     private IAdvanceConsolidationModel advanceConsolidationModel;
 
@@ -59,15 +57,19 @@ public class AdvanceConsolidationController extends GenericForwardComposer {
 
     private IContextWithPlannerTask<TaskElement> context;
 
+    public AdvanceConsolidationController() {
+        if ( advanceConsolidationModel == null ) {
+            advanceConsolidationModel = (IAdvanceConsolidationModel) SpringUtil.getBean("advanceConsolidationModel");
+        }
+    }
+
     @Override
     public void doAfterCompose(Component comp) throws Exception {
         super.doAfterCompose(comp);
         window = (Window) comp;
     }
 
-    public void showWindow(IContextWithPlannerTask<TaskElement> context,
-            org.libreplan.business.planner.entities.Task task,
-            PlanningState planningState) {
+    public void showWindow(IContextWithPlannerTask<TaskElement> context, Task task, PlanningState planningState) {
 
         this.context = context;
         advanceConsolidationModel.initAdvancesFor(task, context, planningState);
@@ -76,8 +78,6 @@ public class AdvanceConsolidationController extends GenericForwardComposer {
             Util.reloadBindings(window);
             window.doModal();
         } catch (SuspendNotAllowedException e) {
-            throw new RuntimeException(e);
-        } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
     }
@@ -89,10 +89,12 @@ public class AdvanceConsolidationController extends GenericForwardComposer {
 
     public void accept() {
         advanceConsolidationModel.accept();
+
         if (context.getRelativeTo() instanceof TaskComponent) {
             ((TaskComponent) context.getRelativeTo()).updateProperties();
-            ((TaskComponent) context.getRelativeTo()).invalidate();
+            context.getRelativeTo().invalidate();
         }
+
         close();
     }
 
@@ -101,13 +103,11 @@ public class AdvanceConsolidationController extends GenericForwardComposer {
     }
 
     public String getInfoAdvance() {
-        String infoAdvanceAssignment = advanceConsolidationModel
-                .getInfoAdvanceAssignment();
-        if (infoAdvanceAssignment.isEmpty()) {
-            return _("Progress measurements");
-        }
+        String infoAdvanceAssignment = advanceConsolidationModel.getInfoAdvanceAssignment();
 
-        return _("Progress measurements") + ": " + infoAdvanceAssignment;
+        return infoAdvanceAssignment.isEmpty()
+                ? _("Progress measurements")
+                : _("Progress measurements") + ": " + infoAdvanceAssignment;
     }
 
     public List<AdvanceConsolidationDTO> getAdvances() {
@@ -133,10 +133,7 @@ public class AdvanceConsolidationController extends GenericForwardComposer {
     }
 
     public String getReadOnlySclass() {
-        if (advanceConsolidationModel.hasLimitingResourceAllocation()) {
-            return "readonly";
-        }
-        return "";
+        return advanceConsolidationModel.hasLimitingResourceAllocation() ? "readonly" : "";
     }
 
     public boolean isUnitType() {

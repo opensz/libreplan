@@ -29,8 +29,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.commons.lang.Validate;
-import org.hibernate.validator.Valid;
+import org.apache.commons.lang3.Validate;
+import javax.validation.Valid;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.joda.time.LocalDate;

@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-2.0.xsd">
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
     <changeSet author="mrego" id="initial-database-creation-1">
         <createTable tableName="advance_assignment">
             <column name="id" type="BIGINT">
@@ -12,6 +16,7 @@
             <column name="advance_type_id" type="BIGINT"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-2">
         <createTable tableName="advance_assignment_template">
             <column name="id" type="BIGINT">
@@ -26,6 +31,7 @@
             <column name="max_value" type="DECIMAL(19,2)"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-3">
         <createTable tableName="advance_measurement">
             <column name="id" type="BIGINT">
@@ -40,6 +46,7 @@
             <column name="communication_date" type="DATETIME"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-4">
         <createTable tableName="advance_type">
             <column name="id" type="BIGINT">
@@ -57,6 +64,7 @@
             <column name="quality_form" type="BOOLEAN"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-5">
         <createTable tableName="all_criterions">
             <column name="generic_resource_allocation_id" type="BIGINT">
@@ -67,6 +75,7 @@
             </column>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-6">
         <createTable tableName="assignment_function">
             <column name="id" type="BIGINT">
@@ -77,6 +86,7 @@
             </column>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-7">
         <createTable tableName="base_calendar">
             <column name="id" type="BIGINT">
@@ -93,6 +103,7 @@
             <column name="last_sequence_code" type="INTEGER"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-8">
         <createTable tableName="calendar_availability">
             <column name="id" type="BIGINT">
@@ -110,6 +121,7 @@
             <column name="position_in_calendar" type="INTEGER"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-9">
         <createTable tableName="calendar_data">
             <column name="id" type="BIGINT">
@@ -127,6 +139,7 @@
             <column name="position_in_calendar" type="INTEGER"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-10">
         <createTable tableName="calendar_exception">
             <column name="id" type="BIGINT">
@@ -144,6 +157,7 @@
             <column name="base_calendar_id" type="BIGINT"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-11">
         <createTable tableName="calendar_exception_type">
             <column name="id" type="BIGINT">
@@ -164,6 +178,7 @@
             <column name="duration" type="INTEGER"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-12">
         <createTable tableName="configuration">
             <column name="id" type="BIGINT">
@@ -222,6 +237,7 @@
             <column name="progress_type" type="INTEGER"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-13">
         <createTable tableName="consolidated_value">
             <column name="id" type="BIGINT">
@@ -240,6 +256,7 @@
             <column name="advance_measurement_id" type="BIGINT"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-14">
         <createTable tableName="consolidation">
             <column name="id" type="BIGINT">
@@ -255,6 +272,7 @@
             <column name="ind_advance_assignment_id" type="BIGINT"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-15">
         <createTable tableName="cost_category">
             <column name="id" type="BIGINT">
@@ -276,6 +294,7 @@
             <column name="enabled" type="BOOLEAN"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-16">
         <createTable tableName="criterion">
             <column name="id" type="BIGINT">
@@ -296,6 +315,7 @@
             <column name="parent" type="BIGINT"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-17">
         <createTable tableName="criterion_requirement">
             <column name="id" type="BIGINT">
@@ -315,6 +335,7 @@
             <column name="valid" type="BOOLEAN"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-18">
         <createTable tableName="criterion_satisfaction">
             <column name="id" type="BIGINT">
@@ -339,6 +360,7 @@
             </column>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-19">
         <createTable tableName="criterion_type">
             <column name="id" type="BIGINT">
@@ -363,6 +385,7 @@
             <column name="resource" type="INTEGER"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-20">
         <createTable tableName="day_assignment">
             <column name="id" type="BIGINT">
@@ -389,6 +412,7 @@
             <column name="derived_container_id" type="BIGINT"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-21">
         <createTable tableName="dependency">
             <column name="id" type="BIGINT">
@@ -403,6 +427,7 @@
             <column name="type" type="INTEGER"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-22">
         <createTable tableName="derived_allocation">
             <column name="id" type="BIGINT">
@@ -417,6 +442,7 @@
             </column>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-23">
         <createTable tableName="derived_day_assignments_container">
             <column name="id" type="BIGINT">
@@ -429,6 +455,7 @@
             <column name="scenario" type="BIGINT"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-24">
         <createTable tableName="description_values">
             <column name="description_value_id" type="BIGINT">
@@ -438,6 +465,7 @@
             <column name="value" type="VARCHAR(255)"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-25">
         <createTable tableName="description_values_in_line">
             <column name="description_value_id" type="BIGINT">
@@ -447,6 +475,7 @@
             <column name="value" type="VARCHAR(255)"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-26">
         <createTable tableName="direct_advance_assignment">
             <column name="advance_assignment_id" type="BIGINT">
@@ -456,6 +485,7 @@
             <column name="max_value" type="DECIMAL(19,2)"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-27">
         <createTable tableName="effort_per_day">
             <column name="base_calendar_id" type="BIGINT">
@@ -467,6 +497,7 @@
             </column>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-28">
         <createTable tableName="entity_sequence">
             <column name="id" type="BIGINT">
@@ -482,6 +513,7 @@
             <column name="active" type="BOOLEAN"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-29">
         <createTable tableName="external_company">
             <column name="id" type="BIGINT">
@@ -501,6 +533,7 @@
             <column name="company_user" type="BIGINT"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-30">
         <createTable tableName="generic_day_assignments_container">
             <column name="id" type="BIGINT">
@@ -517,6 +550,7 @@
             <column name="duration_in_last_day" type="INTEGER"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-31">
         <createTable tableName="generic_resource_allocation">
             <column name="resource_allocation_id" type="BIGINT">
@@ -525,6 +559,7 @@
             <column name="resource_type" type="INTEGER"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-32">
         <createTable tableName="heading_field">
             <column name="heading_id" type="BIGINT">
@@ -535,6 +570,7 @@
             <column name="positionnumber" type="INTEGER"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-33">
         <createTable tableName="hour_cost">
             <column name="id" type="BIGINT">
@@ -553,6 +589,7 @@
             <column name="cost_category_id" type="BIGINT"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-34">
         <createTable tableName="hours_group">
             <column name="id" type="BIGINT">
@@ -574,6 +611,7 @@
             <column name="order_line_template" type="BIGINT"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-35">
         <createTable tableName="indirect_advance_assignment">
             <column name="advance_assignment_id" type="BIGINT">
@@ -582,6 +620,7 @@
             <column name="indirect_order_element_id" type="BIGINT"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-36">
         <createTable tableName="label">
             <column name="id" type="BIGINT">
@@ -597,6 +636,7 @@
             <column name="label_type_id" type="BIGINT"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-37">
         <createTable tableName="label_type">
             <column name="id" type="BIGINT">
@@ -615,6 +655,7 @@
             <column name="last_label_sequence_code" type="INTEGER"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-38">
         <createTable tableName="limiting_resource_queue">
             <column name="id" type="BIGINT">
@@ -626,6 +667,7 @@
             <column name="resource_id" type="BIGINT"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-39">
         <createTable tableName="limiting_resource_queue_dependency">
             <column name="id" type="BIGINT">
@@ -636,6 +678,7 @@
             <column name="destiny_queue_element_id" type="BIGINT"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-40">
         <createTable tableName="limiting_resource_queue_element">
             <column name="id" type="BIGINT">
@@ -655,6 +698,7 @@
             <column name="end_hour" type="INTEGER"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-41">
         <createTable tableName="line_field">
             <column name="heading_id" type="BIGINT">
@@ -665,6 +709,7 @@
             <column name="positionnumber" type="INTEGER"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-42">
         <createTable tableName="machine">
             <column name="machine_id" type="BIGINT">
@@ -674,6 +719,7 @@
             <column name="description" type="VARCHAR(255)"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-43">
         <createTable tableName="machine_configuration_unit_required_criterions">
             <column name="id" type="BIGINT">
@@ -684,6 +730,7 @@
             </column>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-44">
         <createTable tableName="machine_worker_assignment">
             <column name="id" type="BIGINT">
@@ -700,6 +747,7 @@
             <column name="worker_id" type="BIGINT"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-45">
         <createTable tableName="machine_workers_configuration_unit">
             <column name="id" type="BIGINT">
@@ -719,6 +767,7 @@
             </column>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-46">
         <createTable tableName="material">
             <column name="id" type="BIGINT">
@@ -737,6 +786,7 @@
             <column name="category_id" type="BIGINT"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-47">
         <createTable tableName="material_assigment">
             <column name="id" type="BIGINT">
@@ -753,6 +803,7 @@
             <column name="order_element_id" type="BIGINT"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-48">
         <createTable tableName="material_assigment_template">
             <column name="id" type="BIGINT">
@@ -767,6 +818,7 @@
             <column name="order_element_template_id" type="BIGINT"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-49">
         <createTable tableName="material_category">
             <column name="id" type="BIGINT">
@@ -788,6 +840,7 @@
             <column name="parent_id" type="BIGINT"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-50">
         <createTable tableName="order_authorization">
             <column name="id" type="BIGINT">
@@ -807,6 +860,7 @@
             <column name="profile_id" type="BIGINT"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-51">
         <createTable tableName="order_element">
             <column name="id" type="BIGINT">
@@ -829,6 +883,7 @@
             <column name="position_in_container" type="INTEGER"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-52">
         <createTable tableName="order_element_label">
             <column name="order_element_id" type="BIGINT">
@@ -839,6 +894,7 @@
             </column>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-53">
         <createTable tableName="order_element_template">
             <column name="id" type="BIGINT">
@@ -857,6 +913,7 @@
             <column name="position_in_container" type="INTEGER"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-54">
         <createTable tableName="order_element_template_label">
             <column name="order_element_template_id" type="BIGINT">
@@ -867,6 +924,7 @@
             </column>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-55">
         <createTable tableName="order_element_template_quality_form">
             <column name="order_element_template_id" type="BIGINT">
@@ -877,6 +935,7 @@
             </column>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-56">
         <createTable tableName="order_line">
             <column name="order_element_id" type="BIGINT">
@@ -885,6 +944,7 @@
             <column name="last_hours_group_sequence_code" type="INTEGER"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-57">
         <createTable tableName="order_line_group">
             <column name="order_element_id" type="BIGINT">
@@ -892,6 +952,7 @@
             </column>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-58">
         <createTable tableName="order_line_group_template">
             <column name="group_template_id" type="BIGINT">
@@ -899,6 +960,7 @@
             </column>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-59">
         <createTable tableName="order_line_template">
             <column name="order_line_template_id" type="BIGINT">
@@ -907,6 +969,7 @@
             <column name="last_hours_group_sequence_code" type="INTEGER"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-60">
         <createTable tableName="order_table">
             <column name="order_element_id" type="BIGINT">
@@ -926,6 +989,7 @@
             <column name="base_calendar_id" type="BIGINT"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-61">
         <createTable tableName="order_template">
             <column name="order_template_id" type="BIGINT">
@@ -934,6 +998,7 @@
             <column name="base_calendar_id" type="BIGINT"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-62">
         <createTable tableName="order_version">
             <column name="id" type="BIGINT">
@@ -946,6 +1011,7 @@
             <column name="ownerscenario" type="BIGINT"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-63">
         <createTable tableName="planning_data">
             <column name="planning_data_id" type="BIGINT">
@@ -955,6 +1021,7 @@
             <column name="progress_by_num_hours" type="DECIMAL(19,2)"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-64">
         <createTable tableName="profile_roles">
             <column name="profile_id" type="BIGINT">
@@ -963,6 +1030,7 @@
             <column name="elt" type="VARCHAR(255)"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-65">
         <createTable tableName="profile_table">
             <column name="id" type="BIGINT">
@@ -976,6 +1044,7 @@
             </column>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-66">
         <createTable tableName="quality_form">
             <column name="id" type="BIGINT">
@@ -991,6 +1060,7 @@
             <column name="advance_type_id" type="BIGINT"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-67">
         <createTable tableName="quality_form_items">
             <column name="quality_form_id" type="BIGINT">
@@ -1004,6 +1074,7 @@
             </column>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-68">
         <createTable tableName="resource">
             <column name="id" type="BIGINT">
@@ -1024,6 +1095,7 @@
             <column name="base_calendar_id" type="BIGINT"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-69">
         <createTable tableName="resource_allocation">
             <column name="id" type="BIGINT">
@@ -1039,6 +1111,7 @@
             <column name="assignment_function" type="BIGINT"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-70">
         <createTable tableName="resource_calendar">
             <column name="base_calendar_id" type="BIGINT">
@@ -1049,6 +1122,7 @@
             </column>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-71">
         <createTable tableName="resources_cost_category_assignment">
             <column name="id" type="BIGINT">
@@ -1066,6 +1140,7 @@
             <column name="resource_id" type="BIGINT"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-72">
         <createTable tableName="roles_table">
             <column name="user_id" type="BIGINT">
@@ -1074,6 +1149,7 @@
             <column name="elt" type="VARCHAR(255)"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-73">
         <createTable tableName="scenario">
             <column name="id" type="BIGINT">
@@ -1088,6 +1164,7 @@
             <column name="predecessor" type="BIGINT"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-74">
         <createTable tableName="scenario_orders">
             <column name="order_id" type="BIGINT">
@@ -1101,6 +1178,7 @@
             </column>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-75">
         <createTable tableName="scheduling_data_for_version">
             <column name="id" type="BIGINT">
@@ -1113,6 +1191,7 @@
             <column name="order_element_id" type="BIGINT"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-76">
         <createTable tableName="scheduling_states_by_order_version">
             <column name="order_element_id" type="BIGINT">
@@ -1126,6 +1205,7 @@
             </column>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-77">
         <createTable tableName="sigmoid_function">
             <column name="assignment_function_id" type="BIGINT">
@@ -1133,6 +1213,7 @@
             </column>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-78">
         <createTable tableName="specific_day_assignments_container">
             <column name="id" type="BIGINT">
@@ -1149,6 +1230,7 @@
             <column name="duration_in_last_day" type="INTEGER"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-79">
         <createTable tableName="specific_resource_allocation">
             <column name="resource_allocation_id" type="BIGINT">
@@ -1157,6 +1239,7 @@
             <column name="resource" type="BIGINT"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-80">
         <createTable tableName="stretches">
             <column name="assignment_function_id" type="BIGINT">
@@ -1176,6 +1259,7 @@
             </column>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-81">
         <createTable tableName="stretches_function">
             <column name="assignment_function_id" type="BIGINT">
@@ -1184,6 +1268,7 @@
             <column name="type" type="INTEGER"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-82">
         <createTable tableName="subcontracted_task_data">
             <column name="id" type="BIGINT">
@@ -1205,6 +1290,7 @@
             <column name="state" type="INTEGER"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-83">
         <createTable tableName="sum_charged_hours">
             <column name="id" type="BIGINT">
@@ -1217,6 +1303,7 @@
             <column name="indirect_charged_hours" type="INTEGER"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-84">
         <createTable tableName="task">
             <column name="task_element_id" type="BIGINT">
@@ -1231,6 +1318,7 @@
             <column name="priority" type="INTEGER"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-85">
         <createTable tableName="task_element">
             <column name="id" type="BIGINT">
@@ -1257,6 +1345,7 @@
             <column name="position_in_parent" type="INTEGER"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-86">
         <createTable tableName="task_group">
             <column name="task_element_id" type="BIGINT">
@@ -1264,6 +1353,7 @@
             </column>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-87">
         <createTable tableName="task_milestone">
             <column name="task_element_id" type="BIGINT">
@@ -1416,6 +1506,7 @@
             <column name="order_element_id" type="BIGINT"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-98">
         <createTable tableName="work_report_label_type_assigment">
             <column name="id" type="BIGINT">
@@ -1431,6 +1522,7 @@
             <column name="work_report_type_id" type="BIGINT"/>
         </createTable>
     </changeSet>
+
     <changeSet author="mrego" id="initial-database-creation-99">
         <createTable tableName="work_report_line">
             <column name="id" type="BIGINT">
@@ -2163,5 +2255,146 @@
         </insert>
     </changeSet>
 
+    <changeSet author="pluchyn" id="rename_work_report_label_type_assigment">
+        <renameTable oldTableName="work_report_label_type_assigment"
+                     newTableName="work_report_label_type_assignment"/>
+    </changeSet>
+
+    <!-- Next two changesets are renaming pkey -->
+    <changeSet author="pluchyn" id="drop_pkey_work_report_label_type_assignment">
+        <dropPrimaryKey constraintName="work_report_label_type_assigment_pkey"
+                        tableName="work_report_label_type_assignment"/>
+    </changeSet>
+
+    <changeSet author="pluchyn" id="add_pkey_work_report_label_type_assignment">
+        <addPrimaryKey columnNames="id"
+                       constraintName="work_report_label_type_assignment_pkey"
+                       tableName="work_report_label_type_assignment"/>
+    </changeSet>
+
+    <!-- Next two changesets are renaming fkey constraints -->
+    <changeSet author="pluchyn" id="drop_fkey_constraints_work_report_label_type_assignment">
+        <dropForeignKeyConstraint baseTableName="work_report_label_type_assignment"
+                                  constraintName="fkbb262920c1c2746e"/>
+        <dropForeignKeyConstraint baseTableName="work_report_label_type_assignment"
+                                  constraintName="fkbb262920707cd777"/>
+        <dropForeignKeyConstraint baseTableName="work_report_label_type_assignment"
+                                  constraintName="fkbb262920131853a1"/>
+    </changeSet>
+
+    <changeSet author="pluchyn" id="add_fkey_constraints_work_report_label_type_assignment">
+        <addForeignKeyConstraint baseColumnNames="label_id" baseTableName="work_report_label_type_assignment"
+                                 constraintName="fkbb262920c1c2746e" deferrable="false" initiallyDeferred="false"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id"
+                                 referencedTableName="label" referencesUniqueColumn="false"/>
+        <addForeignKeyConstraint baseColumnNames="label_type_id" baseTableName="work_report_label_type_assignment"
+                                 constraintName="fkbb262920707cd777" deferrable="false" initiallyDeferred="false"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id"
+                                 referencedTableName="label_type" referencesUniqueColumn="false"/>
+        <addForeignKeyConstraint baseColumnNames="work_report_type_id" baseTableName="work_report_label_type_assignment"
+                                 constraintName="fkbb262920131853a1" deferrable="false" initiallyDeferred="false"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id"
+                                 referencedTableName="work_report_type" referencesUniqueColumn="false"/>
+    </changeSet>
+
+    <changeSet author="pluchyn" id="rename_material_assigment">
+        <renameTable oldTableName="material_assigment"
+                     newTableName="material_assignment"/>
+    </changeSet>
+
+    <!-- Next two changesets are renaming pkey -->
+    <changeSet author="pluchyn" id="drop_pkey_material_assignment">
+        <dropPrimaryKey constraintName="material_assigment_pkey"
+                        tableName="material_assignment"/>
+    </changeSet>
+
+    <changeSet author="pluchyn" id="add_pkey_material_assignment">
+        <addPrimaryKey columnNames="id"
+                       constraintName="material_assignment_pkey"
+                       tableName="material_assignment"/>
+    </changeSet>
+
+    <changeSet author="pluchyn" id="rename_material_assigment_template">
+        <renameTable oldTableName="material_assigment_template"
+                     newTableName="material_assignment_template"/>
+    </changeSet>
+
+    <!-- Next two changesets are renaming pkey -->
+    <changeSet author="pluchyn" id="drop_pkey_material_assignment_template">
+        <dropPrimaryKey constraintName="material_assigment_template_pkey"
+                        tableName="material_assignment_template"/>
+    </changeSet>
+
+    <changeSet author="pluchyn" id="add_pkey_material_assignment_template">
+        <addPrimaryKey columnNames="id"
+                       constraintName="material_assignment_template_pkey"
+                       tableName="material_assignment_template"/>
+    </changeSet>
+
+    <changeSet author="pluchyn" id="rename_order_element-last_advance_meausurement_for_spreading">
+        <renameColumn oldColumnName="last_advance_meausurement_for_spreading"
+                      newColumnName="last_advance_measurement_for_spreading"
+                      columnDataType="DECIMAL(19,2)"
+                      tableName="order_element"/>
+    </changeSet>
+
+    <changeSet author="pluchyn" id="rename_task-subcontrated_task_data_id">
+        <renameColumn oldColumnName="subcontrated_task_data_id"
+                      newColumnName="subcontracted_task_data_id"
+                      columnDataType="BIGINT"
+                      tableName="task"/>
+    </changeSet>
+
+    <!-- Next two changesets are renaming unique constraint -->
+    <changeSet author="pluchyn" id="drop_unique_constraint_task">
+        <dropUniqueConstraint constraintName="task_subcontrated_task_data_id_key"
+                              tableName="task"/>
+    </changeSet>
+
+    <changeSet author="pluchyn" id="add_unique_constraint_task">
+        <addUniqueConstraint columnNames="subcontracted_task_data_id"
+                             constraintName="task_subcontracted_task_data_id_key" deferrable="false" disabled="false"
+                             initiallyDeferred="false" tableName="task"/>
+    </changeSet>
+
+    <!-- Next two changesets are renaming fkey constraints -->
+    <changeSet author="pluchyn" id="drop_fkey-material_assignment-material_assignment_template">
+        <dropForeignKeyConstraint baseTableName="material_assignment" constraintName="fkb3e9425b5c68337"/>
+        <dropForeignKeyConstraint baseTableName="material_assignment" constraintName="fkb3e9425efda874f"/>
+        <dropForeignKeyConstraint baseTableName="material_assignment_template" constraintName="fk35254354b5c68337"/>
+        <dropForeignKeyConstraint baseTableName="material_assignment_template" constraintName="fk3525435419b9dfde"/>
+    </changeSet>
+
+    <changeSet author="pluchyn" id="add_fkey_material_assignment-material_assignment_template">
+        <addForeignKeyConstraint baseColumnNames="material_id" baseTableName="material_assignment"
+                                 constraintName="fkb3e9425b5c68337" deferrable="false" initiallyDeferred="false"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id"
+                                 referencedTableName="material" referencesUniqueColumn="false"/>
+        <addForeignKeyConstraint baseColumnNames="order_element_id" baseTableName="material_assignment"
+                                 constraintName="fkb3e9425efda874f" deferrable="false" initiallyDeferred="false"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id"
+                                 referencedTableName="order_element" referencesUniqueColumn="false"/>
+        <addForeignKeyConstraint baseColumnNames="material_id" baseTableName="material_assignment_template"
+                                 constraintName="fk35254354b5c68337" deferrable="false" initiallyDeferred="false"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id"
+                                 referencedTableName="material" referencesUniqueColumn="false"/>
+        <addForeignKeyConstraint baseColumnNames="order_element_template_id"
+                                 baseTableName="material_assignment_template" constraintName="fk3525435419b9dfde"
+                                 deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
+                                 referencedColumnNames="id" referencedTableName="order_element_template"
+                                 referencesUniqueColumn="false"/>
+    </changeSet>
+
+    <!-- Next two changesets are renaming fkey constraint -->
+    <changeSet author="pluchyn" id="drop_fkey_task">
+        <dropForeignKeyConstraint baseTableName="task" constraintName="fk3635855b595a0"/>
+    </changeSet>
+
+    <changeSet author="pluchyn" id="add_fkey_task">
+        <addForeignKeyConstraint baseColumnNames="subcontracted_task_data_id" baseTableName="task"
+                                 constraintName="fk3635855b595a0" deferrable="false" initiallyDeferred="false"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id"
+                                 referencedTableName="subcontracted_task_data" referencesUniqueColumn="false"/>
+    </changeSet>
 
 </databaseChangeLog>

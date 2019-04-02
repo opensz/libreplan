@@ -6,6 +6,17 @@ Authors
 LibrePlan Team
 --------------
 
+* Jeroen Baten <jeroen@libreplan-enterprise.com>
+* Edwin Zuijdendorp <edwin@zuydendorp.nl>
+* Bjørn Vos <bjorn@libreplan-enterprise.com>
+* Philippe Poumaroux <philippe.poumaroux@free.fr>
+* Vova Perebykivskyi <vova@libreplan-enterprise.com>
+* Paul Luchyn <ddiamondbbackk@gmail.com>
+
+
+Previous Team Members
+---------------------
+
 * Jacobo Aragunde Pérez <jaragunde@igalia.com>
 * Xavier Castaño García <xcastanho@igalia.com>
 * Ignacio Díaz Teijido <ignacio.diaz@cafedered.es>
@@ -14,11 +25,6 @@ LibrePlan Team
 * Diego Pino García <dpino@igalia.com>
 * Manuel Rego Casasnovas <rego@igalia.com>
 * Lorenzo Tilve Álvaro <ltilve@igalia.com>
-
-
-Previous Team Members
----------------------
-
 * Cristina Alvariño Pérez <cristina.alvarino@cafedered.es>
 * Nacho Barrientos Arias <nacho@igalia.com>
 * Fernando Bellas Permuy <fbellas@udc.es>
@@ -26,6 +32,8 @@ Previous Team Members
 * Óscar González Fernández <ogonzalez@igalia.com>
 * Pablo Fernández de la Cigoña Nóvoa <pcigonha@igalia.com>
 * Farruco Sanjurjo Arcay <fsanjurjo@igalia.com>
+* Misha Gozda <misha@libreplan-enterprise.com>
+* Bogdan Bodnarjuk <b.bodnarjuk@libreplan-enterprise.com
 
 
 Translators
@@ -54,6 +62,7 @@ Translators
   Joaquim Rocha <jrocha@igalia.com>
 * [ru] Pavel Rudensky <prudensky@gmail.com>
 * [zh] Swanson Chan <lacidophilin@yahoo.com>
+* [nb] Kent Thoresen <kt@norwegianoceanpower.com>
 
 
 Contributors

@@ -21,7 +21,7 @@
 
 package org.libreplan.web.calendars;
 
-import org.apache.commons.lang.Validate;
+import org.apache.commons.lang3.Validate;
 import org.libreplan.business.calendars.entities.BaseCalendar;
 import org.libreplan.business.calendars.entities.ResourceCalendar;
 import org.libreplan.business.common.daos.IConfigurationDAO;
@@ -41,8 +41,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Scope(BeanDefinition.SCOPE_PROTOTYPE)
 @Qualifier("subclass")
-public class ResourceCalendarModel extends BaseCalendarModel implements
-        IBaseCalendarModel {
+public class ResourceCalendarModel extends BaseCalendarModel implements IBaseCalendarModel {
 
     @Override
     public void initCreate() {

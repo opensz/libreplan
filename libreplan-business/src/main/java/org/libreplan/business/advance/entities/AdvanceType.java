@@ -25,17 +25,16 @@ import static org.libreplan.business.i18n.I18nHelper._;
 
 import java.math.BigDecimal;
 
-import org.apache.commons.lang.BooleanUtils;
-import org.apache.commons.lang.StringUtils;
-import org.hibernate.validator.AssertTrue;
-import org.hibernate.validator.NotEmpty;
-import org.hibernate.validator.NotNull;
+import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.StringUtils;
+import javax.validation.constraints.AssertTrue;
+import org.hibernate.validator.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import org.libreplan.business.advance.daos.IAdvanceTypeDAO;
 import org.libreplan.business.common.BaseEntity;
 import org.libreplan.business.common.IHumanIdentifiable;
 import org.libreplan.business.common.Registry;
 import org.libreplan.business.common.exceptions.InstanceNotFoundException;
-import org.libreplan.business.orders.entities.OrderElement;
 
 /**
  * @author Susana Montes Pedreira <smontes@wirelessgalicia.com>
@@ -47,22 +46,30 @@ public class AdvanceType extends BaseEntity implements IHumanIdentifiable{
     public static AdvanceType create() {
         AdvanceType advanceType = new AdvanceType();
         advanceType.setNewObject(true);
+
         return advanceType;
     }
 
     public static AdvanceType create(String unitName,
-            BigDecimal defaultMaxValue, boolean updatable,
-            BigDecimal unitPrecision, boolean active, boolean percentage) {
-        return create(unitName, defaultMaxValue, updatable, unitPrecision,
-                active, percentage, false);
+                                     BigDecimal defaultMaxValue,
+                                     boolean updatable,
+                                     BigDecimal unitPrecision,
+                                     boolean active,
+                                     boolean percentage) {
+
+        return create(unitName, defaultMaxValue, updatable, unitPrecision, active, percentage, false);
     }
 
     public static AdvanceType create(String unitName,
-            BigDecimal defaultMaxValue, boolean updatable,
-            BigDecimal unitPrecision, boolean active, boolean percentage,
-            boolean qualityForm) {
-        return create(new AdvanceType(unitName, defaultMaxValue, updatable,
-                unitPrecision, active, percentage, qualityForm));
+                                     BigDecimal defaultMaxValue,
+                                     boolean updatable,
+                                     BigDecimal unitPrecision,
+                                     boolean active,
+                                     boolean percentage,
+                                     boolean qualityForm) {
+
+        return create(
+                new AdvanceType(unitName, defaultMaxValue, updatable, unitPrecision, active, percentage, qualityForm));
     }
 
     private String unitName;
@@ -84,7 +91,7 @@ public class AdvanceType extends BaseEntity implements IHumanIdentifiable{
 
     private Boolean qualityForm = false;
 
-    private IAdvanceTypeDAO avanceTypeDAO = Registry.getAdvanceTypeDao();
+    private IAdvanceTypeDAO advanceTypeDAO = Registry.getAdvanceTypeDao();
 
     private boolean readOnly = false;
 
@@ -92,12 +99,16 @@ public class AdvanceType extends BaseEntity implements IHumanIdentifiable{
      * Constructor for hibernate. Do not use!
      */
     public AdvanceType() {
-
     }
 
-    private AdvanceType(String unitName, BigDecimal defaultMaxValue,
-            boolean updatable, BigDecimal unitPrecision, boolean active,
-            boolean percentage, boolean qualityForm) {
+    private AdvanceType(String unitName,
+                        BigDecimal defaultMaxValue,
+                        boolean updatable,
+                        BigDecimal unitPrecision,
+                        boolean active,
+                        boolean percentage,
+                        boolean qualityForm) {
+
         this.unitName = unitName;
         this.percentage = percentage;
         setDefaultMaxValue(defaultMaxValue);
@@ -119,16 +130,16 @@ public class AdvanceType extends BaseEntity implements IHumanIdentifiable{
     }
 
     public void setDefaultMaxValue(BigDecimal defaultMaxValue) {
-        if (defaultMaxValue.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException(
-                    "The maximum value must be greater than 0");
+        if ( defaultMaxValue.compareTo(BigDecimal.ZERO) <= 0 ) {
+            throw new IllegalArgumentException("The maximum value must be greater than 0");
         }
-        if (percentage) {
-            if (defaultMaxValue.compareTo(new BigDecimal(100)) > 0) {
-                throw new IllegalArgumentException(
-                        "The maximum value for percentage is 100");
+
+        if ( percentage ) {
+            if ( defaultMaxValue.compareTo(new BigDecimal(100)) > 0 ) {
+                throw new IllegalArgumentException("The maximum value for percentage is 100");
             }
         }
+
         this.defaultMaxValue = defaultMaxValue;
         this.defaultMaxValue.setScale(2, BigDecimal.ROUND_HALF_UP);
     }
@@ -163,45 +174,37 @@ public class AdvanceType extends BaseEntity implements IHumanIdentifiable{
     }
 
     public String getType() {
-        if (isUpdatable()) {
+        if ( isUpdatable() ) {
             return _("User");
         }
-        if (isQualityForm()) {
+
+        if ( isQualityForm() ) {
             return _("Quality form");
         }
+
         return _("Predefined");
     }
 
-    public void doPropagateAdvaceToParent(OrderElement orderElement) {
-    }
-
     public boolean isPrecisionValid(BigDecimal precision) {
-        if ((this.defaultMaxValue == null) || (precision == null)) {
-            return true;
-        }
-        return this.defaultMaxValue.compareTo(precision) >= 0;
-
+        return (this.defaultMaxValue == null) || (precision == null) || this.defaultMaxValue.compareTo(precision) >= 0;
     }
 
     public boolean isDefaultMaxValueValid(BigDecimal defaultMaxValue) {
-        if ((this.unitPrecision == null) || (defaultMaxValue == null)) {
-            return true;
-        }
-        return this.unitPrecision.compareTo(defaultMaxValue) <= 0;
+        return (this.unitPrecision == null) ||
+                (defaultMaxValue == null) ||
+                this.unitPrecision.compareTo(defaultMaxValue) <= 0;
     }
 
     public static boolean equivalentInDB(AdvanceType type, AdvanceType otherType) {
-        if (type == null || type.getId() == null || otherType == null
-                || otherType.getId() == null) {
-            return false;
-        }
-        return type.getId().equals(otherType.getId());
+        return !(type == null || type.getId() == null || otherType == null || otherType.getId() == null) &&
+                type.getId().equals(otherType.getId());
     }
 
     public void setPercentage(boolean percentage) {
-        if (percentage) {
+        if ( percentage ) {
             defaultMaxValue = new BigDecimal(100);
         }
+
         this.percentage = percentage;
     }
 
@@ -219,22 +222,24 @@ public class AdvanceType extends BaseEntity implements IHumanIdentifiable{
     }
 
     @AssertTrue(message = "progress type marked as quality form but is updatable")
-    public boolean checkConstraintIfIsQualityFormIsNotUpdatable() {
-        if (isQualityForm()) {
-            if (isUpdatable()) {
+    public boolean isIfIsQualityFormIsNotUpdatableConstraint() {
+        if ( isQualityForm() ) {
+            if ( isUpdatable() ) {
                 return false;
             }
         }
+
         return true;
     }
 
     @AssertTrue(message = "default maximum value of percentage progress type must be 100")
-    public boolean checkConstraintDefaultMaxValueMustBe100ForPercentage() {
-        if (percentage) {
-            if (defaultMaxValue.compareTo(new BigDecimal(100)) != 0) {
+    public boolean isDefaultMaxValueMustBe100ForPercentageConstraint() {
+        if ( percentage ) {
+            if ( defaultMaxValue.compareTo(new BigDecimal(100)) != 0 ) {
                 return false;
             }
         }
+
         return true;
     }
 
@@ -244,12 +249,13 @@ public class AdvanceType extends BaseEntity implements IHumanIdentifiable{
     }
 
     @AssertTrue(message = "progress type name is already in use")
-    public boolean checkConstraintUniqueName() {
-        if (StringUtils.isBlank(unitName)) {
+    public boolean isUniqueNameConstraint() {
+        if ( StringUtils.isBlank(unitName) ) {
             return true;
         }
-        if (isNewObject()) {
-            return !avanceTypeDAO.existsByNameInAnotherTransaction(unitName);
+
+        if ( isNewObject() ) {
+            return !advanceTypeDAO.existsByNameInAnotherTransaction(unitName);
         } else {
             return checkNotExistsOrIsTheSame();
         }
@@ -257,8 +263,8 @@ public class AdvanceType extends BaseEntity implements IHumanIdentifiable{
 
     private boolean checkNotExistsOrIsTheSame() {
         try {
-            AdvanceType advanceType = avanceTypeDAO
-                    .findUniqueByNameInAnotherTransaction(unitName);
+            AdvanceType advanceType = advanceTypeDAO.findUniqueByNameInAnotherTransaction(unitName);
+
             return advanceType.getId().equals(getId());
         } catch (InstanceNotFoundException e) {
             return true;
@@ -266,11 +272,8 @@ public class AdvanceType extends BaseEntity implements IHumanIdentifiable{
     }
 
     @AssertTrue(message = "default maximum value must be greater than precision value")
-    public boolean checkDefaultMaxValueGreaterThanPrecision() {
-        if (defaultMaxValue.compareTo(unitPrecision) == -1) {
-            return false;
-        }
-        return true;
+    public boolean isDefaultMaxValueGreaterThanPrecisionConstraint() {
+        return defaultMaxValue.compareTo(unitPrecision) != -1;
     }
 
     public void setReadOnly(boolean readOnly) {

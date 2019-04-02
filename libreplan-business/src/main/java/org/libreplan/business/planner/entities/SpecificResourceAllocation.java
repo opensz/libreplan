@@ -22,7 +22,6 @@
 package org.libreplan.business.planner.entities;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -30,9 +29,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.lang.Validate;
-import org.hibernate.validator.NotNull;
-import org.hibernate.validator.Valid;
+import org.apache.commons.lang3.Validate;
+import javax.validation.constraints.NotNull;
+import javax.validation.Valid;
 import org.joda.time.LocalDate;
 import org.libreplan.business.calendars.entities.AvailabilityTimeLine;
 import org.libreplan.business.calendars.entities.AvailabilityTimeLine.FixedPoint;
@@ -58,80 +57,69 @@ import org.libreplan.business.workingday.ResourcesPerDay;
 
 /**
  * Represents the relation between {@link Task} and a specific {@link Worker}.
+ *
  * @author Manuel Rego Casasnovas <mrego@igalia.com>
  */
-public class SpecificResourceAllocation extends
-        ResourceAllocation<SpecificDayAssignment> implements IAllocatable {
+public class SpecificResourceAllocation extends ResourceAllocation<SpecificDayAssignment> implements IAllocatable {
+
+    @OnCopy(Strategy.SHARE)
+    private Resource resource;
+
+    private Set<SpecificDayAssignmentsContainer> specificDayAssignmentsContainers = new HashSet<>();
+
+    public SpecificResourceAllocation() {}
 
     public static SpecificResourceAllocation create(Task task) {
-        return create(new SpecificResourceAllocation(
-                task));
+        return create(new SpecificResourceAllocation(task));
     }
 
     /**
-     * Creates a {@link SpecificResourceAllocation} for a
-     * {@link LimitingResourceQueueElement}
+     * Creates a {@link SpecificResourceAllocation} for a {@link LimitingResourceQueueElement}.
      *
      * The process of creating a specific resource allocation for a queue
      * element is different as it's necessary to assign a resource and a number
-     * of resources per day without allocating day assignments
+     * of resources per day without allocating day assignments.
      *
      * @param resource
      * @param task
      * @return
      */
-    public static SpecificResourceAllocation createForLimiting(Resource resource,
-            Task task) {
+    public static SpecificResourceAllocation createForLimiting(Resource resource, Task task) {
         assert resource.isLimitingResource();
-        SpecificResourceAllocation result = create(new SpecificResourceAllocation(
-                task));
+        SpecificResourceAllocation result = create(new SpecificResourceAllocation(task));
         result.setResource(resource);
         result.setResourcesPerDayToAmount(1);
+
         return result;
     }
-
-    @OnCopy(Strategy.SHARE)
-    private Resource resource;
-
-    private Set<SpecificDayAssignmentsContainer> specificDayAssignmentsContainers = new HashSet<SpecificDayAssignmentsContainer>();
 
     @Valid
-    private Set<SpecificDayAssignmentsContainer> getSpecificDayAssignmentsContainers() {
-        return new HashSet<SpecificDayAssignmentsContainer>(
-                specificDayAssignmentsContainers);
+    public Set<SpecificDayAssignmentsContainer> getSpecificDayAssignmentsContainers() {
+        return new HashSet<>(specificDayAssignmentsContainers);
     }
 
-    public static SpecificResourceAllocation createForTesting(
-            ResourcesPerDay resourcesPerDay, Task task) {
-        return create(new SpecificResourceAllocation(
-                resourcesPerDay, task));
-    }
-
-    public SpecificResourceAllocation() {
+    public static SpecificResourceAllocation createForTesting(ResourcesPerDay resourcesPerDay, Task task) {
+        return create(new SpecificResourceAllocation(resourcesPerDay, task));
     }
 
     @Override
-    protected SpecificDayAssignmentsContainer retrieveOrCreateContainerFor(
-            Scenario scenario) {
+    protected SpecificDayAssignmentsContainer retrieveOrCreateContainerFor(Scenario scenario) {
         SpecificDayAssignmentsContainer retrieved = retrieveContainerFor(scenario);
-        if (retrieved != null) {
+        if ( retrieved != null ) {
             return retrieved;
         }
-        SpecificDayAssignmentsContainer result = SpecificDayAssignmentsContainer
-                .create(this, scenario);
+        SpecificDayAssignmentsContainer result = SpecificDayAssignmentsContainer.create(this, scenario);
         specificDayAssignmentsContainers.add(result);
+
         return result;
     }
 
     @Override
-    protected SpecificDayAssignmentsContainer retrieveContainerFor(
-            Scenario scenario) {
-        Map<Scenario, SpecificDayAssignmentsContainer> containers = containersByScenario();
-        return containers.get(scenario);
+    protected SpecificDayAssignmentsContainer retrieveContainerFor(Scenario scenario) {
+        return containersByScenario().get(scenario);
     }
 
-    private SpecificResourceAllocation(ResourcesPerDay resourcesPerDay,
-            Task task) {
+    private SpecificResourceAllocation(ResourcesPerDay resourcesPerDay, Task task) {
         super(resourcesPerDay, task);
     }
 
@@ -145,7 +133,7 @@ public class SpecificResourceAllocation extends
     }
 
     private Map<Scenario, SpecificDayAssignmentsContainer> containersByScenario() {
-        Map<Scenario, SpecificDayAssignmentsContainer> result = new HashMap<Scenario, SpecificDayAssignmentsContainer>();
+        Map<Scenario, SpecificDayAssignmentsContainer> result = new HashMap<>();
         for (SpecificDayAssignmentsContainer each : specificDayAssignmentsContainers) {
             assert !result.containsKey(each);
             result.put(each.getScenario(), each);
@@ -165,17 +153,13 @@ public class SpecificResourceAllocation extends
     }
 
     @Override
-    public IAllocateResourcesPerDay resourcesPerDayUntil(
-            IntraDayDate endExclusive) {
-        return new SpecificAssignmentsAllocator()
-                .resourcesPerDayUntil(endExclusive);
+    public IAllocateResourcesPerDay resourcesPerDayUntil(IntraDayDate endExclusive) {
+        return new SpecificAssignmentsAllocator().resourcesPerDayUntil(endExclusive);
     }
 
     @Override
-    public IAllocateResourcesPerDay resourcesPerDayFromEndUntil(
-            IntraDayDate start) {
-        SpecificAssignmentsAllocator allocator = new SpecificAssignmentsAllocator();
-        return allocator.resourcesPerDayFromEndUntil(start);
+    public IAllocateResourcesPerDay resourcesPerDayFromEndUntil(IntraDayDate start) {
+        return new SpecificAssignmentsAllocator().resourcesPerDayFromEndUntil(start);
     }
 
     @Override
@@ -188,14 +172,11 @@ public class SpecificResourceAllocation extends
         return new SpecificAssignmentsAllocator().fromEndUntil(start);
     }
 
-    private final class SpecificAssignmentsAllocator extends
-            AssignmentsAllocator {
+    private final class SpecificAssignmentsAllocator extends AssignmentsAllocator {
 
         @Override
-        public List<SpecificDayAssignment> distributeForDay(PartialDay day,
-                EffortDuration effort) {
-            return Arrays.asList(SpecificDayAssignment.create(day.getDate(),
-                    effort, resource));
+        public List<SpecificDayAssignment> distributeForDay(PartialDay day, EffortDuration effort) {
+            return Collections.singletonList(SpecificDayAssignment.create(day.getDate(), effort, resource));
         }
 
         @Override
@@ -205,8 +186,7 @@ public class SpecificResourceAllocation extends
 
         @Override
         protected Capacity getCapacityAt(PartialDay day) {
-            return day.limitCapacity(getAllocationCalendar()
-                    .getCapacityWithOvertime(day.getDate()));
+            return day.limitCapacity(getAllocationCalendar().getCapacityWithOvertime(day.getDate()));
         }
 
     }
@@ -221,29 +201,23 @@ public class SpecificResourceAllocation extends
     }
 
     @Override
-    public IAllocateEffortOnInterval onIntervalWithinTask(IntraDayDate start,
-            IntraDayDate end) {
-        return new SpecificAssignmentsAllocator().onIntervalWithinTask(start,
-                end);
+    public IAllocateEffortOnInterval onIntervalWithinTask(IntraDayDate start, IntraDayDate end) {
+        return new SpecificAssignmentsAllocator().onIntervalWithinTask(start, end);
     }
 
     @Override
-    public IAllocateEffortOnInterval onInterval(LocalDate startInclusive,
-            LocalDate endExclusive) {
-        return new SpecificAssignmentsAllocator().onInterval(startInclusive,
-                endExclusive);
+    public IAllocateEffortOnInterval onInterval(LocalDate startInclusive, LocalDate endExclusive) {
+        return new SpecificAssignmentsAllocator().onInterval(startInclusive, endExclusive);
     }
 
     @Override
-    public IAllocateEffortOnInterval onInterval(IntraDayDate start,
-            IntraDayDate end) {
+    public IAllocateEffortOnInterval onInterval(IntraDayDate start, IntraDayDate end) {
         return new SpecificAssignmentsAllocator().onInterval(start, end);
     }
 
     @Override
     protected ICalendar getCalendarGivenTaskCalendar(ICalendar taskCalendar) {
-        return CombinedWorkHours.minOf(taskCalendar, getResource()
-                .getCalendar());
+        return CombinedWorkHours.minOf(taskCalendar, getResource().getCalendar());
     }
 
     @Override
@@ -258,25 +232,24 @@ public class SpecificResourceAllocation extends
 
     @Override
     public List<Resource> getAssociatedResources() {
-        return Arrays.asList(resource);
+        return Collections.singletonList(resource);
     }
 
     @Override
     ResourceAllocation<SpecificDayAssignment> createCopy(Scenario scenario) {
         SpecificResourceAllocation result = create(getTask());
         result.resource = getResource();
+
         return result;
     }
 
     @Override
-    public ResourcesPerDayModification withDesiredResourcesPerDay(
-            ResourcesPerDay resourcesPerDay) {
+    public ResourcesPerDayModification withDesiredResourcesPerDay(ResourcesPerDay resourcesPerDay) {
         return ResourcesPerDayModification.create(this, resourcesPerDay);
     }
 
     @Override
-    public List<Resource> querySuitableResources(
-            IResourcesSearcher resourcesSearcher) {
+    public List<Resource> querySuitableResources(IResourcesSearcher resourcesSearcher) {
         return Collections.singletonList(resource);
     }
 
@@ -312,8 +285,7 @@ public class SpecificResourceAllocation extends
 
     @Override
     protected void removeContainersFor(Scenario scenario) {
-        SpecificDayAssignmentsContainer container = containersByScenario().get(
-                scenario);
+        SpecificDayAssignmentsContainer container = containersByScenario().get(scenario);
         if (container != null) {
             specificDayAssignmentsContainers.remove(container);
         }
@@ -321,45 +293,41 @@ public class SpecificResourceAllocation extends
 
     /**
      * It does an allocation using the provided {@link EffortDuration} in the
-     * not consolidated part in interval from the first day not consolidated to
-     * the end provided. All previous not consolidated assignments are removed.
+     * not consolidated part in interval from the first day not consolidated to the end provided.
+     * All previous not consolidated assignments are removed.
      *
      * @param effortForNotConsolidatedPart
      * @param endExclusive
      */
-    public void allocateWholeAllocationKeepingProportions(
-            EffortDuration effortForNotConsolidatedPart, IntraDayDate end) {
-        AllocationInterval interval = new AllocationInterval(
-                getIntraDayStartDate(), end);
+    public void allocateWholeAllocationKeepingProportions(EffortDuration effortForNotConsolidatedPart,
+                                                          IntraDayDate end) {
 
-        List<DayAssignment> nonConsolidatedAssignments = interval
-                .getNoConsolidatedAssignmentsOnInterval();
-        ProportionalDistributor distributor = ProportionalDistributor
-                .create(asSeconds(nonConsolidatedAssignments));
+        AllocationInterval interval = new AllocationInterval(getIntraDayStartDate(), end);
 
-        EffortDuration[] effortsPerDay = asEfforts(distributor
-                .distribute(effortForNotConsolidatedPart.getSeconds()));
-        allocateTheWholeAllocation(
-                interval,
-                assignmentsForEfforts(nonConsolidatedAssignments, effortsPerDay));
+        List<DayAssignment> nonConsolidatedAssignments = interval.getNoConsolidatedAssignmentsOnInterval();
+        ProportionalDistributor distributor = ProportionalDistributor.create(asSeconds(nonConsolidatedAssignments));
+
+        EffortDuration[] effortsPerDay = asEfforts(distributor.distribute(effortForNotConsolidatedPart.getSeconds()));
+        allocateTheWholeAllocation(interval, assignmentsForEfforts(nonConsolidatedAssignments, effortsPerDay));
     }
 
     private EffortDuration[] asEfforts(int[] secondsArray) {
         EffortDuration[] result = new EffortDuration[secondsArray.length];
+
         for (int i = 0; i < result.length; i++) {
             result[i] = EffortDuration.seconds(secondsArray[i]);
         }
         return result;
     }
 
-    private List<SpecificDayAssignment> assignmentsForEfforts(
-            List<DayAssignment> assignments, EffortDuration[] newEffortsPerDay) {
-        List<SpecificDayAssignment> result = new ArrayList<SpecificDayAssignment>();
+    private List<SpecificDayAssignment> assignmentsForEfforts(List<DayAssignment> assignments,
+                                                              EffortDuration[] newEffortsPerDay) {
+
+        List<SpecificDayAssignment> result = new ArrayList<>();
         int i = 0;
         for (DayAssignment each : assignments) {
             EffortDuration durationForAssignment = newEffortsPerDay[i++];
-            result.add(SpecificDayAssignment.create(each.getDay(),
-                    durationForAssignment, resource));
+            result.add(SpecificDayAssignment.create(each.getDay(), durationForAssignment, resource));
         }
         return result;
     }
@@ -367,35 +335,33 @@ public class SpecificResourceAllocation extends
     private int[] asSeconds(List<DayAssignment> assignments) {
         int[] result = new int[assignments.size()];
         int i = 0;
+
         for (DayAssignment each : assignments) {
             result[i++] = each.getDuration().getSeconds();
         }
         return result;
     }
 
-    public void overrideConsolidatedDayAssignments(
-            SpecificResourceAllocation origin) {
-        if (origin != null) {
-            List<SpecificDayAssignment> originAssignments = origin
-                    .getConsolidatedAssignments();
-            resetAssignmentsTo(SpecificDayAssignment
-                    .copyToAssignmentsWithoutParent(originAssignments));
+    public void overrideConsolidatedDayAssignments(SpecificResourceAllocation origin) {
+        if ( origin != null ) {
+            List<SpecificDayAssignment> originAssignments = origin.getConsolidatedAssignments();
+            resetAssignmentsTo(SpecificDayAssignment.copyToAssignmentsWithoutParent(originAssignments));
         }
     }
 
     @Override
     public EffortDuration getAssignedEffort(Criterion criterion,
-            final IntraDayDate startInclusive, final IntraDayDate endExclusive) {
+                                            final IntraDayDate startInclusive,
+                                            final IntraDayDate endExclusive) {
 
         return EffortDuration.sum(
-                getIntervalsRelatedWith(criterion, startInclusive.getDate(),
-                        endExclusive.asExclusiveEnd()),
+                getIntervalsRelatedWith(criterion, startInclusive.getDate(), endExclusive.asExclusiveEnd()),
                 new IEffortFrom<Interval>() {
-
                     @Override
                     public EffortDuration from(Interval each) {
                         FixedPoint intervalStart = (FixedPoint) each.getStart();
                         FixedPoint intervalEnd = (FixedPoint) each.getEnd();
+
                         return getAssignedDuration(
                                 IntraDayDate.convert(intervalStart.getDate(), startInclusive),
                                 IntraDayDate.convert(intervalEnd.getDate(), endExclusive));
@@ -404,34 +370,34 @@ public class SpecificResourceAllocation extends
     }
 
     private List<Interval> getIntervalsRelatedWith(Criterion criterion,
-            LocalDate startInclusive, LocalDate endExclusive) {
-        Interval queryInterval = AvailabilityTimeLine.Interval.create(
-                startInclusive, endExclusive);
+                                                   LocalDate startInclusive,
+                                                   LocalDate endExclusive) {
 
-        List<Interval> result = new ArrayList<Interval>();
+        Interval queryInterval = AvailabilityTimeLine.Interval.create(startInclusive, endExclusive);
+
+        List<Interval> result = new ArrayList<>();
+
         for (Interval each : getIntervalsThisAllocationInterferesWith(criterion)) {
-            if (queryInterval.overlaps(each)) {
+            if ( queryInterval.overlaps(each) ) {
                 result.add(queryInterval.intersect(each));
             }
         }
         return result;
     }
 
-    private List<Interval> getIntervalsThisAllocationInterferesWith(
-            Criterion criterion) {
-        AvailabilityTimeLine availability = AvailabilityCalculator
-                .getCriterionsAvailabilityFor(Collections.singleton(criterion),
-                        resource);
+    private List<Interval> getIntervalsThisAllocationInterferesWith(Criterion criterion) {
+
+        AvailabilityTimeLine availability =
+                AvailabilityCalculator.getCriterionsAvailabilityFor(Collections.singleton(criterion), resource);
+
         availability.invalidUntil(getStartDate());
         availability.invalidFrom(getEndDate());
+
         return availability.getValidPeriods();
     }
 
-    public boolean interferesWith(Criterion criterion,
-            LocalDate startInclusive, LocalDate endExclusive) {
-        List<Interval> intervalsRelatedWith = getIntervalsRelatedWith(
-                criterion, startInclusive, endExclusive);
-        return !intervalsRelatedWith.isEmpty();
+    public boolean interferesWith(Criterion criterion, LocalDate startInclusive, LocalDate endExclusive) {
+        return !getIntervalsRelatedWith(criterion, startInclusive, endExclusive).isEmpty();
     }
 
 

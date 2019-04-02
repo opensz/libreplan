@@ -24,6 +24,7 @@ package org.libreplan.web.orders;
 import java.util.Date;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.libreplan.business.externalcompanies.entities.ExternalCompany;
 import org.libreplan.business.labels.entities.Label;
 import org.libreplan.business.orders.entities.Order;
@@ -51,14 +52,14 @@ public class OrderPredicate implements IPredicate {
 
     private Date finishDate;
 
-    private Boolean includeOrderElements;
+    private String name;
 
     public OrderPredicate(List<FilterPair> filters, Date startDate,
-            Date finishDate, Boolean includeOrderElements) {
+            Date finishDate, String name) {
         this.filters = filters;
         this.startDate = startDate;
         this.finishDate = finishDate;
-        this.includeOrderElements = includeOrderElements;
+        this.name = name;
     }
 
     @Override
@@ -71,7 +72,8 @@ public class OrderPredicate implements IPredicate {
         if (order == null) {
             return false;
         }
-        if (acceptFilters(order) && acceptFiltersDates(order)) {
+        if (acceptFilters(order) && acceptFiltersDates(order)
+                && acceptFilterName(order)) {
             return true;
         }
         return false;
@@ -112,13 +114,6 @@ public class OrderPredicate implements IPredicate {
         if (existCriterionInOrderElement(filterCriterion, order)) {
             return true;
         }
-        if (includeOrderElements) {
-            for (OrderElement orderElement : order.getAllOrderElements()) {
-                if (existCriterionInOrderElement(filterCriterion, orderElement)) {
-                    return true;
-                }
-            }
-        }
         return false;
     }
 
@@ -143,13 +138,6 @@ public class OrderPredicate implements IPredicate {
         Label filterLabel = (Label) filter.getValue();
         if (existLabelInOrderElement(filterLabel, order)) {
             return true;
-        }
-        if (this.includeOrderElements) {
-            for (OrderElement orderElement : order.getAllOrderElements()) {
-                if (existLabelInOrderElement(filterLabel, orderElement)) {
-                    return true;
-                }
-            }
         }
         return false;
     }
@@ -233,4 +221,16 @@ public class OrderPredicate implements IPredicate {
         }
         return false;
     }
+
+    private boolean acceptFilterName(Order order) {
+        if (name == null) {
+            return true;
+        }
+        if ((order.getName() != null)
+                && (StringUtils.containsIgnoreCase(order.getName(), name))) {
+            return true;
+        }
+        return false;
+    }
+
 }

@@ -20,9 +20,9 @@
  */
 package org.libreplan.business.orders.entities;
 
-import org.apache.commons.lang.Validate;
-import org.hibernate.validator.NotNull;
-import org.hibernate.validator.Valid;
+import org.apache.commons.lang3.Validate;
+import javax.validation.constraints.NotNull;
+import javax.validation.Valid;
 import org.libreplan.business.common.BaseEntity;
 import org.libreplan.business.orders.entities.SchedulingState.ITypeChangedListener;
 import org.libreplan.business.orders.entities.SchedulingState.Type;
@@ -33,17 +33,18 @@ import org.libreplan.business.util.deepcopy.DeepCopy;
 
 /**
  * @author Óscar González Fernández <ogonzalez@igalia.com>
- *
  */
 public class SchedulingDataForVersion extends BaseEntity {
 
-    public static class Data {
+    @NotNull
+    private SchedulingState.Type schedulingStateType;
 
-        private static Data from(SchedulingDataForVersion version,
-                OrderVersion orderVersion) {
-            return new Data(orderVersion, version, version
-                    .getTaskSource(), version.getSchedulingStateType());
-        }
+    @NotNull
+    private OrderElement orderElement;
+
+    private TaskSource taskSource;
+
+    public static class Data {
 
         private SchedulingDataForVersion originVersion;
 
@@ -58,15 +59,20 @@ public class SchedulingDataForVersion extends BaseEntity {
         private final Type initialSchedulingStateType;
 
         private Data(OrderVersion orderVersion,
-                SchedulingDataForVersion version,
-                TaskSource taskSource,
-                Type schedulingStateType) {
+                     SchedulingDataForVersion version,
+                     TaskSource taskSource,
+                     Type schedulingStateType) {
+
             Validate.notNull(schedulingStateType);
             this.originOrderVersion = orderVersion;
             this.originVersion = version;
             this.taskSource = taskSource;
             this.schedulingStateType = schedulingStateType;
             this.initialSchedulingStateType = schedulingStateType;
+        }
+
+        private static Data from(SchedulingDataForVersion version, OrderVersion orderVersion) {
+            return new Data(orderVersion, version, version.getTaskSource(), version.getSchedulingStateType());
         }
 
         public TaskSource getTaskSource() {
@@ -77,8 +83,7 @@ public class SchedulingDataForVersion extends BaseEntity {
             return schedulingStateType;
         }
 
-        private void setSchedulingStateType(
-                SchedulingState.Type schedulingStateType) {
+        private void setSchedulingStateType(SchedulingState.Type schedulingStateType) {
             this.schedulingStateType = schedulingStateType;
             hasPendingChanges = true;
         }
@@ -109,14 +114,12 @@ public class SchedulingDataForVersion extends BaseEntity {
         }
 
         public void requestedCreationOf(TaskSource taskSource) {
-            Validate.isTrue(this.getTaskSource() == null,
-                    "there must be no task source");
+            Validate.isTrue(this.getTaskSource() == null, "there must be no task source");
             this.setTaskSource(taskSource);
         }
 
         public void replaceCurrentTaskSourceWith(TaskSource newTaskSource) {
-            Validate.isTrue(this.getTaskSource() != null,
-                    "there must be a task source to replace");
+            Validate.isTrue(this.getTaskSource() != null, "there must be a task source to replace");
             this.setTaskSource(newTaskSource);
         }
 
@@ -138,12 +141,11 @@ public class SchedulingDataForVersion extends BaseEntity {
             return hasPendingChanges;
         }
 
-        public Data pointsTo(DeepCopy deepCopy, OrderVersion orderVersion,
-                SchedulingDataForVersion schedulingVersion) {
+        public Data pointsTo(DeepCopy deepCopy, OrderVersion orderVersion, SchedulingDataForVersion schedulingVersion) {
             Validate.isTrue(!this.originVersion.equals(schedulingVersion));
-            Data data = new Data(orderVersion, schedulingVersion, copy(
-                    deepCopy, taskSource), schedulingStateType);
+            Data data = new Data(orderVersion, schedulingVersion, copy(deepCopy, taskSource), schedulingStateType);
             data.hasPendingChanges = true;
+
             return data;
         }
 
@@ -162,17 +164,8 @@ public class SchedulingDataForVersion extends BaseEntity {
     }
 
     private static Type defaultTypeFor(OrderElement orderElement) {
-        return orderElement.isLeaf() ? Type.SCHEDULING_POINT
-                : Type.NO_SCHEDULED;
+        return orderElement.isLeaf() ? Type.SCHEDULING_POINT : Type.NO_SCHEDULED;
     }
-
-    @NotNull
-    private SchedulingState.Type schedulingStateType;
-
-    @NotNull
-    private OrderElement orderElement;
-
-    private TaskSource taskSource;
 
     public SchedulingState.Type getSchedulingStateType() {
         return schedulingStateType;
@@ -193,7 +186,8 @@ public class SchedulingDataForVersion extends BaseEntity {
 
     void removeSpuriousDayAssignments(Scenario scenario) {
         TaskSource taskSource = getTaskSource();
-        if (taskSource != null) {
+
+        if ( taskSource != null ) {
             TaskElement task = taskSource.getTask();
             task.removeDayAssignmentsFor(scenario);
         }

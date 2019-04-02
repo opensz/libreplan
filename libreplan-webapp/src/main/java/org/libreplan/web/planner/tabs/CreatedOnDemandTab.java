@@ -20,7 +20,7 @@
  */
 package org.libreplan.web.planner.tabs;
 
-import org.apache.commons.lang.Validate;
+import org.apache.commons.lang3.Validate;
 import org.zkoss.ganttz.extensions.ITab;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.Desktop;
@@ -31,21 +31,24 @@ import org.zkoss.zk.ui.Desktop;
 public class CreatedOnDemandTab implements ITab {
 
     private final String name;
+
     private Component parent;
+
     private final IComponentCreator componentCreator;
+
     private Component component;
+
     private final String cssClass;
 
     public interface IComponentCreator {
-        public Component create(Component parent);
+        Component create(Component parent);
     }
 
     public CreatedOnDemandTab(String name, IComponentCreator componentCreator) {
         this(name, null, componentCreator);
     }
 
-    public CreatedOnDemandTab(String name, String cssClass,
-            IComponentCreator componentCreator) {
+    public CreatedOnDemandTab(String name, String cssClass, IComponentCreator componentCreator) {
         Validate.notNull(name);
         Validate.notNull(componentCreator);
         this.componentCreator = componentCreator;
@@ -84,6 +87,7 @@ public class CreatedOnDemandTab implements ITab {
         if (component == null) {
             return null;
         }
+
         return component.getDesktop();
     }
 

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
-    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-2.0.xsd">
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
 
 	<changeSet author="smontes" id="initial-database-creation-customer-comunication">
         <createTable tableName="customer_comunication">
@@ -19,6 +19,7 @@
             <column name="order_id" type="BIGINT"/>
         </createTable>
     </changeSet>
+
     <changeSet author="smontes" id="initial-database-creation-subcontractor-comunication">
         <createTable tableName="subcontractor_comunication">
             <column name="id" type="BIGINT">
@@ -33,6 +34,7 @@
             <column name="subcontracted_task_data" type="BIGINT"/>
         </createTable>
     </changeSet>
+
     <changeSet author="smontes" id="initial-database-creation-subcontractor-comunication-value">
         <createTable tableName="subcontrator_comunication_values">
             <column name="subcontractor_comunication_id" type="BIGINT">
@@ -46,7 +48,8 @@
         </createTable>
 
     </changeSet>
-      <changeSet id="rename-table-customer_comunication-to-customer_communication" author="smontes">
+
+    <changeSet id="rename-table-customer_comunication-to-customer_communication" author="smontes">
         <comment>Rename table customer_comunication to customer_communication</comment>
         <renameTable oldTableName="customer_comunication" newTableName="customer_communication" />
     </changeSet>
@@ -648,6 +651,22 @@
             columnName="changed_default_reports_password"
             defaultNullValue="FALSE"
             columnDataType="BOOLEAN" />
+    </changeSet>
+
+    <changeSet id="update allow_to_gather_usage_stats_enabled" author="bogdan/jeroen" runAlways="true">
+        <comment>Update allow_to_gather_usage_stats_enabled field</comment>
+        <update tableName="configuration">
+            <column name="allow_to_gather_usage_stats_enabled" valueBoolean="TRUE"/>
+        </update>
+    </changeSet>
+
+    <changeSet author="pluchyn" id="change_default_value_for_gather_usage_stats">
+        <addDefaultValue tableName="configuration" columnName="allow_to_gather_usage_stats_enabled"
+                         defaultValueBoolean="TRUE"/>
+        <addNotNullConstraint tableName="configuration"
+                              columnName="allow_to_gather_usage_stats_enabled"
+                              defaultNullValue="TRUE"
+                              columnDataType="BOOLEAN" />
     </changeSet>
 
 </databaseChangeLog>

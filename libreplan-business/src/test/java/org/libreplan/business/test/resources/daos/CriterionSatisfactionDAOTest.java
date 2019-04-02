@@ -21,10 +21,10 @@
 
 package org.libreplan.business.test.resources.daos;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertFalse;
-import static junit.framework.Assert.assertNotNull;
-import static junit.framework.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.libreplan.business.BusinessGlobalNames.BUSINESS_SPRING_CONFIG_FILE;
 import static org.libreplan.business.test.BusinessGlobalNames.BUSINESS_SPRING_CONFIG_TEST_FILE;
 
@@ -43,7 +43,7 @@ import org.libreplan.business.resources.entities.CriterionSatisfaction;
 import org.libreplan.business.resources.entities.CriterionType;
 import org.libreplan.business.resources.entities.Worker;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
@@ -55,7 +55,6 @@ import org.springframework.transaction.annotation.Transactional;
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = { BUSINESS_SPRING_CONFIG_FILE,
         BUSINESS_SPRING_CONFIG_TEST_FILE })
-@Transactional
 public class CriterionSatisfactionDAOTest {
 
     @Autowired
@@ -79,6 +78,7 @@ public class CriterionSatisfactionDAOTest {
     }
 
     @Test
+    @Transactional
     public void testSaveCriterions() {
         CriterionSatisfaction criterionSatisfaction = createValidCriterionSatisfaction(2007);
         satisfactionDAO.save(criterionSatisfaction);
@@ -109,7 +109,8 @@ public class CriterionSatisfactionDAOTest {
         criterion.setType(criterionType);
     }
 
-    @Test(expected = DataIntegrityViolationException.class)
+    @Test(expected = InvalidDataAccessApiUsageException.class)
+    @Transactional
     public void testNotSaveWithTransientCriterionAndWorker() {
         Criterion criterion = CriterionDAOTest.createValidCriterion();
         saveCriterionType(criterion);
@@ -127,6 +128,7 @@ public class CriterionSatisfactionDAOTest {
     }
 
     @Test
+    @Transactional
     public void testRemove() throws InstanceNotFoundException {
         CriterionSatisfaction satisfaction = createValidCriterionSatisfaction(2008);
         satisfactionDAO.save(satisfaction);
@@ -136,6 +138,7 @@ public class CriterionSatisfactionDAOTest {
     }
 
     @Test
+    @Transactional
     public void testList() {
         int previous = satisfactionDAO.list(CriterionSatisfaction.class).size();
         CriterionSatisfaction satisfaction1 = createValidCriterionSatisfaction(2007);

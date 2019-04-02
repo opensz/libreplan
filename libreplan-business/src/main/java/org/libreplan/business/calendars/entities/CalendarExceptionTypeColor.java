@@ -22,8 +22,7 @@ package org.libreplan.business.calendars.entities;
 import static org.libreplan.business.i18n.I18nHelper._;
 
 /**
- * Enum representing the possible colors to choose for a
- * {@link CalendarExceptionType}
+ * Enum representing the possible colors to choose for a {@link CalendarExceptionType}.
  *
  * @author Manuel Rego Casasnovas <rego@igalia.com>
  */
@@ -39,11 +38,12 @@ public enum CalendarExceptionTypeColor {
     PURPLE(_("purple"), "#801a80", "#b38eb3");
 
     private final String name;
+
     private final String colorOwnException;
+
     private final String colorDerivedException;
 
-    private CalendarExceptionTypeColor(String name, String colorOwnException,
-            String colorDerivedException) {
+    CalendarExceptionTypeColor(String name, String colorOwnException, String colorDerivedException) {
         this.name = name;
         this.colorOwnException = colorOwnException;
         this.colorDerivedException = colorDerivedException;

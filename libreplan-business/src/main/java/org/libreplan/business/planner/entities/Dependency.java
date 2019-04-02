@@ -23,15 +23,14 @@ package org.libreplan.business.planner.entities;
 
 import java.util.Date;
 
-import org.apache.commons.lang.Validate;
+import org.apache.commons.lang3.Validate;
 import org.libreplan.business.common.BaseEntity;
 import org.libreplan.business.planner.limiting.entities.LimitingResourceQueueDependency;
 import org.libreplan.business.util.deepcopy.Strategy;
 import org.libreplan.business.util.deepcopy.OnCopy;
 
 /**
- * Entity which represents an associated with properties
- * between two @{link Task}
+ * Entity which represents an association with properties between two {@link Task}
  *
  * @author Óscar González Fernández <ogonzalez@igalia.com>
  * @author Javier Moran Rua <jmoran@igalia.com>
@@ -50,6 +49,7 @@ public class Dependency extends BaseEntity {
                 return false;
             }
         },
+
         START_START {
             @Override
             public boolean modifiesDestinationStart() {
@@ -61,6 +61,7 @@ public class Dependency extends BaseEntity {
                 return false;
             }
         },
+
         END_END {
             @Override
             public boolean modifiesDestinationStart() {
@@ -72,6 +73,7 @@ public class Dependency extends BaseEntity {
                 return true;
             }
         },
+
         START_END {
             @Override
             public boolean modifiesDestinationStart() {
@@ -89,12 +91,12 @@ public class Dependency extends BaseEntity {
         public abstract boolean modifiesDestinationEnd();
     }
 
-    public static Dependency create(TaskElement origin,
-            TaskElement destination, Type type) {
+    public static Dependency create(TaskElement origin, TaskElement destination, Type type) {
         Dependency dependency = new Dependency(origin, destination, type);
         dependency.setNewObject(true);
         origin.add(dependency);
         destination.add(dependency);
+
         return dependency;
     }
 
@@ -117,8 +119,8 @@ public class Dependency extends BaseEntity {
         Validate.notNull(origin);
         Validate.notNull(destination);
         Validate.notNull(type);
-        Validate.isTrue(!origin.equals(destination),
-                "a dependency must have a different origin than destination");
+        Validate.isTrue(!origin.equals(destination), "a dependency must have a different origin than destination");
+
         this.origin = origin;
         this.destination = destination;
         this.type = type;
@@ -145,8 +147,7 @@ public class Dependency extends BaseEntity {
     }
 
     public boolean isDependencyBetweenLimitedAllocatedTasks() {
-        return getOrigin().hasLimitedResourceAllocation() &&
-            getDestination().hasLimitedResourceAllocation();
+        return getOrigin().hasLimitedResourceAllocation() && getDestination().hasLimitedResourceAllocation();
     }
 
     public boolean hasLimitedQueueDependencyAssociated() {
@@ -155,14 +156,18 @@ public class Dependency extends BaseEntity {
 
     public Date getDateFromOrigin() {
         switch (type) {
-        case END_START:
-        case END_END:
-            return origin.getEndDate();
-        case START_END:
-        case START_START:
-            return origin.getStartDate();
-        default:
-            throw new RuntimeException("unexpected type");
+            case END_START:
+
+            case END_END:
+                return origin.getEndDate();
+
+            case START_END:
+
+            case START_START:
+                return origin.getStartDate();
+
+            default:
+                throw new RuntimeException("unexpected type");
         }
     }
 }

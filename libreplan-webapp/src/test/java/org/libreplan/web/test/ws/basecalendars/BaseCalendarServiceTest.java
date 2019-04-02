@@ -30,12 +30,6 @@ import static org.libreplan.web.test.WebappGlobalNames.WEBAPP_SPRING_CONFIG_TEST
 import static org.libreplan.web.test.WebappGlobalNames.WEBAPP_SPRING_SECURITY_CONFIG_TEST_FILE;
 import static org.libreplan.web.test.ws.common.Util.getUniqueName;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
-
 import javax.xml.datatype.XMLGregorianCalendar;
 
 import org.hibernate.Query;
@@ -45,7 +39,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.libreplan.business.calendars.daos.IBaseCalendarDAO;
-import org.libreplan.business.calendars.daos.ICalendarExceptionDAO;
 import org.libreplan.business.calendars.daos.ICalendarExceptionTypeDAO;
 import org.libreplan.business.calendars.entities.BaseCalendar;
 import org.libreplan.business.calendars.entities.CalendarData;
@@ -75,16 +68,22 @@ import org.springframework.test.context.transaction.AfterTransaction;
 import org.springframework.test.context.transaction.BeforeTransaction;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import java.util.Collections;
+
 /**
  * Tests for <code>ICalendarService</code>.
+ *
  * @author Susana Montes Pedreira <smontes@wirelessgalicia.com>
  */
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(locations = { BUSINESS_SPRING_CONFIG_FILE,
+@ContextConfiguration(locations = {
+        BUSINESS_SPRING_CONFIG_FILE,
         WEBAPP_SPRING_CONFIG_FILE, WEBAPP_SPRING_CONFIG_TEST_FILE,
-        WEBAPP_SPRING_SECURITY_CONFIG_FILE,
-        WEBAPP_SPRING_SECURITY_CONFIG_TEST_FILE })
-@Transactional
+        WEBAPP_SPRING_SECURITY_CONFIG_FILE, WEBAPP_SPRING_SECURITY_CONFIG_TEST_FILE })
 public class BaseCalendarServiceTest {
 
     @Autowired
@@ -95,9 +94,6 @@ public class BaseCalendarServiceTest {
 
     @Autowired
     private ICalendarExceptionTypeDAO calendarExceptionTypeDAO;
-
-    @Autowired
-    private ICalendarExceptionDAO calendarExceptionDAO;
 
     @Autowired
     private IConfigurationDAO configurationDAO;
@@ -115,7 +111,6 @@ public class BaseCalendarServiceTest {
     public void loadConfiguration() {
 
         IOnTransaction<Void> load = new IOnTransaction<Void>() {
-
             @Override
             public Void execute() {
                 configurationBootstrap.loadRequiredData();
@@ -131,31 +126,26 @@ public class BaseCalendarServiceTest {
 
     @BeforeTransaction
     public void ensureOneExceptionType() {
-        addedExceptionType = transactionService
-                .runOnTransaction(new IOnTransaction<CalendarExceptionType>() {
+        addedExceptionType = transactionService.runOnTransaction(new IOnTransaction<CalendarExceptionType>() {
+            @Override
+            public CalendarExceptionType execute() {
+                CalendarExceptionType result;
+                result = CalendarExceptionType.create("name", CalendarExceptionTypeColor.DEFAULT, false);
+                result.setCode("TypeCode_A");
+                calendarExceptionTypeDAO.save(result);
+                return result;
+            }
+        });
 
-                    @Override
-                    public CalendarExceptionType execute() {
-                        CalendarExceptionType result;
-                        result = CalendarExceptionType.create("name",
-                                CalendarExceptionTypeColor.DEFAULT, false);
-                        result.setCode("TypeCode_A");
-                        calendarExceptionTypeDAO.save(result);
-                        return result;
-                    }
-                });
         addedExceptionType.dontPoseAsTransientObjectAnymore();
     }
 
 
     /**
-     * It removes added {@link CalendarExceptionType} to avoid problems in other
-     * tests. The associated calendar exceptions are also removed, so the
-     * {@link CalendarExceptionType} can be removed without error.
+     * It removes added {@link CalendarExceptionType} to avoid problems in other tests.
+     * The associated calendar exceptions are also removed, so the {@link CalendarExceptionType} can be removed without error.
      *
-     * More concretely, it was causing problem in
-     * {@link CalendarExceptionTypeServiceTest} if it was executed after this
-     * test.
+     * More concretely, it was causing problem in {@link CalendarExceptionTypeServiceTest} if it was executed after this test.
      */
     @AfterTransaction
     public void removeAddedExceptionType() {
@@ -174,9 +164,7 @@ public class BaseCalendarServiceTest {
             @SuppressWarnings("unchecked")
             private void removeAssociatedCalendarData() {
                 Session s = sessionFactory.getCurrentSession();
-                Query query = s.createQuery(
-                        "from CalendarException e where e.type = :type")
-                        .setParameter("type", addedExceptionType);
+                Query query = s.createQuery("from CalendarException e where e.type = :type").setParameter("type", addedExceptionType);
                 List<CalendarException> found = query.list();
                 for (CalendarException each : found) {
                     s.delete(each);
@@ -221,151 +209,136 @@ public class BaseCalendarServiceTest {
     }
 
     @Test
+    @Transactional
     public void testAddValidBaseCalendar() throws InstanceNotFoundException {
 
-        /* Build valid base calendar "bc1" (5 constraint violations). */
+        /* Build valid base calendar "bc1" (5 constraint violations) */
+
         /* Build a calendar exception */
-        CalendarExceptionDTO exceptionDTO_1 = new CalendarExceptionDTO(
-                getUniqueName(), toXml(getValidDate(0)), new Integer(7),
-                addedExceptionType.getCode());
+        CalendarExceptionDTO exceptionDTO_1 =
+                new CalendarExceptionDTO(getUniqueName(), toXml(getValidDate(0)), 7, addedExceptionType.getCode());
 
-        CalendarExceptionDTO exceptionDTO_2 = new CalendarExceptionDTO(
-                getUniqueName(), toXml(getValidDate(1)), new Integer(7),
-                addedExceptionType.getCode());
+        CalendarExceptionDTO exceptionDTO_2 =
+                new CalendarExceptionDTO(getUniqueName(), toXml(getValidDate(1)), 7, addedExceptionType.getCode());
 
-        List<CalendarExceptionDTO> calendarExceptions = new ArrayList<CalendarExceptionDTO>();
+        List<CalendarExceptionDTO> calendarExceptions = new ArrayList<>();
         calendarExceptions.add(exceptionDTO_1);
         calendarExceptions.add(exceptionDTO_2);
 
         /* Build a calendar data */
-        HoursPerDayDTO hoursPerDayDTO_1 = new HoursPerDayDTO(CalendarData.Days.FRIDAY.name(), new Integer(4));
-        HoursPerDayDTO hoursPerDayDTO_2 = new HoursPerDayDTO(CalendarData.Days.TUESDAY.name(), new Integer(4));
-        List<HoursPerDayDTO> listHoursPerDayDTO = new ArrayList<HoursPerDayDTO>();
+        HoursPerDayDTO hoursPerDayDTO_1 = new HoursPerDayDTO(CalendarData.Days.FRIDAY.name(), 4);
+        HoursPerDayDTO hoursPerDayDTO_2 = new HoursPerDayDTO(CalendarData.Days.TUESDAY.name(), 4);
+        List<HoursPerDayDTO> listHoursPerDayDTO = new ArrayList<>();
         listHoursPerDayDTO.add(hoursPerDayDTO_1);
         listHoursPerDayDTO.add(hoursPerDayDTO_2);
 
-        /* missing code,date, hoursPerDays and parent */
+        /* missing code, date, hoursPerDays and parent */
         CalendarDataDTO dataDTO_1 = new CalendarDataDTO(null, null, null);
-        CalendarDataDTO dataDTO_2 = new CalendarDataDTO("codeData",
-                listHoursPerDayDTO, toXml(getValidDate(4)),
-                getDefaultCalendar()
-                        .getCode());
 
-        List<CalendarDataDTO> calendarDatas = new ArrayList<CalendarDataDTO>();
-        calendarDatas.add(dataDTO_1);
-        calendarDatas.add(dataDTO_2);
+        CalendarDataDTO dataDTO_2 =
+                new CalendarDataDTO("codeData", listHoursPerDayDTO, toXml(getValidDate(4)), getDefaultCalendar().getCode());
 
-        /* Build Base Calendar list. */
-        BaseCalendarDTO bc1 = new BaseCalendarDTO(getUniqueName(),
-                getUniqueName(), null, calendarExceptions, Arrays
-                        .asList(new CalendarDataDTO(Arrays
-                                .asList(new HoursPerDayDTO(
-                                        CalendarData.Days.MONDAY.name(),
-                                        new Integer(8))), null, null)));
+        List<CalendarDataDTO> calendarData = new ArrayList<>();
+        calendarData.add(dataDTO_1);
+        calendarData.add(dataDTO_2);
+
+        /* Build Base Calendar list */
+        BaseCalendarDTO bc1 = new BaseCalendarDTO(
+                getUniqueName(), getUniqueName(),
+                null, calendarExceptions,
+                Collections.singletonList(new CalendarDataDTO(
+                        Collections.singletonList(new HoursPerDayDTO(CalendarData.Days.MONDAY.name(), 8)), null, null)));
 
         String codeBaseCalendar = getUniqueName();
-        BaseCalendarDTO bc2 = new BaseCalendarDTO(codeBaseCalendar,
-                getUniqueName(), null, null, calendarDatas);
+        BaseCalendarDTO bc2 = new BaseCalendarDTO(codeBaseCalendar, getUniqueName(), null, null, calendarData);
 
         BaseCalendarListDTO baseCalendars = createBaseCalendarListDTO(bc1, bc2);
 
-        List<InstanceConstraintViolationsDTO> instanceConstraintViolationsList = calendarService
-                .addBaseCalendars(baseCalendars).instanceConstraintViolationsList;
+        List<InstanceConstraintViolationsDTO> instanceConstraintViolationsList =
+                calendarService.addBaseCalendars(baseCalendars).instanceConstraintViolationsList;
 
-        assertTrue(instanceConstraintViolationsList.toString(),
-                instanceConstraintViolationsList.size() == 0);
+        assertTrue(instanceConstraintViolationsList.toString(), instanceConstraintViolationsList.size() == 0);
 
-        BaseCalendar baseCalendar = baseCalendarDAO
-                .findByCode(codeBaseCalendar);
+        BaseCalendar baseCalendar = baseCalendarDAO.findByCode(codeBaseCalendar);
         assertTrue(baseCalendar.getExceptions().isEmpty());
         assertTrue(baseCalendar.getCalendarDataVersions().size() == 2);
 
         CalendarData data = baseCalendar.getCalendarDataByCode("codeData");
-        assertEquals(Capacity.create(EffortDuration.hours(4))
-                .overAssignableWithoutLimit(),
+        assertEquals(Capacity.create(EffortDuration.hours(4)).overAssignableWithoutLimit(),
                 data.getCapacityOn(CalendarData.Days.FRIDAY));
-        assertEquals(Capacity.create(EffortDuration.hours(4))
-                .overAssignableWithoutLimit(true),
+
+        assertEquals(Capacity.create(EffortDuration.hours(4)).overAssignableWithoutLimit(true),
                 data.getCapacityOn(CalendarData.Days.TUESDAY));
     }
 
     @Test
+    @Transactional
     public void testAddInvalidBaseCalendar() throws InstanceNotFoundException {
-        /* Build valid base calendar "bc1" (5 constraint violations). */
-        /* Build two calendar exception with the same date */
-        CalendarExceptionDTO exceptionDTO_1 = new CalendarExceptionDTO(
-                getUniqueName(), toXml(getValidDate(0)), new Integer(7),
-                addedExceptionType.getCode());
+        /* Build valid base calendar "bc1" (5 constraint violations) */
 
-        CalendarExceptionDTO exceptionDTO_2 = new CalendarExceptionDTO(
-                getUniqueName(), toXml(getValidDate(0)), new Integer(7),
-                addedExceptionType.getCode());
+        /* Build two calendar exception with the same date */
+        CalendarExceptionDTO exceptionDTO_1 =
+                new CalendarExceptionDTO(getUniqueName(), toXml(getValidDate(0)), 7, addedExceptionType.getCode());
+
+        CalendarExceptionDTO exceptionDTO_2 =
+                new CalendarExceptionDTO(getUniqueName(), toXml(getValidDate(0)), 7, addedExceptionType.getCode());
 
         /* Build two calendar exception with the past date */
-        CalendarExceptionDTO exceptionDTO_3 = new CalendarExceptionDTO(
-                getUniqueName(), toXml(getInvalidDate()), new Integer(7),
-                addedExceptionType.getCode());
+        CalendarExceptionDTO exceptionDTO_3 =
+                new CalendarExceptionDTO(getUniqueName(), toXml(getInvalidDate()), 7, addedExceptionType.getCode());
 
         /* Build two calendar exception with the invalid type */
-        CalendarExceptionDTO exceptionDTO_4 = new CalendarExceptionDTO(
-                getUniqueName(), toXml(getInvalidDate()), new Integer(7),
-                "InvalidType");
+        CalendarExceptionDTO exceptionDTO_4 =
+                new CalendarExceptionDTO(getUniqueName(), toXml(getInvalidDate()), 7, "InvalidType");
 
-        List<CalendarExceptionDTO> calendarExceptions = new ArrayList<CalendarExceptionDTO>();
+        List<CalendarExceptionDTO> calendarExceptions = new ArrayList<>();
         calendarExceptions.add(exceptionDTO_1);
         calendarExceptions.add(exceptionDTO_2);
         calendarExceptions.add(exceptionDTO_3);
         calendarExceptions.add(exceptionDTO_4);
 
-        /* Build Base Calendar list. */
-        BaseCalendarDTO bc1 = new BaseCalendarDTO(getUniqueName(),
-                getUniqueName(), null, calendarExceptions,
-                new ArrayList<CalendarDataDTO>());
+        /* Build Base Calendar list */
+        BaseCalendarDTO bc1 =
+                new BaseCalendarDTO(getUniqueName(), getUniqueName(), null, calendarExceptions, new ArrayList<>());
 
         BaseCalendarListDTO baseCalendars = createBaseCalendarListDTO(bc1);
 
-        List<InstanceConstraintViolationsDTO> instanceConstraintViolationsList = calendarService
-                .addBaseCalendars(baseCalendars).instanceConstraintViolationsList;
+        List<InstanceConstraintViolationsDTO> instanceConstraintViolationsList =
+                calendarService.addBaseCalendars(baseCalendars).instanceConstraintViolationsList;
 
-        assertTrue(instanceConstraintViolationsList.toString(),
-                instanceConstraintViolationsList.size() == 1);
+        assertTrue(instanceConstraintViolationsList.toString(), instanceConstraintViolationsList.size() == 1);
 
     }
 
     @Test
+    @Transactional
     public void testAddInvalidCalendarData() {
         /* Build a calendar data */
-        HoursPerDayDTO hoursPerDayDTO_1 = new HoursPerDayDTO("XXX",
-                new Integer(4));
-        List<HoursPerDayDTO> listHoursPerDayDTO = new ArrayList<HoursPerDayDTO>();
+        HoursPerDayDTO hoursPerDayDTO_1 = new HoursPerDayDTO("XXX", 4);
+        List<HoursPerDayDTO> listHoursPerDayDTO = new ArrayList<>();
         listHoursPerDayDTO.add(hoursPerDayDTO_1);
 
-        /* missing code,date, hoursPerDays and parent */
-        CalendarDataDTO dataDTO_2 = new CalendarDataDTO("codeData_2",
-                listHoursPerDayDTO, toXml(getInvalidDate()),
-                getDefaultCalendar()
-                        .getCode());
+        /* Missing code,date, hoursPerDays and parent */
+        CalendarDataDTO dataDTO_2 =
+                new CalendarDataDTO("codeData_2", listHoursPerDayDTO, toXml(getInvalidDate()), getDefaultCalendar().getCode());
 
-        List<CalendarDataDTO> calendarDatas = new ArrayList<CalendarDataDTO>();
-        calendarDatas.add(dataDTO_2);
+        List<CalendarDataDTO> calendarData = new ArrayList<>();
+        calendarData.add(dataDTO_2);
 
         String codeBaseCalendar = getUniqueName();
-        BaseCalendarDTO bc2 = new BaseCalendarDTO(codeBaseCalendar,
-                getUniqueName(), null, null, calendarDatas);
+        BaseCalendarDTO bc2 = new BaseCalendarDTO(codeBaseCalendar, getUniqueName(), null, null, calendarData);
 
         BaseCalendarListDTO baseCalendars = createBaseCalendarListDTO(bc2);
 
-        List<InstanceConstraintViolationsDTO> instanceConstraintViolationsList = calendarService
-                .addBaseCalendars(baseCalendars).instanceConstraintViolationsList;
+        List<InstanceConstraintViolationsDTO> instanceConstraintViolationsList =
+                calendarService.addBaseCalendars(baseCalendars).instanceConstraintViolationsList;
 
-        assertTrue(instanceConstraintViolationsList.toString(),
-                instanceConstraintViolationsList.size() == 1);
+        assertTrue(instanceConstraintViolationsList.toString(), instanceConstraintViolationsList.size() == 1);
     }
 
-    private BaseCalendarListDTO createBaseCalendarListDTO(
-            BaseCalendarDTO... calendarDTOs) {
+    private BaseCalendarListDTO createBaseCalendarListDTO(BaseCalendarDTO... calendarDTOs) {
 
-        List<BaseCalendarDTO> baseCalendarList = new ArrayList<BaseCalendarDTO>();
+        List<BaseCalendarDTO> baseCalendarList = new ArrayList<>();
 
         for (BaseCalendarDTO c : calendarDTOs) {
             baseCalendarList.add(c);
@@ -378,11 +351,9 @@ public class BaseCalendarServiceTest {
     private BaseCalendar getDefaultCalendar() {
 
         IOnTransaction<BaseCalendar> find = new IOnTransaction<BaseCalendar>() {
-
             @Override
             public BaseCalendar execute() {
-                BaseCalendar defaultCalendar = configurationDAO
-                        .getConfiguration().getDefaultCalendar();
+                BaseCalendar defaultCalendar = configurationDAO.getConfiguration().getDefaultCalendar();
                 defaultCalendar.getCode();
                 return defaultCalendar;
             }

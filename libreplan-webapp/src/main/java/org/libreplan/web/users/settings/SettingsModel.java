@@ -22,7 +22,7 @@ package org.libreplan.web.users.settings;
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.commons.lang.Validate;
+import org.apache.commons.lang3.Validate;
 import org.libreplan.business.common.exceptions.InstanceNotFoundException;
 import org.libreplan.business.common.exceptions.ValidationException;
 import org.libreplan.business.labels.daos.ILabelDAO;
@@ -309,6 +309,66 @@ public class SettingsModel implements ISettingsModel {
     @Override
     public void setResourcesLoadFilterCriterion(Criterion criterion) {
         user.setResourcesLoadFilterCriterion(criterion);
+    }
+
+    @Override
+    public boolean isShowResourcesOn() {
+        return user.isShowResourcesOn();
+    }
+
+    @Override
+    public void setShowResourcesOn(boolean showResourcesOn) {
+        user.setShowResourcesOn(showResourcesOn);
+    }
+
+    @Override
+    public boolean isShowAdvancesOn() {
+        return user.isShowAdvancesOn();
+    }
+
+    @Override
+    public void setShowAdvancesOn(boolean showAdvancesOn) {
+        user.setShowAdvancesOn(showAdvancesOn);
+    }
+
+    @Override
+    public boolean isShowReportedHoursOn() {
+        return user.isShowReportedHoursOn();
+    }
+
+    @Override
+    public void setShowReportedHoursOn(boolean showReportedHoursOn) {
+        user.setShowReportedHoursOn(showReportedHoursOn);
+    }
+
+    @Override
+    public boolean isShowLabelsOn() {
+        return user.isShowLabelsOn();
+    }
+
+    @Override
+    public void setShowLabelsOn(boolean showLabelsOn) {
+        user.setShowLabelsOn(showLabelsOn);
+    }
+
+    @Override
+    public boolean isShowMoneyCostBarOn() {
+        return user.isShowMoneyCostBarOn();
+    }
+
+    @Override
+    public void setShowMoneyCostBarOn(boolean showMoneyCostBarOn) {
+            user.setShowMoneyCostBarOn(showMoneyCostBarOn);
+    }
+
+    @Override
+    public boolean isProjectsFilterFinishedOn() {
+        return user.isProjectsFilterFinishedOn();
+    }
+
+    @Override
+    public void setProjectsFilterFinishedOn(boolean projectsFilterFinishedOn) {
+        user.setProjectsFilterFinishedOn(projectsFilterFinishedOn);
     }
 
 }

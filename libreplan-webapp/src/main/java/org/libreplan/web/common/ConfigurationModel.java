@@ -35,7 +35,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.libreplan.business.calendars.daos.IBaseCalendarDAO;
 import org.libreplan.business.calendars.entities.BaseCalendar;
 import org.libreplan.business.common.daos.IConfigurationDAO;
@@ -63,6 +63,7 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * @author Manuel Rego Casasnovas <mrego@igalia.com>
  * @author Cristina Alvarino Perez <cristina.alvarino@comtecsf.es>
+ * @author Vova Perebykivskyi <vova@libreplan-enterprise.com>
  */
 @Service
 @Scope(BeanDefinition.SCOPE_PROTOTYPE)
@@ -70,11 +71,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class ConfigurationModel implements IConfigurationModel {
 
     /**
-     * Conversation state
+     * Conversation state.
      */
     private Configuration configuration;
 
-    private Map<EntityNameEnum, List<EntitySequence>> entitySequences = new HashMap<EntityNameEnum, List<EntitySequence>>();
+    private Map<EntityNameEnum, List<EntitySequence>> entitySequences = new HashMap<>();
 
     private static Map<String, String> currencies = getAllCurrencies();
 
@@ -106,10 +107,7 @@ public class ConfigurationModel implements IConfigurationModel {
 
     @Override
     public BaseCalendar getDefaultCalendar() {
-        if (configuration == null) {
-            return null;
-        }
-        return configuration.getDefaultCalendar();
+        return configuration == null ? null : configuration.getDefaultCalendar();
     }
 
     @Override
@@ -124,11 +122,10 @@ public class ConfigurationModel implements IConfigurationModel {
     private void initEntitySequences() {
         this.entitySequences.clear();
         for (EntityNameEnum entityName : EntityNameEnum.values()) {
-            entitySequences.put(entityName, new ArrayList<EntitySequence>());
+            entitySequences.put(entityName, new ArrayList<>());
         }
         for (EntitySequence entitySequence : entitySequenceDAO.getAll()) {
-            entitySequences.get(entitySequence.getEntityName()).add(
-                    entitySequence);
+            entitySequences.get(entitySequence.getEntityName()).add(entitySequence);
         }
     }
 
@@ -192,36 +189,32 @@ public class ConfigurationModel implements IConfigurationModel {
         try {
             storeAndRemoveEntitySequences();
         } catch (IllegalStateException e) {
-            throw new OptimisticLockingFailureException(
-                    "concurrency problem in entity sequences");
+            throw new OptimisticLockingFailureException("concurrency problem in entity sequences");
         }
     }
 
     private void checkEntitySequences() {
-        // check if exist at least one sequence for each entity
+        // Check if exist at least one sequence for each entity
         for (EntityNameEnum entityName : EntityNameEnum.values()) {
             String entity = entityName.getDescription();
             List<EntitySequence> sequences = entitySequences.get(entityName);
             if (sequences.isEmpty()) {
-                throw new ValidationException(_(
-                        "At least one {0} sequence is needed", entity));
+                throw new ValidationException(_("At least one {0} sequence is needed", entity));
             }
 
             if (!isAnyActive(sequences)) {
-                throw new ValidationException(_(
-                        "At least one {0} sequence must be active", entity));
+                throw new ValidationException(_("At least one {0} sequence must be active", entity));
             }
+
             if (!checkConstraintPrefixNotRepeated(sequences)) {
                 throw new ValidationException(_(
-                        "The {0} sequence prefixes cannot be repeated",
-                        entityName.getDescription()));
+                        "The {0} sequence prefixes cannot be repeated", entityName.getDescription()));
             }
         }
     }
 
-    private boolean checkConstraintPrefixNotRepeated(
-            List<EntitySequence> sequences) {
-        Set<String> prefixes = new HashSet<String>();
+    private boolean checkConstraintPrefixNotRepeated(List<EntitySequence> sequences) {
+        Set<String> prefixes = new HashSet<>();
         for (EntitySequence sequence : sequences) {
             String prefix = sequence.getPrefix();
             if (prefixes.contains(prefix)) {
@@ -242,10 +235,9 @@ public class ConfigurationModel implements IConfigurationModel {
     }
 
     private void storeAndRemoveEntitySequences() {
-        Collection<List<EntitySequence>> col_sequences = entitySequences
-                .values();
-        List<EntitySequence> sequences = new ArrayList<EntitySequence>();
-        for (List<EntitySequence> list : col_sequences) {
+        Collection<List<EntitySequence>> sequencesCollection = entitySequences.values();
+        List<EntitySequence> sequences = new ArrayList<>();
+        for (List<EntitySequence> list : sequencesCollection) {
             sequences.addAll(list);
         }
         removeEntitySequences(sequences);
@@ -253,15 +245,13 @@ public class ConfigurationModel implements IConfigurationModel {
     }
 
     public void removeEntitySequences(final List<EntitySequence> sequences) {
-        // first one is necessary to remove the deleted sequences.
-        List<EntitySequence> toRemove = entitySequenceDAO
-                .findEntitySquencesNotIn(sequences);
+        // First one is necessary to remove the deleted sequences
+        List<EntitySequence> toRemove = entitySequenceDAO.findEntitySequencesNotIn(sequences);
         for (final EntitySequence entitySequence : toRemove) {
             try {
                 entitySequenceDAO.remove(entitySequence);
             } catch (InstanceNotFoundException e) {
-                throw new ValidationException(
-                        _("Some sequences to be removed do not exist"));
+                throw new ValidationException(_("Some sequences to be removed do not exist"));
             } catch (IllegalArgumentException e) {
                 throw new ValidationException(e.getMessage());
             }
@@ -269,10 +259,10 @@ public class ConfigurationModel implements IConfigurationModel {
     }
 
     public void storeEntitySequences(List<EntitySequence> sequences) {
-        // it updates the sequences that are not active first
-        List<EntitySequence> toSaveAfter = new ArrayList<EntitySequence>();
+        // It updates the sequences that are not active first
+        List<EntitySequence> toSaveAfter = new ArrayList<>();
         for (EntitySequence entitySequence : sequences) {
-            if (entitySequence.isActive()) {
+            if ( entitySequence.isActive() ) {
                 toSaveAfter.add(entitySequence);
             } else {
                 entitySequenceDAO.save(entitySequence);
@@ -324,8 +314,7 @@ public class ConfigurationModel implements IConfigurationModel {
         if (configuration == null) {
             return null;
         }
-        return (configuration.isAutocompleteLogin() && (!configuration
-                .getChangedDefaultAdminPassword()));
+        return (configuration.isAutocompleteLogin() && (!configuration.getChangedDefaultAdminPassword()));
     }
 
     @Override
@@ -337,8 +326,7 @@ public class ConfigurationModel implements IConfigurationModel {
 
     @Override
     public Boolean isChangedDefaultPasswdAdmin() {
-        return configuration != null ? configuration
-                .getChangedDefaultAdminPassword() : false;
+        return configuration != null ? configuration.getChangedDefaultAdminPassword() : false;
     }
 
     @Override
@@ -350,11 +338,9 @@ public class ConfigurationModel implements IConfigurationModel {
     }
 
     @Override
-    public void setGenerateCodeForWorkReportType(
-            Boolean generateCodeForWorkReportType) {
+    public void setGenerateCodeForWorkReportType(Boolean generateCodeForWorkReportType) {
         if (configuration != null) {
-            configuration
-                    .setGenerateCodeForWorkReportType(generateCodeForWorkReportType);
+            configuration.setGenerateCodeForWorkReportType(generateCodeForWorkReportType);
         }
     }
 
@@ -367,20 +353,16 @@ public class ConfigurationModel implements IConfigurationModel {
     }
 
     @Override
-    public void setGenerateCodeForCalendarExceptionType(
-            Boolean generateCodeForCalendarExceptionType) {
+    public void setGenerateCodeForCalendarExceptionType(Boolean generateCodeForCalendarExceptionType) {
         if (configuration != null) {
-            configuration
-                    .setGenerateCodeForCalendarExceptionType(generateCodeForCalendarExceptionType);
+            configuration.setGenerateCodeForCalendarExceptionType(generateCodeForCalendarExceptionType);
         }
     }
 
     @Override
-    public void setGenerateCodeForCostCategory(
-            Boolean generateCodeForCostCategory) {
+    public void setGenerateCodeForCostCategory(Boolean generateCodeForCostCategory) {
         if (configuration != null) {
-            configuration
-                    .setGenerateCodeForCostCategory(generateCodeForCostCategory);
+            configuration.setGenerateCodeForCostCategory(generateCodeForCostCategory);
         }
     }
 
@@ -418,8 +400,7 @@ public class ConfigurationModel implements IConfigurationModel {
     @Override
     public void setGenerateCodeForWorkReport(Boolean generateCodeForWorkReport) {
         if (configuration != null) {
-            configuration
-                    .setGenerateCodeForWorkReport(generateCodeForWorkReport);
+            configuration.setGenerateCodeForWorkReport(generateCodeForWorkReport);
         }
     }
 
@@ -447,11 +428,9 @@ public class ConfigurationModel implements IConfigurationModel {
     }
 
     @Override
-    public void setGenerateCodeForTypesOfWorkHours(
-            Boolean generateCodeForTypesOfWorkHours) {
+    public void setGenerateCodeForTypesOfWorkHours(Boolean generateCodeForTypesOfWorkHours) {
         if (configuration != null) {
-            configuration
-                    .setGenerateCodeForTypesOfWorkHours(generateCodeForTypesOfWorkHours);
+            configuration.setGenerateCodeForTypesOfWorkHours(generateCodeForTypesOfWorkHours);
         }
     }
 
@@ -464,11 +443,9 @@ public class ConfigurationModel implements IConfigurationModel {
     }
 
     @Override
-    public void setGenerateCodeForMaterialCategories(
-            Boolean generateCodeForMaterialCategories) {
+    public void setGenerateCodeForMaterialCategories(Boolean generateCodeForMaterialCategories) {
         if (configuration != null) {
-            configuration
-                    .setGenerateCodeForMaterialCategories(generateCodeForMaterialCategories);
+            configuration.setGenerateCodeForMaterialCategories(generateCodeForMaterialCategories);
         }
     }
 
@@ -481,11 +458,9 @@ public class ConfigurationModel implements IConfigurationModel {
     }
 
     @Override
-    public void setGenerateCodeForBaseCalendars(
-            Boolean generateCodeForBaseCalendars) {
+    public void setGenerateCodeForBaseCalendars(Boolean generateCodeForBaseCalendars) {
         if (configuration != null) {
-            configuration
-                    .setGenerateCodeForBaseCalendars(generateCodeForBaseCalendars);
+            configuration.setGenerateCodeForBaseCalendars(generateCodeForBaseCalendars);
         }
     }
 
@@ -538,30 +513,25 @@ public class ConfigurationModel implements IConfigurationModel {
         return entitySequences.get(entityName);
     }
 
-    public void addEntitySequence(EntityNameEnum entityName, String prefix,
-            Integer digits) {
+    public void addEntitySequence(EntityNameEnum entityName, String prefix, Integer digits) {
         List<EntitySequence> sequences = entitySequences.get(entityName);
-        EntitySequence entitySequence = EntitySequence.create(prefix,
-                entityName, digits);
+        EntitySequence entitySequence = EntitySequence.create(prefix, entityName, digits);
         if (sequences.isEmpty()) {
             entitySequence.setActive(true);
         }
         sequences.add(entitySequence);
     }
 
-    public void removeEntitySequence(EntitySequence entitySequence)
-            throws IllegalArgumentException {
-        entitySequences.get(entitySequence.getEntityName()).remove(
-                entitySequence);
+    public void removeEntitySequence(EntitySequence entitySequence) throws IllegalArgumentException {
+        entitySequences.get(entitySequence.getEntityName()).remove(entitySequence);
     }
 
-    public boolean checkFrefixFormat(EntitySequence sequence) {
-        return (sequence.checkConstraintWithoutLowBar() && sequence
-                .checkConstraintPrefixWithoutWhiteSpaces());
+    public boolean checkPrefixFormat(EntitySequence sequence) {
+        return (sequence.isWithoutLowBarConstraint() && sequence.isPrefixWithoutWhiteSpacesConstraint());
     }
 
     @Override
-    public List<ProgressType> getProgresTypes() {
+    public List<ProgressType> getProgressTypes() {
         return ProgressType.getAll();
     }
 
@@ -604,25 +574,12 @@ public class ConfigurationModel implements IConfigurationModel {
         configuration.setCheckNewVersionEnabled(checkNewVersionEnabled);
     }
 
-    @Override
-    public boolean isAllowToGatherUsageStatsEnabled() {
-        return configuration.isAllowToGatherUsageStatsEnabled();
-    }
-
-    @Override
-    public void setAllowToGatherUsageStatsEnabled(
-            boolean allowToGatherUsageStatsEnabled) {
-        configuration
-                .setAllowToGatherUsageStatsEnabled(allowToGatherUsageStatsEnabled);
-    }
-
     private static Map<String, String> getAllCurrencies() {
-        Map<String, String> currencies = new TreeMap<String, String>();
+        Map<String, String> currencies = new TreeMap<>();
         for (Locale locale : Locale.getAvailableLocales()) {
             if (StringUtils.isNotBlank(locale.getCountry())) {
                 Currency currency = Currency.getInstance(locale);
-                currencies.put(currency.getCurrencyCode(),
-                        currency.getSymbol(locale));
+                currencies.put(currency.getCurrencyCode(), currency.getSymbol(locale));
             }
         }
         return currencies;
@@ -657,8 +614,7 @@ public class ConfigurationModel implements IConfigurationModel {
     }
 
     @Override
-    public void setPersonalTimesheetsTypeOfWorkHours(
-            TypeOfWorkHours typeOfWorkHours) {
+    public void setPersonalTimesheetsTypeOfWorkHours(TypeOfWorkHours typeOfWorkHours) {
         if (configuration != null) {
             configuration.setPersonalTimesheetsTypeOfWorkHours(typeOfWorkHours);
         }
@@ -670,10 +626,8 @@ public class ConfigurationModel implements IConfigurationModel {
     }
 
     @Override
-    public void setPersonalTimesheetsPeriodicity(
-            PersonalTimesheetsPeriodicityEnum personalTimesheetsPeriodicity) {
-        configuration
-                .setPersonalTimesheetsPeriodicity(personalTimesheetsPeriodicity);
+    public void setPersonalTimesheetsPeriodicity(PersonalTimesheetsPeriodicityEnum personalTimesheetsPeriodicity) {
+        configuration.setPersonalTimesheetsPeriodicity(personalTimesheetsPeriodicity);
     }
 
     @Override
@@ -690,6 +644,16 @@ public class ConfigurationModel implements IConfigurationModel {
     @Override
     public void setSecondsPlanningWarning(Integer secondsPlanningWarning) {
         configuration.setSecondsPlanningWarning(secondsPlanningWarning);
+    }
+
+    @Override
+    public String getRepositoryLocation() {
+        return configuration.getRepositoryLocation();
+    }
+
+    @Override
+    public void setRepositoryLocation(String location) {
+        configuration.setRepositoryLocation(location);
     }
 
     private void saveConnectors() {

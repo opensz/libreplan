@@ -21,32 +21,35 @@
 
 package org.libreplan.web.users.services;
 
-import org.springframework.security.GrantedAuthority;
-import org.springframework.security.providers.dao.SaltSource;
-import org.springframework.security.providers.encoding.PasswordEncoder;
-import org.springframework.security.userdetails.User;
-import org.springframework.security.userdetails.UserDetails;
+import java.util.Collections;
+
+import org.springframework.security.authentication.dao.SaltSource;
+import org.springframework.security.authentication.encoding.PasswordEncoder;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
 
 /**
- * For maximum flexibility, the implementation uses the password encoder and
- * the salt source configured in the Spring Security configuration file (in
- * consequence, it is possible to change the configuration to use any password
- * encoder and/or salt source without modifying the implementation of this
- * service). The only restriction the implementation imposes is that when using
- * a reflection-based salt source, the "username" property must be specified.
+ * For maximum flexibility, the implementation uses the password encoder and the salt source
+ * configured in the Spring Security configuration file
+ * (in consequence, it is possible to change the configuration to use any password encoder and/or salt source
+ * without modifying the implementation of this service).
+ *
+ * The only restriction the implementation imposes is that
+ * when using a reflection-based salt source, the "username" property must be specified.
  *
  * @author Fernando Bellas Permuy <fbellas@udc.es>
  */
 public class DBPasswordEncoderService implements IDBPasswordEncoderService {
 
     private SaltSource saltSource;
-
+    // TODO resolve deprecated
     private PasswordEncoder passwordEncoder;
 
     public void setSaltSource(SaltSource saltSource) {
         this.saltSource = saltSource;
     }
 
+    // TODO resolve deprecated
     public void setPasswordEncoder(PasswordEncoder passwordEncoder) {
         this.passwordEncoder = passwordEncoder;
     }
@@ -54,8 +57,8 @@ public class DBPasswordEncoderService implements IDBPasswordEncoderService {
     @Override
     /**
      * The second parameter, <code>loginName</code>, is used as a salt if the
-     * configured salt source is <code>ReflectionSaltSource</code> (which must
-     * be configured to use "username" property as a salt).
+     * configured salt source is <code>ReflectionSaltSource</code>
+     * (which must be configured to use "username" property as a salt).
      */
     public String encodePassword(String clearPassword, String loginName) {
 
@@ -63,14 +66,13 @@ public class DBPasswordEncoderService implements IDBPasswordEncoderService {
          * The only important parameter in User's constructor is "loginName",
          * which corresponds to the "username" property if the "saltSource" is
          * "ReflectionSaltSource". Note that "SystemWideSaltSource" ignores
-         * the "user" passed as a parameter to "saltSource.getSalt".
+         * the "user" passed as a parameter to "saltSource.getSalt"
          */
-        UserDetails userDetails = new User(loginName, clearPassword, true,
-            true, true, true, new GrantedAuthority[0]);
+        UserDetails userDetails = new User(loginName, clearPassword, true, true, true, true, Collections.emptyList());
 
         Object salt = null;
 
-        if (saltSource != null) {
+        if ( saltSource != null ) {
             salt = saltSource.getSalt(userDetails);
         }
 

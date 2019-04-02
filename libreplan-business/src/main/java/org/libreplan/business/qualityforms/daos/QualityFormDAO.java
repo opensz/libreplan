@@ -25,7 +25,7 @@ import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.commons.lang.Validate;
+import org.apache.commons.lang3.Validate;
 import org.hibernate.Criteria;
 import org.hibernate.NonUniqueResultException;
 import org.hibernate.Query;
@@ -45,19 +45,20 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * DAO for {@link QualityForm}
+ * DAO for {@link QualityForm}.
+ *
  * @author Susana Montes Pedreira <smontes@wirelessgalicia.com>
  */
 
 @Repository
 @Scope(BeanDefinition.SCOPE_SINGLETON)
-public class QualityFormDAO extends GenericDAOHibernate<QualityForm, Long>
-        implements IQualityFormDAO {
+public class QualityFormDAO extends GenericDAOHibernate<QualityForm, Long> implements IQualityFormDAO {
 
     @Autowired
     private IAdvanceTypeDAO advanceTypeDAO;
 
     @Override
+    @Transactional(readOnly = true)
     public List<QualityForm> getAll() {
         return list(QualityForm.class);
     }
@@ -67,8 +68,7 @@ public class QualityFormDAO extends GenericDAOHibernate<QualityForm, Long>
     public boolean isUnique(QualityForm qualityForm) {
         try {
             QualityForm result = findUniqueByName(qualityForm);
-            return (result == null || result.getId()
-                    .equals(qualityForm.getId()));
+            return result == null || result.getId().equals(qualityForm.getId());
         } catch (Exception e) {
             e.printStackTrace();
             return false;
@@ -78,35 +78,36 @@ public class QualityFormDAO extends GenericDAOHibernate<QualityForm, Long>
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true)
     public QualityForm findByNameAndType(String name, QualityFormType type) {
-        return (QualityForm) getSession().createCriteria(QualityForm.class)
-                .add(Restrictions.eq("name", name)).add(
-                        Restrictions.eq("qualityFormType", type))
+        return (QualityForm) getSession()
+                .createCriteria(QualityForm.class)
+                .add(Restrictions.eq("name", name))
+                .add(Restrictions.eq("qualityFormType", type))
                 .uniqueResult();
     }
 
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true)
     public List<QualityForm> getAllByType(QualityFormType type) {
-        Criteria c = getSession().createCriteria(QualityForm.class).add(
-                Restrictions.eq("qualityFormType", type));
-        return ((List<QualityForm>) c.list());
+        return getSession()
+                .createCriteria(QualityForm.class)
+                .add(Restrictions.eq("qualityFormType", type))
+                .list();
     }
 
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true)
-    public QualityForm findUniqueByName(QualityForm qualityForm)
-            throws InstanceNotFoundException {
+    public QualityForm findUniqueByName(QualityForm qualityForm) throws InstanceNotFoundException {
         Validate.notNull(qualityForm);
         return findUniqueByName(qualityForm.getName());
     }
 
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true)
-    public QualityForm findUniqueByName(String name)
-            throws InstanceNotFoundException, NonUniqueResultException {
-        Criteria c = getSession().createCriteria(QualityForm.class);
-        c.add(Restrictions.eq("name", name));
-        QualityForm qualityForm = (QualityForm) c.uniqueResult();
+    public QualityForm findUniqueByName(String name) throws InstanceNotFoundException, NonUniqueResultException {
+        QualityForm qualityForm = (QualityForm) getSession()
+                .createCriteria(QualityForm.class)
+                .add(Restrictions.eq("name", name))
+                .uniqueResult();
 
         if (qualityForm == null) {
             throw new InstanceNotFoundException(null, "QualityForm");
@@ -119,7 +120,7 @@ public class QualityFormDAO extends GenericDAOHibernate<QualityForm, Long>
     public boolean existsOtherWorkReportTypeByName(QualityForm qualityForm) {
         try {
             QualityForm t = findUniqueByName(qualityForm);
-            return (t != null && t != qualityForm);
+            return t != null && t != qualityForm;
         } catch (InstanceNotFoundException e) {
             return false;
         }
@@ -141,8 +142,9 @@ public class QualityFormDAO extends GenericDAOHibernate<QualityForm, Long>
                 advanceTypeDAO.save(advanceType);
                 advanceType.setUnitName(name);
             } else {
-                advanceType = AdvanceType.create(name, new BigDecimal(100),
-                        false, new BigDecimal(0.01), true, true, true);
+                advanceType = AdvanceType.create(
+                        name, new BigDecimal(100), false, BigDecimal.valueOf(0.01), true, true, true);
+
                 advanceTypeDAO.save(advanceType);
 
                 entity.setAdvanceType(advanceType);
@@ -154,14 +156,15 @@ public class QualityFormDAO extends GenericDAOHibernate<QualityForm, Long>
 
     @Override
     public void checkHasTasks(QualityForm qualityForm) throws ValidationException {
-        Query query = getSession().createQuery(
-                "FROM TaskQualityForm taskQualityForm JOIN taskQualityForm.qualityForm tq WHERE tq IN (:qualityForms)");
+        String queryString =
+                "FROM TaskQualityForm taskQualityForm JOIN taskQualityForm.qualityForm tq WHERE tq IN (:qualityForms)";
+
+        Query query = getSession().createQuery(queryString);
+
         query.setParameterList("qualityForms", Collections.singleton(qualityForm));
         if (!query.list().isEmpty()) {
-            throw ValidationException
-                    .invalidValue(
-                            "Cannot delete quality form. It is being used at this moment by some task.",
-                            qualityForm);
+            throw ValidationException.invalidValueException(
+                    "Cannot delete quality form. It is being used at this moment by some task.", qualityForm);
         }
     }
 }

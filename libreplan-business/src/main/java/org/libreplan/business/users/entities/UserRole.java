@@ -28,21 +28,26 @@ import static org.libreplan.business.i18n.I18nHelper._;
  *
  * @author Fernando Bellas Permuy <fbellas@udc.es>
  * @author Manuel Rego Casasnovas <rego@igalia.com>
+ * @author Vova Perebykivskyi <vova@libreplan-enterprise.com>
  */
 public enum UserRole {
 
     // Access to all pages
     ROLE_SUPERUSER(_("Superuser")),
+
     // Web services roles
     ROLE_WS_READER(_("Web service reader")),
     ROLE_WS_WRITER(_("Web service writer")),
     ROLE_WS_SUBCONTRACTING(_("Web service subcontractor operations")),
+
     // Project operations roles
     ROLE_READ_ALL_PROJECTS(_("Read all projects")),
     ROLE_EDIT_ALL_PROJECTS(_("Edit all projects")),
     ROLE_CREATE_PROJECTS(_("Create projects")),
+
     // Special role for bound users
     ROLE_BOUND_USER(_("Bound user")),
+
     // Page roles
     ROLE_PLANNING(_("Planning")),
     ROLE_TEMPLATES(_("Templates")),
@@ -80,12 +85,22 @@ public enum UserRole {
     ROLE_ESTIMATED_PLANNED_HOURS_PER_TASK_REPORT(_("Estimated/Planned Hours Per Task Report")),
     ROLE_PROJECT_COSTS_REPORT(_("Project Costs Report")),
     ROLE_TASK_SCHEDULING_STATUS_IN_PROJECT_REPORT(_("Task Scheduling Status In Project Report")),
-    ROLE_MATERIALS_NEED_AT_DATE_REPORT(_("Materials Needs At Date Report")),
-    ROLE_PROJECT_STATUS_REPORT(_("Project Status Report"));
+    ROLE_MATERIALS_NEED_AT_DATE_REPORT(_("Materials Needed At Date Report")),
+    ROLE_PROJECT_STATUS_REPORT(_("Project Status Report")),
+
+    ROLE_EDIT_EMAIL_TEMPLATES(_("Edit E-mail Templates")),
+    ROLE_USE_FILES(_("Use files for order")),
+
+    ROLE_EMAIL_TASK_ASSIGNED_TO_RESOURCE(_("Email: task assigned to resource")),
+    ROLE_EMAIL_RESOURCE_REMOVED_FROM_TASK(_("Email: resource removed from task")),
+    ROLE_EMAIL_MILESTONE_REACHED(_("Email: milestone reached")),
+    ROLE_EMAIL_TASK_SHOULD_FINISH(_("Email: task should finish")),
+    ROLE_EMAIL_TASK_SHOULD_START(_("Email: task should start")),
+    ROLE_EMAIL_TIMESHEET_DATA_MISSING(_("Email: timesheet data missing"));
 
     private final String displayName;
 
-    private UserRole(String displayName) {
+    UserRole(String displayName) {
         this.displayName = displayName;
     }
 

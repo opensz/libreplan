@@ -43,13 +43,12 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Tests for {@link Order}. <br />
+ * Tests for {@link Order}.
+ * <br />
  * @author Óscar González Fernández <ogonzalez@igalia.com>
  */
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(locations = { BUSINESS_SPRING_CONFIG_FILE,
-        BUSINESS_SPRING_CONFIG_TEST_FILE })
-@Transactional
+@ContextConfiguration(locations = { BUSINESS_SPRING_CONFIG_FILE, BUSINESS_SPRING_CONFIG_TEST_FILE })
 public class OrderTest {
 
     private static OrderVersion mockedOrderVersion = TaskTest.mockOrderVersion();
@@ -58,11 +57,12 @@ public class OrderTest {
     private IDataBootstrap defaultAdvanceTypesBootstrapListener;
 
     @Before
-    public void loadRequiredaData() {
+    public void loadRequiredData() {
         defaultAdvanceTypesBootstrapListener.loadRequiredData();
     }
 
     @Test
+    @Transactional
     public void testAddingOrderElement() {
         Order order = Order.create();
         order.useSchedulingDataFor(mockedOrderVersion);
@@ -74,17 +74,19 @@ public class OrderTest {
     }
 
     @Test
+    @Transactional
     public void testPreservesOrder() {
         OrderLineGroup container = OrderLineGroup.create();
         container.useSchedulingDataFor(mockedOrderVersion);
         OrderLine[] created = new OrderLine[100];
+
         for (int i = 0; i < created.length; i++) {
             created[i] = OrderLine.create();
             container.add(created[i]);
         }
+
         for (int i = 0; i < created.length; i++) {
-            assertThat(container.getChildren().get(i),
-                    equalTo((OrderElement) created[i]));
+            assertThat(container.getChildren().get(i), equalTo((OrderElement) created[i]));
         }
     }
 }

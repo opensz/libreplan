@@ -20,23 +20,23 @@
  */
 package org.libreplan.web.planner.chart;
 
-import org.apache.commons.lang.Validate;
+import org.apache.commons.lang3.Validate;
 import org.zkforge.timeplot.Timeplot;
 import org.zkoss.ganttz.timetracker.TimeTracker;
 import org.zkoss.ganttz.timetracker.zoom.ZoomLevel;
 
 /**
  * @author Óscar González Fernández <ogonzalez@igalia.com>
- *
  */
 public class Chart {
 
     private final Timeplot timeplot;
+
     private final IChartFiller filler;
+
     private final TimeTracker timeTracker;
 
-    public Chart(Timeplot timeplot, IChartFiller filler,
-            TimeTracker timeTracker) {
+    public Chart(Timeplot timeplot, IChartFiller filler, TimeTracker timeTracker) {
         Validate.notNull(filler);
         Validate.notNull(timeTracker);
         Validate.notNull(timeplot);

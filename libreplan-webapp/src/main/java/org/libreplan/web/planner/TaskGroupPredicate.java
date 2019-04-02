@@ -23,6 +23,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
 import org.libreplan.business.externalcompanies.entities.ExternalCompany;
 import org.libreplan.business.labels.entities.Label;
 import org.libreplan.business.orders.entities.Order;
@@ -53,14 +54,17 @@ public class TaskGroupPredicate implements IPredicate {
 
     private Date finishDate;
 
-    private Boolean includeChildren;
+    private String name;
+
+    private Boolean excludeFinishedProject;
 
     public TaskGroupPredicate(List<FilterPair> filters, Date startDate,
-            Date finishDate, Boolean includeChildren) {
+            Date finishDate, String name, Boolean excludeFinishedProject) {
         this.filters = filters;
         this.startDate = startDate;
         this.finishDate = finishDate;
-        this.includeChildren = includeChildren;
+        this.name = name;
+        this.excludeFinishedProject = excludeFinishedProject;
     }
 
     @Override
@@ -73,7 +77,8 @@ public class TaskGroupPredicate implements IPredicate {
         if (taskGroup == null) {
             return false;
         }
-        if (acceptFilters(taskGroup) && acceptFiltersDates(taskGroup)) {
+        if (acceptFilters(taskGroup) && acceptFiltersDates(taskGroup)
+                && acceptFilterName(taskGroup)) {
             return true;
         }
         return false;
@@ -117,14 +122,6 @@ public class TaskGroupPredicate implements IPredicate {
                 taskElement)) {
             return true;
         }
-        if (includeChildren) {
-            for (TaskElement each : taskElement.getAllChildren()) {
-                if (existCriterionInTaskElementResourceAllocations(
-                        filterCriterion, each)) {
-                    return true;
-                }
-            }
-        }
         return false;
     }
 
@@ -159,13 +156,6 @@ public class TaskGroupPredicate implements IPredicate {
         if (existLabelInOrderElement(filterLabel, order)) {
             return true;
         }
-        if (this.includeChildren) {
-            for (OrderElement orderElement : order.getAllOrderElements()) {
-                if (existLabelInOrderElement(filterLabel, orderElement)) {
-                    return true;
-                }
-            }
-        }
         return false;
     }
 
@@ -175,6 +165,15 @@ public class TaskGroupPredicate implements IPredicate {
             if (label.getId().equals(filterLabel.getId())) {
                 return true;
             }
+        }
+        return false;
+    }
+
+    private boolean acceptFinishedProject(FilterPair filter, TaskGroup taskGroup) {
+        Label filterLabel = (Label) filter.getValue();
+        Order order = (Order) taskGroup.getOrderElement();
+        if (order.getState() != OrderStatusEnum.FINISHED) {
+            return true;
         }
         return false;
     }
@@ -283,10 +282,6 @@ public class TaskGroupPredicate implements IPredicate {
         return false;
     }
 
-    public boolean isIncludeChildren() {
-        return includeChildren;
-    }
-
     public List<FilterPair> getFilters() {
         if (filters == null) {
             return Collections.emptyList();
@@ -304,6 +299,21 @@ public class TaskGroupPredicate implements IPredicate {
 
     public void setFilters(List<FilterPair> listFilters) {
         filters = listFilters;
+    }
+
+    protected boolean acceptFilterName(TaskGroup taskGroup) {
+        if (name == null) {
+            return true;
+        }
+        if ((taskGroup.getName() != null)
+                && (StringUtils.containsIgnoreCase(taskGroup.getName(), name))) {
+            return true;
+        }
+        return false;
+    }
+
+    public Boolean getExcludeFinishedProjects() {
+        return excludeFinishedProject;
     }
 
 }

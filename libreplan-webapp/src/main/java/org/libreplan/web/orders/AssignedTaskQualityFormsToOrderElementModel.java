@@ -21,6 +21,7 @@
 
 package org.libreplan.web.orders;
 
+import static org.libreplan.business.common.exceptions.ValidationException.invalidValue;
 import static org.libreplan.web.I18nHelper._;
 
 import java.math.BigDecimal;
@@ -28,7 +29,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import org.hibernate.validator.InvalidValue;
 import org.joda.time.LocalDate;
 import org.libreplan.business.advance.daos.IAdvanceTypeDAO;
 import org.libreplan.business.advance.entities.AdvanceAssignment;
@@ -52,11 +52,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * @author Susana Montes Pedreira <smontes@wirelessgalicia.com>
+ * @author Vova Perebykivskyi <vova@libreplan-enterprise.com>
  */
 @Service
 @Scope(BeanDefinition.SCOPE_PROTOTYPE)
-public class AssignedTaskQualityFormsToOrderElementModel implements
-        IAssignedTaskQualityFormsToOrderElementModel {
+public class AssignedTaskQualityFormsToOrderElementModel implements IAssignedTaskQualityFormsToOrderElementModel {
 
     @Autowired
     private IOrderElementDAO orderDAO;
@@ -64,12 +64,13 @@ public class AssignedTaskQualityFormsToOrderElementModel implements
     @Autowired
     private IQualityFormDAO qualityFormDAO;
 
+    @Autowired
+    private IAdvanceTypeDAO advanceTypeDAO;
+
     private OrderElement orderElement;
 
     private IOrderModel orderModel;
 
-    @Autowired
-    private IAdvanceTypeDAO advanceTypeDAO;
 
     @Override
     public OrderElement getOrderElement() {
@@ -101,17 +102,14 @@ public class AssignedTaskQualityFormsToOrderElementModel implements
         }
     }
 
-    private void initializeTaskQualityForms(
-            Collection<TaskQualityForm> taskQualityForms) {
+    private void initializeTaskQualityForms(Collection<TaskQualityForm> taskQualityForms) {
         for (TaskQualityForm taskQualityForm : taskQualityForms) {
             taskQualityForm.getQualityForm().getName();
-            initializeTaskQualityFormItems(taskQualityForm
-                    .getTaskQualityFormItems());
+            initializeTaskQualityFormItems(taskQualityForm.getTaskQualityFormItems());
         }
     }
 
-    public void initializeTaskQualityFormItems(
-            Collection<TaskQualityFormItem> taskQualityFormItems) {
+    public void initializeTaskQualityFormItems(Collection<TaskQualityFormItem> taskQualityFormItems) {
         for (TaskQualityFormItem taskQualityFormItem : taskQualityFormItems) {
             taskQualityFormItem.getName();
         }
@@ -119,29 +117,39 @@ public class AssignedTaskQualityFormsToOrderElementModel implements
 
     @Override
     public List<QualityForm> getNotAssignedQualityForms() {
-        List<QualityForm> result = new ArrayList<QualityForm>();
-        if (orderElement != null) {
-            return getlistNotAssignedQualityForms();
-        }
-        return result;
+        return orderElement != null ? getListNotAssignedQualityForms() : new ArrayList<>();
     }
 
-    private List<QualityForm> getlistNotAssignedQualityForms() {
-        List<QualityForm> result = new ArrayList<QualityForm>();
+    private List<QualityForm> getListNotAssignedQualityForms() {
+        List<QualityForm> result = new ArrayList<>();
         for (QualityForm qualityForm : orderModel.getQualityForms()) {
-            if (!isAssigned(qualityForm)) {
+            if ( !isAssigned(qualityForm) ) {
                 result.add(qualityForm);
             }
         }
+
+        return result;
+    }
+
+    @Override
+    public List<QualityForm> getAssignedQualityForms() {
+        List<QualityForm> result = new ArrayList<>();
+        for (QualityForm qualityForm : qualityFormDAO.getAll()) {
+            if ( isAssigned(qualityForm) ) {
+                result.add(qualityForm);
+            }
+        }
+
         return result;
     }
 
     @Override
     public List<TaskQualityForm> getTaskQualityForms() {
-        List<TaskQualityForm> result = new ArrayList<TaskQualityForm>();
-        if (orderElement != null) {
+        List<TaskQualityForm> result = new ArrayList<>();
+        if ( orderElement != null ) {
             result.addAll(orderElement.getTaskQualityForms());
         }
+
         return result;
     }
 
@@ -152,31 +160,40 @@ public class AssignedTaskQualityFormsToOrderElementModel implements
 
     @Override
     public void deleteTaskQualityForm(TaskQualityForm taskQualityForm) {
-            orderElement.removeTaskQualityForm(taskQualityForm);
+        orderElement.removeTaskQualityForm(taskQualityForm);
     }
 
-    private AdvanceAssignment getAdvanceAssignment(
-            TaskQualityForm taskQualityForm) {
-        AdvanceType advanceType = taskQualityForm.getQualityForm()
-                .getAdvanceType();
-        if (advanceType == null) {
+    private AdvanceAssignment getAdvanceAssignment(TaskQualityForm taskQualityForm) {
+        AdvanceType advanceType = taskQualityForm.getQualityForm().getAdvanceType();
+        if ( advanceType == null ) {
             return null;
         }
         else {
             advanceTypeDAO.reattach(advanceType);
-            return taskQualityForm.getOrderElement()
-                    .getDirectAdvanceAssignmentByType(advanceType);
+            return taskQualityForm.getOrderElement().getDirectAdvanceAssignmentByType(advanceType);
         }
     }
 
     @Override
     public boolean isAssigned(QualityForm qualityForm) {
-        for (TaskQualityForm taskQualityForm : orderElement
-                .getTaskQualityForms()) {
-            if (qualityForm.equals(taskQualityForm.getQualityForm())) {
-                return true;
+        // orderDAO used for gathered data to be sent to LibrePlan server.
+        // In general case orderElement will be not null and only that part of code will be triggered.
+
+        if ( orderElement != null ) {
+            for (TaskQualityForm taskQualityForm : orderElement.getTaskQualityForms()) {
+                if ( qualityForm.equals(taskQualityForm.getQualityForm()) ) {
+                    return true;
+                }
+            }
+        } else {
+            for (OrderElement currentElement : orderDAO.getAll()) {
+                for ( TaskQualityForm taskQualityForm : currentElement.getTaskQualityForms() )
+                    if ( qualityForm.equals(taskQualityForm.getQualityForm()) ) {
+                        return true;
+                    }
             }
         }
+
         return false;
     }
 
@@ -185,42 +202,37 @@ public class AssignedTaskQualityFormsToOrderElementModel implements
         this.orderModel = orderModel;
     }
 
-    public boolean isDisabledPassedItem(TaskQualityForm taskQualityForm,
-            TaskQualityFormItem item) {
-        if ((taskQualityForm == null) || ((item == null))) {
+    public boolean isDisabledPassedItem(TaskQualityForm taskQualityForm, TaskQualityFormItem item) {
+        if ( (taskQualityForm == null) || (item == null) ) {
             return true;
         }
-        if (!taskQualityForm.isByItems()) {
-            return (!(item.getPassed() || taskQualityForm
-                    .isPassedPreviousItem(item)));
+
+        if ( !taskQualityForm.isByItems() ) {
+            return !(item.getPassed() || taskQualityForm.isPassedPreviousItem(item));
         }
         return false;
     }
 
-    public boolean isDisabledDateItem(TaskQualityForm taskQualityForm,
-            TaskQualityFormItem item) {
-        if ((taskQualityForm == null) || ((item == null))) {
-            return true;
-        }
-        return (!taskQualityForm.isByItems() && (!item.getPassed()));
+    public boolean isDisabledDateItem(TaskQualityForm taskQualityForm, TaskQualityFormItem item) {
+        return (taskQualityForm == null) || (item == null) || !taskQualityForm.isByItems() && !item.getPassed();
     }
 
-    public boolean isCorrectConsecutiveDate(TaskQualityForm taskQualityForm,
-            TaskQualityFormItem item) {
-        if ((taskQualityForm == null) || ((item == null))) {
+    public boolean isCorrectConsecutiveDate(TaskQualityForm taskQualityForm, TaskQualityFormItem item) {
+        if ( (taskQualityForm == null) || (item == null) ) {
             return true;
         }
-        if (taskQualityForm.isByItems()) {
+
+        if ( taskQualityForm.isByItems() ) {
             return true;
         }
-        return (taskQualityForm.isCorrectConsecutiveDate(item));
+        return taskQualityForm.isCorrectConsecutiveDate(item);
     }
 
     public void updatePassedTaskQualityFormItems(TaskQualityForm taskQualityForm) {
         if (taskQualityForm != null) {
             Integer position = getFirstNotPassedPosition(taskQualityForm);
-            List<TaskQualityFormItem> items = taskQualityForm
-                .getTaskQualityFormItems();
+            List<TaskQualityFormItem> items = taskQualityForm.getTaskQualityFormItems();
+
             for (int i = position; i < items.size(); i++) {
                 items.get(i).setPassed(false);
                 items.get(i).setDate(null);
@@ -230,8 +242,7 @@ public class AssignedTaskQualityFormsToOrderElementModel implements
 
     private Integer getFirstNotPassedPosition(TaskQualityForm taskQualityForm) {
         Integer position = 0;
-        for (TaskQualityFormItem item : taskQualityForm
-                .getTaskQualityFormItems()) {
+        for (TaskQualityFormItem item : taskQualityForm.getTaskQualityFormItems()) {
             if (!item.getPassed()) {
                 return position;
             }
@@ -240,13 +251,13 @@ public class AssignedTaskQualityFormsToOrderElementModel implements
         return position;
     }
 
-    // Operation to confirm and validate
-
+    /**
+     * Operation to confirm and validate.
+     */
     @Override
     public void validate() {
         if (getOrderElement() != null) {
-            for (TaskQualityForm taskQualityForm : orderElement
-                    .getTaskQualityForms()) {
+            for (TaskQualityForm taskQualityForm : orderElement.getTaskQualityForms()) {
                 validateTaskQualityForm(taskQualityForm);
             }
         }
@@ -257,29 +268,32 @@ public class AssignedTaskQualityFormsToOrderElementModel implements
     }
 
     private void validateTaskQualityFormItems(TaskQualityForm taskQualityForm) {
-        for (TaskQualityFormItem item : taskQualityForm
-                .getTaskQualityFormItems()) {
+        for (TaskQualityFormItem item : taskQualityForm.getTaskQualityFormItems()) {
 
-            if ((!taskQualityForm.isByItems())
-                    && (!taskQualityForm.isCorrectConsecutivePassed(item))) {
-                throw new ValidationException(new InvalidValue(
+            if ((!taskQualityForm.isByItems()) && (!taskQualityForm.isCorrectConsecutivePassed(item))) {
+
+                throw new ValidationException(invalidValue(
                         _("cannot be checked until the previous item is checked before"),
-                        TaskQualityForm.class,
-                        "passed", item.getName(), taskQualityForm));
+                        "passed",
+                        item.getName(),
+                        taskQualityForm));
 
             }
-            if ((!taskQualityForm.isByItems())
-                    && (!taskQualityForm.isCorrectConsecutiveDate(item))) {
-                throw new ValidationException(new InvalidValue(
+
+            if ((!taskQualityForm.isByItems()) && (!taskQualityForm.isCorrectConsecutiveDate(item))) {
+                throw new ValidationException(invalidValue(
                         _("must be after the previous date"),
-                        TaskQualityForm.class,
-                        "date", item.getName(), taskQualityForm));
+                        "date",
+                        item.getName(),
+                        taskQualityForm));
             }
 
-            if (!item.checkConstraintIfDateCanBeNull()) {
-                throw new ValidationException(new InvalidValue(
-                        _("date not specified"), TaskQualityForm.class, "date",
-                        item.getName(), taskQualityForm));
+            if (!item.isIfDateCanBeNullConstraint()) {
+                throw new ValidationException(invalidValue(
+                        _("date not specified"),
+                        "date",
+                        item.getName(),
+                        taskQualityForm));
             }
         }
     }
@@ -287,69 +301,58 @@ public class AssignedTaskQualityFormsToOrderElementModel implements
     @Override
     @Transactional(readOnly = true)
     public void addAdvanceAssignmentIfNeeded(TaskQualityForm taskQualityForm)
-            throws DuplicateValueTrueReportGlobalAdvanceException,
-            DuplicateAdvanceAssignmentForOrderElementException {
-        AdvanceType advanceType = taskQualityForm.getQualityForm()
-                .getAdvanceType();
-        advanceTypeDAO.reattach(advanceType);
-        AdvanceAssignment advanceAssignment = taskQualityForm.getOrderElement()
-                .getDirectAdvanceAssignmentByType(advanceType);
+            throws DuplicateValueTrueReportGlobalAdvanceException, DuplicateAdvanceAssignmentForOrderElementException {
 
-        if (advanceAssignment == null) {
-            DirectAdvanceAssignment newAdvanceAssignment = DirectAdvanceAssignment
-                    .create(false, new BigDecimal(100));
+        AdvanceType advanceType = taskQualityForm.getQualityForm().getAdvanceType();
+        advanceTypeDAO.reattach(advanceType);
+
+        AdvanceAssignment advanceAssignment =
+                taskQualityForm.getOrderElement().getDirectAdvanceAssignmentByType(advanceType);
+
+        if ( advanceAssignment == null ) {
+            DirectAdvanceAssignment newAdvanceAssignment = DirectAdvanceAssignment.create(false, new BigDecimal(100));
             newAdvanceAssignment.setAdvanceType(advanceType);
-            taskQualityForm.getOrderElement().addAdvanceAssignment(
-                    newAdvanceAssignment);
+            taskQualityForm.getOrderElement().addAdvanceAssignment(newAdvanceAssignment);
             addAdvanceMeasurements(taskQualityForm, newAdvanceAssignment);
         }
     }
 
-    private void addAdvanceMeasurements(TaskQualityForm taskQualityForm,
-            DirectAdvanceAssignment newAdvanceAssignment) {
-        for (TaskQualityFormItem taskQualityFormItem : taskQualityForm
-                .getTaskQualityFormItems()) {
-            if (taskQualityFormItem.getPassed()
-                    && (taskQualityFormItem.getDate() != null)) {
-                LocalDate date = LocalDate
-                        .fromDateFields(taskQualityFormItem.getDate());
+    private void addAdvanceMeasurements(TaskQualityForm taskQualityForm, DirectAdvanceAssignment newAdvanceAssignment) {
+        for (TaskQualityFormItem taskQualityFormItem : taskQualityForm.getTaskQualityFormItems()) {
+            if ( taskQualityFormItem.getPassed() && (taskQualityFormItem.getDate() != null) ) {
+                LocalDate date = LocalDate.fromDateFields(taskQualityFormItem.getDate());
                 BigDecimal value = taskQualityFormItem.getPercentage();
-                newAdvanceAssignment
-                        .addAdvanceMeasurements(AdvanceMeasurement
-                                .create(date, value));
+                newAdvanceAssignment.addAdvanceMeasurements(AdvanceMeasurement.create(date, value));
             }
         }
     }
 
     @Override
     @Transactional(readOnly = true)
-    public void removeAdvanceAssignmentIfNeeded(TaskQualityForm taskQualityForm)
-            throws ValidationException {
-        AdvanceAssignment advanceAssignment = this
-                .getAdvanceAssignment(taskQualityForm);
-        if (advanceAssignment != null) {
-            if (advanceAssignment.getReportGlobalAdvance()) {
+    public void removeAdvanceAssignmentIfNeeded(TaskQualityForm taskQualityForm) throws ValidationException {
+        AdvanceAssignment advanceAssignment = this.getAdvanceAssignment(taskQualityForm);
+        if ( advanceAssignment != null ) {
+            if ( advanceAssignment.getReportGlobalAdvance() ) {
                 showMessageDeleteSpread();
             } else {
-                taskQualityForm.getOrderElement().removeAdvanceAssignment(
-                    advanceAssignment);
+                taskQualityForm.getOrderElement().removeAdvanceAssignment(advanceAssignment);
             }
         }
     }
 
     private void showMessageDeleteSpread() throws ValidationException {
-        throw new ValidationException(
-                _("Quality form cannot be removed as it is spreading progress"));
+        throw new ValidationException(_("Quality form cannot be removed as it is spreading progress"));
     }
 
     @Override
     public void updateAdvancesIfNeeded() {
-        if (orderElement != null) {
+        if ( orderElement != null ) {
             for (TaskQualityForm taskQualityForm : getTaskQualityForms()) {
-                if (taskQualityForm.isReportAdvance()) {
-                    DirectAdvanceAssignment advanceAssignment = orderElement
-                            .getAdvanceAssignmentByType(taskQualityForm
-                                    .getQualityForm().getAdvanceType());
+                if ( taskQualityForm.isReportAdvance() ) {
+
+                    DirectAdvanceAssignment advanceAssignment =
+                            orderElement.getAdvanceAssignmentByType(taskQualityForm.getQualityForm().getAdvanceType());
+
                     advanceAssignment.clearAdvanceMeasurements();
                     addAdvanceMeasurements(taskQualityForm, advanceAssignment);
                 }

@@ -21,20 +21,13 @@
 
 package org.zkoss.ganttz;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.zkoss.ganttz.extensions.ICommand;
 import org.zkoss.ganttz.extensions.IContext;
-import org.zkoss.zk.ui.event.Event;
-import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zul.Button;
 
 class CommandContextualized<T> {
-
-    public static <T> CommandContextualized<T> create(ICommand<T> command,
-            IContext<T> context) {
-        return new CommandContextualized<T>(command, context);
-    }
 
     private final ICommand<T> command;
 
@@ -47,33 +40,35 @@ class CommandContextualized<T> {
         this.context = context;
     }
 
+    public static <T> CommandContextualized<T> create(ICommand<T> command, IContext<T> context) {
+        return new CommandContextualized<>(command, context);
+    }
+
     public void doAction() {
         command.doAction(context);
     }
 
     Button toButton() {
-        if (button != null) {
+        if ( button != null ) {
             return button;
         }
+
         Button result = new Button();
-        if (StringUtils.isEmpty(command.getImage())) {
+        if ( StringUtils.isEmpty(command.getImage()) ) {
             result.setLabel(command.getName());
         } else {
             result.setImage(command.getImage());
             result.setTooltiptext(command.getName());
         }
-        if (command.isDisabled()) {
+
+        if ( command.isDisabled() ) {
             result.setDisabled(true);
         } else {
-            result.addEventListener(Events.ON_CLICK, new EventListener() {
-
-                @Override
-                public void onEvent(Event event) {
-                    doAction();
-                }
-            });
+            result.addEventListener(Events.ON_CLICK, event -> doAction());
         }
+
         button = result;
+
         return result;
     }
 

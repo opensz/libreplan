@@ -65,16 +65,14 @@ import org.springframework.transaction.annotation.Transactional;
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = { BUSINESS_SPRING_CONFIG_FILE, BUSINESS_SPRING_CONFIG_TEST_FILE })
 /**
- * Test for {@ExpenseSheetDAO}
+ * Test for {@link org.libreplan.business.expensesheet.daos.ExpenseSheetDAO}.
  *
  * @author Susana Montes Pedreira <smontes@wirelessgalicia.com>
- *
  */
-@Transactional
 public class ExpenseSheetTestDAO {
 
     @Before
-    public void loadRequiredaData() {
+    public void loadRequiredData() {
         transactionService.runOnAnotherTransaction(new IOnTransaction<Void>() {
             @Override
             public Void execute() {
@@ -112,6 +110,7 @@ public class ExpenseSheetTestDAO {
     private IScenarioManager scenarioManager;
 
     @Test
+    @Transactional
     public void testInSpringContainer() {
         assertNotNull(orderDAO);
         assertNotNull(calendarDAO);
@@ -126,8 +125,7 @@ public class ExpenseSheetTestDAO {
         order.setInitDate(new Date());
         BaseCalendar basicCalendar = BaseCalendarTest.createBasicCalendar();
         calendarDAO.save(basicCalendar);
-        OrderVersion orderVersion = ResourceAllocationDAOTest.setupVersionUsing(scenarioManager,
-                order);
+        OrderVersion orderVersion = ResourceAllocationDAOTest.setupVersionUsing(scenarioManager, order);
         order.useSchedulingDataFor(orderVersion);
         return order;
     }
@@ -151,6 +149,7 @@ public class ExpenseSheetTestDAO {
     }
 
     @Test(expected = ValidationException.class)
+    @Transactional
     public void invalidExpenseSheetWithoutLines() {
         ExpenseSheet expense = ExpenseSheet.create();
         expense.setCode("UUID.randomUUID().toString()");
@@ -170,17 +169,17 @@ public class ExpenseSheetTestDAO {
     }
 
     @Test(expected = ValidationException.class)
+    @Transactional
     public void validExpenseSheetWithInvalidExpenseSheetLineData() {
-        // check out the expenseSheet without lines
+        // Check out the expenseSheet without lines
         ExpenseSheet expense = ExpenseSheet.create();
         expense.setCode("code-expense-sheet-1");
 
-        // order element empty
+        // orderElement empty
         OrderElement orderElement = null;
 
-        // a expense sheet with valid value,date but without order element.
-        ExpenseSheetLine line1 = ExpenseSheetLine.create(BigDecimal.ZERO, "concept",
-                new LocalDate(), orderElement);
+        // A expense sheet with valid value,date but without order element
+        ExpenseSheetLine line1 = ExpenseSheetLine.create(BigDecimal.ZERO, "concept", new LocalDate(), orderElement);
 
         line1.setExpenseSheet(expense);
         expense.add(line1);
@@ -191,19 +190,20 @@ public class ExpenseSheetTestDAO {
     }
 
     @Test
+    @Transactional
     public void validExpenseSheetWithInvalidValuesInLines() {
-        // create the expenseSheet without lines
+        // Create the expenseSheet without lines
         ExpenseSheet expense = ExpenseSheet.create();
         expense.setCode("code-expense-sheet-1");
 
-        // order element empty
+        // orderElement empty
         OrderElement orderElement = this.givenOrderElement("order-element-2");
 
-        // a expense sheet with valid date and order element, but invalid value.
+        // A expense sheet with valid date and order element, but invalid value
         ExpenseSheetLine line1 = ExpenseSheetLine.create(null, "concept", new LocalDate(),
                 orderElement);
 
-        // add the line to the expense sheet
+        // Add the line to the expense sheet
         line1.setExpenseSheet(expense);
         expense.add(line1);
 
@@ -219,12 +219,12 @@ public class ExpenseSheetTestDAO {
             expenseSheetDAO.save(expense);
             fail("it must throw a exception. The total is invalid because it is less than 0.");
         } catch (ValidationException e) {
+
         }
 
-        ExpenseSheetLine line2 = ExpenseSheetLine.create(BigDecimal.TEN, "concept",
-                new LocalDate(), orderElement);
+        ExpenseSheetLine line2 = ExpenseSheetLine.create(BigDecimal.TEN, "concept", new LocalDate(), orderElement);
 
-        // add other line to the expense sheet
+        // Add other line to the expense sheet
         line2.setExpenseSheet(expense);
         expense.add(line2);
 
@@ -234,7 +234,7 @@ public class ExpenseSheetTestDAO {
         } catch (ValidationException e) {
         }
 
-        // but if you change the value
+        // But if you change the value
         line1.setValue(BigDecimal.ONE);
 
         try {
@@ -246,19 +246,20 @@ public class ExpenseSheetTestDAO {
     }
 
     @Test
+    @Transactional
     public void validExpenseSheetWithInvalidDateInLines() {
-        // create the expenseSheet without lines
+        // Create the expenseSheet without lines
         ExpenseSheet expense = ExpenseSheet.create();
         expense.setCode("code-expense-sheet-1");
 
-        // order element empty
+        // orderElement empty
         OrderElement orderElement = this.givenOrderElement("order-element-2");
 
-        // a expense sheet with valid date and order element, but invalid value.
+        // A expense sheet with valid date and order element, but invalid value
         ExpenseSheetLine line1 = ExpenseSheetLine.create(BigDecimal.ONE, "concept", null,
                 orderElement);
 
-        // add the line to the expense sheet
+        // Add the line to the expense sheet
         line1.setExpenseSheet(expense);
         expense.add(line1);
 
@@ -274,10 +275,9 @@ public class ExpenseSheetTestDAO {
         assertThat(expense.getFirstExpense(), equalTo(today));
         assertThat(expense.getLastExpense(), equalTo(today));
 
-        // add other line with other date
+        // Add other line with other date
         LocalDate tomorrow = new LocalDate().plusDays(1);
-        ExpenseSheetLine line2 = ExpenseSheetLine.create(BigDecimal.ONE, "concept", tomorrow,
-                orderElement);
+        ExpenseSheetLine line2 = ExpenseSheetLine.create(BigDecimal.ONE, "concept", tomorrow, orderElement);
         line2.setExpenseSheet(expense);
         expense.add(line2);
 
@@ -292,31 +292,30 @@ public class ExpenseSheetTestDAO {
     }
 
     @Test
+    @Transactional
     public void validExpenseSheetData() {
-        // check out the expenseSheet without lines
+        // Check out the expenseSheet without lines
         int previousExpenses = expenseSheetDAO.getAll().size();
         ExpenseSheet expense = ExpenseSheet.create();
         expense.setCode("code-expense-sheet-1");
 
-        // check out the order element
+        // Check out the orderElement
         String orderLineCode = "order-line-code";
         OrderElement orderElement = givenSavedOrderElement(orderLineCode);
 
-        // check out the resource
+        // Check out the resource
         Worker worker = givenSavedValidWorker();
 
-        // add line 1 with a resource
+        // Add line 1 with a resource
         LocalDate today = new LocalDate();
-        ExpenseSheetLine line1 = ExpenseSheetLine.create(BigDecimal.ONE, "concept 1", today,
-                orderElement);
+        ExpenseSheetLine line1 = ExpenseSheetLine.create(BigDecimal.ONE, "concept 1", today, orderElement);
         line1.setResource(worker);
         line1.setExpenseSheet(expense);
         expense.add(line1);
 
-        // add line 2 without resource
+        // Add line 2 without resource
         LocalDate tomorrow = new LocalDate().plusDays(1);
-        ExpenseSheetLine line2 = ExpenseSheetLine.create(BigDecimal.ONE, "concept 2", tomorrow,
-                orderElement);
+        ExpenseSheetLine line2 = ExpenseSheetLine.create(BigDecimal.ONE, "concept 2", tomorrow, orderElement);
         line2.setExpenseSheet(expense);
         expense.add(line2);
 
@@ -330,7 +329,7 @@ public class ExpenseSheetTestDAO {
 
         assertThat(expenseSheetDAO.getAll().size(), equalTo(previousExpenses + 1));
 
-        // check out the expense sheet
+        // Check out the expense sheet
         ExpenseSheet expenseSheet = expenseSheetDAO.getAll().get(previousExpenses);
         assertNotNull(expenseSheet.getCode());
         assertThat(expenseSheet.getCode(), equalTo("code-expense-sheet-1"));
@@ -339,7 +338,7 @@ public class ExpenseSheetTestDAO {
         assertThat(expenseSheet.getLastExpense(), equalTo(tomorrow));
         assertThat(expenseSheet.getExpenseSheetLines().size(), equalTo(2));
 
-        // check out the expense sheet lines
+        // Check out the expense sheet lines
         ExpenseSheetLine savedLine1 = expenseSheet.getExpenseSheetLines().last();
         ExpenseSheetLine savedLine2 = expenseSheet.getExpenseSheetLines().first();
 
@@ -373,10 +372,11 @@ public class ExpenseSheetTestDAO {
     }
 
     @Test
+    @Transactional
     public void testSaveTwoExpenseSheetWithTheSameCode() {
         int previousExpenses = expenseSheetDAO.getAll().size();
 
-        // create a valid order element
+        // Create a valid order element
         String orderLineCode = "order-line-code";
         OrderElement orderElement = givenSavedOrderElement(orderLineCode);
 
@@ -390,12 +390,12 @@ public class ExpenseSheetTestDAO {
 
         assertThat(expenseSheetDAO.getAll().size(), equalTo(previousExpenses + 1));
 
-        // check out the expense sheet
+        // Check out the expense sheet
         ExpenseSheet expenseSheet = expenseSheetDAO.getAll().get(previousExpenses);
         assertNotNull(expenseSheet.getCode());
         assertThat(expenseSheet.getCode(), equalTo("code-expense-sheet-1"));
 
-        // create other expense sheet with one line
+        // Create other expense sheet with one line
 
         ExpenseSheet expense2 = getValidExpenseSheet("code-expense-sheet-1", orderElement);
         try {
@@ -411,20 +411,20 @@ public class ExpenseSheetTestDAO {
         ExpenseSheet expense = ExpenseSheet.create();
         expense.setCode(code);
 
-        // add line 1
+        // Add line 1
         LocalDate today = new LocalDate();
-        ExpenseSheetLine line1 = ExpenseSheetLine.create(BigDecimal.ONE, "concept 1", today,
-                orderElement);
+        ExpenseSheetLine line1 = ExpenseSheetLine.create(BigDecimal.ONE, "concept 1", today, orderElement);
         line1.setExpenseSheet(expense);
         expense.add(line1);
         return expense;
     }
 
     @Test
+    @Transactional
     public void testSaveTwoValidExpenseSheets() {
         int previousExpenses = expenseSheetDAO.getAll().size();
 
-        // create a valid order element
+        // Create a valid orderElement
         String orderLineCode = "order-line-code";
         OrderElement orderElement = givenSavedOrderElement(orderLineCode);
 
@@ -438,12 +438,12 @@ public class ExpenseSheetTestDAO {
 
         assertThat(expenseSheetDAO.getAll().size(), equalTo(previousExpenses + 1));
 
-        // check out the expense sheet
+        // Check out the expense sheet
         ExpenseSheet expenseSheet = expenseSheetDAO.getAll().get(previousExpenses);
         assertNotNull(expenseSheet.getCode());
         assertThat(expenseSheet.getCode(), equalTo("code-expense-sheet-1"));
 
-        // create other expense sheet with one line
+        // Create other expense sheet with one line
 
         ExpenseSheet expense2 = getValidExpenseSheet("code-expense-sheet-2", orderElement);
         try {
@@ -455,7 +455,7 @@ public class ExpenseSheetTestDAO {
 
         assertThat(expenseSheetDAO.getAll().size(), equalTo(previousExpenses + 2));
 
-        // check out the expense sheet
+        // Check out the expense sheet
         try {
             ExpenseSheet expenseSheet2 = expenseSheetDAO.findByCode("code-expense-sheet-2");
             assertNotNull(expenseSheet2);
@@ -466,6 +466,7 @@ public class ExpenseSheetTestDAO {
     }
 
     @Test(expected = ValidationException.class)
+    @Transactional
     public void testSaveExpenseSheetWithoutCode() {
         ExpenseSheet expense = ExpenseSheet.create();
         expense.setCode(null);
@@ -477,11 +478,12 @@ public class ExpenseSheetTestDAO {
     }
 
     @Test
+    @Transactional
     public void testRemoveExpenseSheet() throws InstanceNotFoundException {
         int previousExpenses = expenseSheetDAO.getAll().size();
         int previousExpenseLines = expenseSheetLineDAO.findAll().size();
 
-        // create a valid order element
+        // Create a valid order element
         String orderLineCode = "order-line-code";
         OrderElement orderElement = givenSavedOrderElement(orderLineCode);
 
@@ -504,6 +506,7 @@ public class ExpenseSheetTestDAO {
     }
 
     @Test
+    @Transactional
     public void testRemoveExpenseSheetLine() {
         int previousExpenseLines = expenseSheetLineDAO.findAll().size();
         int previousExpenses = expenseSheetDAO.getAll().size();
@@ -511,25 +514,23 @@ public class ExpenseSheetTestDAO {
         ExpenseSheet expense = ExpenseSheet.create();
         expense.setCode("code-expense-sheet-1");
 
-        // check out the order element
+        // Check out the orderElement
         String orderLineCode = "order-line-code";
         OrderElement orderElement = givenSavedOrderElement(orderLineCode);
 
-        // check out the resource
+        // Check out the resource
         Worker worker = givenSavedValidWorker();
 
-        // add line 1 with a resource
+        // Add line 1 with a resource
         LocalDate today = new LocalDate();
-        ExpenseSheetLine line1 = ExpenseSheetLine.create(BigDecimal.ONE, "concept 1", today,
-                orderElement);
+        ExpenseSheetLine line1 = ExpenseSheetLine.create(BigDecimal.ONE, "concept 1", today, orderElement);
         line1.setResource(worker);
         line1.setExpenseSheet(expense);
         expense.add(line1);
 
-        // add line 2 without resource
+        // Add line 2 without resource
         LocalDate tomorrow = new LocalDate().plusDays(1);
-        ExpenseSheetLine line2 = ExpenseSheetLine.create(BigDecimal.ONE, "concept 2", tomorrow,
-                orderElement);
+        ExpenseSheetLine line2 = ExpenseSheetLine.create(BigDecimal.ONE, "concept 2", tomorrow, orderElement);
         line2.setCode("code-line-2");
         line2.setExpenseSheet(expense);
         expense.add(line2);

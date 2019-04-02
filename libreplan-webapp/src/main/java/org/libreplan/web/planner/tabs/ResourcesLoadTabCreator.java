@@ -41,25 +41,18 @@ import org.zkoss.zul.Image;
 import org.zkoss.zul.Label;
 
 /**
- * @author Óscar González Fernández <ogonzalez@igalia.com>
+ * Handles Resources Load tab creation (Global and Local).
  *
+ * @author Óscar González Fernández <ogonzalez@igalia.com>
  */
 public class ResourcesLoadTabCreator {
 
+    private static final String RESOURCES_LOAD = "Resources Load";
+
     private final IOrderPlanningGate orderPlanningGate;
 
-    public static ITab create(Mode mode,
-            ResourceLoadController resourceLoadController,
-            ResourceLoadController resourceLoadControllerGlobal,
-            IOrderPlanningGate orderPlanningGate,
-            Component breadcrumbs) {
-        return new ResourcesLoadTabCreator(mode, resourceLoadController,
-                resourceLoadControllerGlobal, orderPlanningGate,
-                breadcrumbs)
-                .build();
-    }
-
     private final Mode mode;
+
     private final ResourceLoadController resourceLoadController;
 
     private final ResourceLoadController resourceLoadControllerGlobal;
@@ -67,10 +60,11 @@ public class ResourcesLoadTabCreator {
     private final Component breadcrumbs;
 
     private ResourcesLoadTabCreator(Mode mode,
-            ResourceLoadController resourceLoadController,
-            ResourceLoadController resourceLoadControllerGlobal,
-            IOrderPlanningGate orderPlanningGate,
-            Component breadcrumbs) {
+                                    ResourceLoadController resourceLoadController,
+                                    ResourceLoadController resourceLoadControllerGlobal,
+                                    IOrderPlanningGate orderPlanningGate,
+                                    Component breadcrumbs) {
+
         this.mode = mode;
         this.resourceLoadController = resourceLoadController;
         this.resourceLoadControllerGlobal = resourceLoadControllerGlobal;
@@ -78,29 +72,34 @@ public class ResourcesLoadTabCreator {
         this.breadcrumbs = breadcrumbs;
     }
 
+    public static ITab create(Mode mode,
+                              ResourceLoadController resourceLoadController,
+                              ResourceLoadController resourceLoadControllerGlobal,
+                              IOrderPlanningGate orderPlanningGate,
+                              Component breadcrumbs) {
+
+        return new ResourcesLoadTabCreator(
+                mode, resourceLoadController, resourceLoadControllerGlobal, orderPlanningGate, breadcrumbs).build();
+    }
+
+
+
     private ITab build() {
         return TabOnModeType.forMode(mode)
-            .forType(ModeType.GLOBAL, createGlobalResourcesLoadTab())
-            .forType(ModeType.ORDER, createOrderResourcesLoadTab())
-            .create();
+                .forType(ModeType.GLOBAL, createGlobalResourcesLoadTab())
+                .forType(ModeType.ORDER, createOrderResourcesLoadTab())
+                .create();
     }
 
     private ITab createOrderResourcesLoadTab() {
-        IComponentCreator componentCreator = new IComponentCreator() {
+        IComponentCreator componentCreator = parent -> {
+            Map<String, Object> arguments = new HashMap<>();
+            arguments.put("resourceLoadController", resourceLoadController);
 
-            @Override
-            public org.zkoss.zk.ui.Component create(
-                    org.zkoss.zk.ui.Component parent) {
-                Map<String, Object> arguments = new HashMap<String, Object>();
-                arguments.put("resourceLoadController", resourceLoadController);
-                return Executions.createComponents(
-                        "/resourceload/_resourceloadfororder.zul", parent,
-                        arguments);
-            }
-
+            return Executions.createComponents("/resourceload/_resourceloadfororder.zul", parent, arguments);
         };
-        return new CreatedOnDemandTab(_("Resources Load"), "order-load",
-                componentCreator) {
+
+        return new CreatedOnDemandTab(_(RESOURCES_LOAD), "order-load", componentCreator) {
 
             @Override
             protected void afterShowAction() {
@@ -108,11 +107,11 @@ public class ResourcesLoadTabCreator {
                 breadcrumbs.appendChild(new Image(BREADCRUMBS_SEPARATOR));
                 breadcrumbs.appendChild(new Label(getSchedulingLabel()));
                 breadcrumbs.appendChild(new Image(BREADCRUMBS_SEPARATOR));
-                breadcrumbs.appendChild(new Label(_("Resources Load")));
+                breadcrumbs.appendChild(new Label(_(RESOURCES_LOAD)));
                 breadcrumbs.appendChild(new Image(BREADCRUMBS_SEPARATOR));
+
                 Order currentOrder = mode.getOrder();
-                resourceLoadController
-                        .setPlanningControllerEntryPoints(orderPlanningGate);
+                resourceLoadController.setPlanningControllerEntryPoints(orderPlanningGate);
                 resourceLoadController.filterBy(currentOrder);
                 resourceLoadController.reload();
                 breadcrumbs.appendChild(new Label(currentOrder.getName()));
@@ -120,44 +119,38 @@ public class ResourcesLoadTabCreator {
         };
     }
 
+
     private ITab createGlobalResourcesLoadTab() {
 
-        final IComponentCreator componentCreator = new IComponentCreator() {
+        final IComponentCreator componentCreator = parent -> {
+            Map<String, Object> arguments = new HashMap<>();
+            arguments.put("resourceLoadController", resourceLoadControllerGlobal);
 
-            @Override
-            public org.zkoss.zk.ui.Component create(
-                    org.zkoss.zk.ui.Component parent) {
-                Map<String, Object> arguments = new HashMap<String, Object>();
-                arguments.put("resourceLoadController",
-                        resourceLoadControllerGlobal);
-                return Executions.createComponents(
-                        "/resourceload/_resourceload.zul", parent, arguments);
-            }
-
+            return Executions.createComponents("/resourceload/_resourceload.zul", parent, arguments);
         };
-        return new CreatedOnDemandTab(_("Resources Load"), "company-load",
-                componentCreator) {
+
+        return new CreatedOnDemandTab(_(RESOURCES_LOAD), "company-load", componentCreator) {
             @Override
             protected void beforeShowAction() {
-                if (!SecurityUtils
-                        .isSuperuserOrUserInRoles(UserRole.ROLE_PLANNING)) {
+                if (!SecurityUtils.isSuperuserOrUserInRoles(UserRole.ROLE_PLANNING)) {
                     Util.sendForbiddenStatusCodeInHttpServletResponse();
                 }
             }
 
             @Override
             protected void afterShowAction() {
-                resourceLoadControllerGlobal
-                        .setPlanningControllerEntryPoints(orderPlanningGate);
+                resourceLoadControllerGlobal.setPlanningControllerEntryPoints(orderPlanningGate);
                 resourceLoadControllerGlobal.filterBy(null);
                 resourceLoadControllerGlobal.reload();
-                if (breadcrumbs.getChildren() != null) {
+
+                if ( breadcrumbs.getChildren() != null ) {
                     breadcrumbs.getChildren().clear();
                 }
+
                 breadcrumbs.appendChild(new Image(BREADCRUMBS_SEPARATOR));
                 breadcrumbs.appendChild(new Label(getSchedulingLabel()));
                 breadcrumbs.appendChild(new Image(BREADCRUMBS_SEPARATOR));
-                breadcrumbs.appendChild(new Label(_("Resources Load")));
+                breadcrumbs.appendChild(new Label(_(RESOURCES_LOAD)));
             }
         };
     }

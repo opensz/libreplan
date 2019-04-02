@@ -19,7 +19,7 @@
 
 package org.libreplan.business.test.orders.daos;
 
-import static junit.framework.Assert.assertNotNull;
+import static org.junit.Assert.assertNotNull;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
@@ -53,18 +53,16 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Test for {@link IOrderDAO}
+ * Test for {@link IOrderDAO}.
  *
  * @author Manuel Rego Casasnovas <rego@igalia.com>
  */
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(locations = { BUSINESS_SPRING_CONFIG_FILE,
-        BUSINESS_SPRING_CONFIG_TEST_FILE })
-@Transactional
+@ContextConfiguration(locations = { BUSINESS_SPRING_CONFIG_FILE, BUSINESS_SPRING_CONFIG_TEST_FILE })
 public class OrderDAOTest {
 
     @Before
-    public void loadRequiredaData() {
+    public void loadRequiredData() {
         transactionService.runOnAnotherTransaction(new IOnTransaction<Void>() {
             @Override
             public Void execute() {
@@ -90,6 +88,7 @@ public class OrderDAOTest {
     private IAdHocTransactionService transactionService;
 
     @Test
+    @Transactional
     public void testInSpringContainer() {
         assertNotNull(orderDAO);
     }
@@ -102,8 +101,7 @@ public class OrderDAOTest {
         BaseCalendar basicCalendar = BaseCalendarTest.createBasicCalendar();
         calendarDAO.save(basicCalendar);
         order.setCalendar(basicCalendar);
-        OrderVersion orderVersion = ResourceAllocationDAOTest
-                .setupVersionUsing(scenarioManager, order);
+        OrderVersion orderVersion = ResourceAllocationDAOTest.setupVersionUsing(scenarioManager, order);
         order.useSchedulingDataFor(orderVersion);
         return order;
     }
@@ -111,7 +109,7 @@ public class OrderDAOTest {
     private Order createValidOrderWithDeadlineCommunications(String name) {
         Order order = createValidOrder(name);
 
-        //create two deadline communications
+        // Create two deadline communications
         Date date1 = (new Date());
         Date date2 = (new LocalDate(date1).plusDays(3)).toDateTimeAtStartOfDay().toDate();
 
@@ -125,6 +123,7 @@ public class OrderDAOTest {
     }
 
     @Test
+    @Transactional
     public void testSaveOrdersWithDeliveringDates() {
         Order order = createValidOrderWithDeadlineCommunications("test");
         orderDAO.save(order);
@@ -138,7 +137,7 @@ public class OrderDAOTest {
         assertTrue(dcFirst.getSaveDate().after(dcLast.getSaveDate()));
 
 
-        //A new DeadlineCommunication is placed between the existing communications.
+        // A new DeadlineCommunication is placed between the existing communications
         Date date = (new LocalDate(dcLast.getSaveDate()).plusDays(2)).toDateTimeAtStartOfDay().toDate();
         DeadlineCommunication deadlineCommunication = DeadlineCommunication.create(date, null);
         order.getDeliveringDates().add(deadlineCommunication);
@@ -159,6 +158,7 @@ public class OrderDAOTest {
     }
 
     @Test
+    @Transactional
     public void testSaveTwoOrdersWithDifferentNames() {
         transactionService.runOnAnotherTransaction(new IOnTransaction<Void>() {
             @Override
@@ -182,6 +182,7 @@ public class OrderDAOTest {
     }
 
     @Test(expected = ValidationException.class)
+    @Transactional
     public void testSaveTwoOrdersWithSameNames() {
         transactionService.runOnAnotherTransaction(new IOnTransaction<Void>() {
             @Override

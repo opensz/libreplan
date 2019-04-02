@@ -21,13 +21,14 @@
 
 package org.libreplan.business.calendars.entities;
 
-import org.hibernate.validator.AssertTrue;
-import org.hibernate.validator.NotNull;
+import javax.validation.constraints.AssertTrue;
+import javax.validation.constraints.NotNull;
 import org.joda.time.LocalDate;
 import org.libreplan.business.resources.entities.Resource;
 
 /**
  * Calendar for a {@link Resource}.
+ *
  * @author Manuel Rego Casasnovas <mrego@igalia.com>
  * @author Lorenzo Tilve Álvaro <ltilve@igalia.com>
  */
@@ -41,6 +42,7 @@ public class ResourceCalendar extends BaseCalendar {
         if (capacity == null) {
             return 1;
         }
+
         return capacity;
     }
 
@@ -60,8 +62,7 @@ public class ResourceCalendar extends BaseCalendar {
 
     private ResourceCalendar(CalendarData calendarData) {
         super(calendarData);
-        CalendarAvailability calendarAvailability = CalendarAvailability
-                .create(new LocalDate(), null);
+        CalendarAvailability calendarAvailability = CalendarAvailability.create(new LocalDate(), null);
         addNewCalendarAvailability(calendarAvailability);
     }
 
@@ -71,7 +72,7 @@ public class ResourceCalendar extends BaseCalendar {
     }
 
     @AssertTrue(message = "Capacity must be a positive integer number")
-    public boolean checkCapacityPositiveIntegerNumber() {
+    public boolean isCapacityPositiveIntegerNumberConstraint() {
         return (capacity >= 1);
     }
 

@@ -1,11 +1,9 @@
 <zk>
-    <log>
-        <log-base></log-base>
-    </log>
-
-    <desktop-config>
-        <!-- seconds it takes between requests for a desktop to be invalidated -->
-        <!-- a timer is introduced to avoid invalidation of pages still open -->
+        <desktop-config>
+        <!--
+        Seconds it takes between requests for a desktop to be invalidated.
+        A timer is introduced to avoid invalidation of pages still open.
+        -->
         <desktop-timeout>30</desktop-timeout>
     </desktop-config>
 
@@ -15,22 +13,19 @@
         <timer-keep-alive>true</timer-keep-alive>
     </session-config>
     <error-page>
-        <exception-type>java.lang.Throwable
-        </exception-type>
-        <location>/common/event_error.zul</location>
+        <exception-type>java.lang.Throwable</exception-type>
+        <location>/common/eventError.zul</location>
     </error-page>
 
     <!--  Spring Security -->
     <listener>
-       <description>ThreadLocal Synchronization Listener</description>
-       <listener-class>org.zkoss.zkplus.util.ThreadLocalListener</listener-class>
+        <description>ThreadLocal Synchronization Listener</description>
+        <listener-class>org.zkoss.zkplus.util.ThreadLocalListener</listener-class>
     </listener>
 
     <preference>
         <name>ThreadLocal</name>
-        <value>
-            org.springframework.security.context.ThreadLocalSecurityContextHolderStrategy=contextHolder
-        </value>
+        <value>org.springframework.security.core.context.ThreadLocalSecurityContextHolderStrategy=contextHolder</value>
     </preference>
 
 
@@ -46,7 +41,12 @@
 
     <library-property>
         <name>org.zkoss.zul.chart.engine.class</name>
-        <value>com.igalia.java.zk.components.JFreeChartEngine</value>
+        <value>com.libreplan.java.zk.components.JFreeChartEngine</value>
+    </library-property>
+
+    <library-property>
+        <name>org.zkoss.theme.preferred</name>
+        <value>sapphire</value>
     </library-property>
 
 </zk>

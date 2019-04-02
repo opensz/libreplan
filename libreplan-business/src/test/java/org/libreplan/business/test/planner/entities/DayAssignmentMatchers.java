@@ -21,6 +21,8 @@
 
 package org.libreplan.business.test.planner.entities;
 
+import static org.hamcrest.CoreMatchers.both;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -28,9 +30,8 @@ import java.util.List;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
+import org.hamcrest.core.CombinableMatcher;
 import org.joda.time.LocalDate;
-import org.junit.matchers.CombinableMatcher;
-import org.junit.matchers.JUnitMatchers;
 import org.libreplan.business.planner.entities.DayAssignment;
 import org.libreplan.business.planner.entities.GenericDayAssignment;
 import org.libreplan.business.planner.entities.ResourceAllocation;
@@ -48,9 +49,9 @@ public class DayAssignmentMatchers {
 
         @Override
         final public boolean matches(Object value) {
-            if (value instanceof List) {
-                List<DayAssignment> dayAssignments = new ArrayList<DayAssignment>(
-                        (List<DayAssignment>) value);
+            if ( value instanceof List ) {
+                List<DayAssignment> dayAssignments = new ArrayList<>((List<DayAssignment>) value);
+
                 return matches(dayAssignments);
             }
             return false;
@@ -69,48 +70,48 @@ public class DayAssignmentMatchers {
 
         @Override
         public void describeTo(Description description) {
-            description.appendText("the first assignment must be at date"
-                    + start);
+            description.appendText("the first assignment must be at date" + start);
         }
 
-        public CombinableMatcher<List<? extends DayAssignment>> consecutiveDays(
-                int days) {
-            return JUnitMatchers.both(this).and(
-                    DayAssignmentMatchers.consecutiveDays(days));
+        public CombinableMatcher<List<? extends DayAssignment>> consecutiveDays(int days) {
+            return both(this).and(DayAssignmentMatchers.consecutiveDays(days));
         }
 
         @Override
         protected boolean matches(List<DayAssignment> assignments) {
-            return !assignments.isEmpty()
-                    && assignments.get(0).getDay().equals(start);
+
+            return !assignments.isEmpty() && assignments.get(0).getDay().equals(start);
         }
     }
 
-    public static final Matcher<List<? extends DayAssignment>> haveHours(
-            final int... hours) {
+    public static final Matcher<List<? extends DayAssignment>> haveHours(final int... hours) {
         return new BaseMatcher<List<? extends DayAssignment>>() {
 
             @Override
             public boolean matches(Object value) {
-                if (value instanceof List) {
+                if ( value instanceof List ) {
+
                     List<? extends DayAssignment> assignments = (List<? extends DayAssignment>) value;
-                    if (assignments.size() != hours.length) {
+
+                    if ( assignments.size() != hours.length ) {
                         return false;
                     }
+
                     for (int i = 0; i < hours.length; i++) {
-                        if (hours[i] != assignments.get(i).getHours()) {
+                        if ( hours[i] != assignments.get(i).getDuration().getHours() ) {
                             return false;
                         }
                     }
+
                     return true;
                 }
+
                 return false;
             }
 
             @Override
             public void describeTo(Description description) {
-                description.appendText("must have hours: "
-                        + Arrays.toString(hours));
+                description.appendText("must have hours: " + Arrays.toString(hours));
             }
         };
     }
@@ -120,15 +121,17 @@ public class DayAssignmentMatchers {
 
             @Override
             public boolean matches(List<DayAssignment> assignments) {
-                if (assignments.size() != days) {
+                if ( assignments.size() != days ) {
                     return false;
                 }
-                if (days == 0) {
+                if ( days == 0 ) {
                     return true;
                 }
+
                 LocalDate current = assignments.get(0).getDay();
+
                 for (DayAssignment d : assignments) {
-                    if (!d.getDay().equals(current)) {
+                    if ( !d.getDay().equals(current) ) {
                         return false;
                     }
                     current = current.plusDays(1);
@@ -138,8 +141,7 @@ public class DayAssignmentMatchers {
 
             @Override
             public void describeTo(Description description) {
-                description.appendText("it must have " + days
-                        + " days consecutive ");
+                description.appendText("it must have " + days + " days consecutive ");
             }
         };
     }
@@ -159,27 +161,32 @@ public class DayAssignmentMatchers {
             @Override
             protected boolean matches(List<DayAssignment> assignments) {
                 for (DayAssignment dayAssignment : assignments) {
-                    if (dayAssignment instanceof GenericDayAssignment) {
+
+                    if ( dayAssignment instanceof GenericDayAssignment ) {
+
                         GenericDayAssignment generic = (GenericDayAssignment) dayAssignment;
-                        if (!allocation.equals(generic
-                                .getGenericResourceAllocation())) {
+
+                        if ( !allocation.equals(generic.getGenericResourceAllocation()) ) {
                             return false;
                         }
-                    } else if (dayAssignment instanceof SpecificDayAssignment) {
+
+                    } else if ( dayAssignment instanceof SpecificDayAssignment ) {
+
                         SpecificDayAssignment specific = (SpecificDayAssignment) dayAssignment;
-                        if (!allocation.equals(specific
-                                .getSpecificResourceAllocation())) {
+
+                        if ( !allocation.equals(specific.getSpecificResourceAllocation()) ) {
+
                             return false;
                         }
                     }
                 }
+
                 return true;
             }
 
             @Override
             public void describeTo(Description description) {
-                description.appendText("all must belong to allocation "
-                        + allocation);
+                description.appendText("all must belong to allocation " + allocation);
             }
         };
     }

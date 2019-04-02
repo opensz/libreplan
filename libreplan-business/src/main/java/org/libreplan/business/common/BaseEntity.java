@@ -27,9 +27,13 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import javax.validation.ConstraintViolation;
+import javax.validation.Validation;
+import javax.validation.Validator;
+import javax.validation.ValidatorFactory;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.hibernate.validator.InvalidValue;
 import org.libreplan.business.INewObject;
 import org.libreplan.business.common.exceptions.ValidationException;
 import org.libreplan.business.util.deepcopy.AfterCopy;
@@ -39,7 +43,6 @@ import org.libreplan.business.util.deepcopy.Strategy;
 
 /**
  * Base class for all the application entities.
- *
  * It provides the basic behavior for id and version fields.
  *
  * @author Manuel Rego Casasnovas <mrego@igalia.com>
@@ -53,19 +56,24 @@ public abstract class BaseEntity implements INewObject {
      * @param entities
      * @return entities grouped by id
      */
-    public static <T extends BaseEntity> Map<Long, Set<T>> byId(
-            Collection<? extends T> entities) {
-        Map<Long, Set<T>> result = new HashMap<Long, Set<T>>();
+    public static <T extends BaseEntity> Map<Long, Set<T>> byId(Collection<? extends T> entities) {
+        Map<Long, Set<T>> result = new HashMap<>();
+
         for (T each : entities) {
-            if (!result.containsKey(each.getId())) {
-                result.put(each.getId(), new HashSet<T>());
+            if ( !result.containsKey(each.getId()) ) {
+                result.put(each.getId(), new HashSet<>());
             }
             result.get(each.getId()).add(each);
         }
+
         return result;
     }
 
     private static final Log LOG = LogFactory.getLog(BaseEntity.class);
+
+    private static final ValidatorFactory validatorFactory = Validation.buildDefaultValidatorFactory();
+
+    private static final Validator validator = validatorFactory.getValidator();
 
     @OnCopy(Strategy.IGNORE)
     private Long id;
@@ -81,7 +89,7 @@ public abstract class BaseEntity implements INewObject {
     }
 
     public Long getVersion() {
-        if (isNewObject()) {
+        if ( isNewObject() ) {
             return null;
         }
 
@@ -111,13 +119,15 @@ public abstract class BaseEntity implements INewObject {
 
     protected static <T extends BaseEntity> T create(T baseEntity) {
         baseEntity.setNewObject(true);
+
         return baseEntity;
     }
 
     /**
      * Once the has been really saved in DB (not a readonly transaction), it
-     * could be necessary to unmark the object as newObject. This is the case if
-     * you must use the same instance after the transaction. <br />
+     * could be necessary to unmark the object as newObject.
+     * This is the case if you must use the same instance after the transaction.
+     * <br />
      */
     public void dontPoseAsTransientObjectAnymore() {
         setNewObject(false);
@@ -125,10 +135,9 @@ public abstract class BaseEntity implements INewObject {
 
     @SuppressWarnings("unchecked")
     public void validate() throws ValidationException {
-        LibrePlanClassValidator classValidator = new LibrePlanClassValidator(this.getClass());
-        InvalidValue[] invalidValues = classValidator.getInvalidValues(this);
-        if (invalidValues.length > 0) {
-            throw new ValidationException(invalidValues);
+        Set<ConstraintViolation<BaseEntity>> violations = validator.validate(this);
+        if ( !violations.isEmpty() ) {
+            throw new ValidationException(violations);
         }
     }
 
@@ -139,13 +148,13 @@ public abstract class BaseEntity implements INewObject {
         } catch (Exception e) {
             final String message = "error doing toString";
             LOG.error(message, e);
+
             return message;
         }
     }
 
     public String getExtraInformation() {
-        return "[ id: " + getId() + ", newObject: "
-                + isNewObject() + "]";
+        return "[ id: " + getId() + ", newObject: " + isNewObject() + "]";
     }
 
 }

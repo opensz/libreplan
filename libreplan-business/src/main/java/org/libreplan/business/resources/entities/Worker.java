@@ -22,10 +22,10 @@
 package org.libreplan.business.resources.entities;
 
 
-import org.apache.commons.lang.StringUtils;
-import org.hibernate.validator.AssertTrue;
-import org.hibernate.validator.NotEmpty;
-import org.hibernate.validator.Valid;
+import org.apache.commons.lang3.StringUtils;
+import javax.validation.constraints.AssertTrue;
+import org.hibernate.validator.constraints.NotEmpty;
+import javax.validation.Valid;
 import org.libreplan.business.common.Registry;
 import org.libreplan.business.common.exceptions.InstanceNotFoundException;
 import org.libreplan.business.users.daos.IUserDAO;
@@ -34,7 +34,6 @@ import org.libreplan.business.users.entities.UserRole;
 
 /**
  * This class models a worker.
- *
  * Note: this class has a natural ordering that is inconsistent with equals.
  *
  * @author Fernando Bellas Permuy <fbellas@udc.es>
@@ -51,15 +50,13 @@ public class Worker extends Resource {
         return create(new Worker(), code);
     }
 
-    public static Worker create(String firstName, String surname,
-        String nif) {
+    public static Worker create(String firstName, String surname, String nif) {
 
         return create(new Worker(firstName, surname, nif));
 
     }
 
-    public static Worker createUnvalidated(String code, String firstName,
-        String surname, String nif) {
+    public static Worker createUnvalidated(String code, String firstName, String surname, String nif) {
 
         Worker worker = create(new Worker(), code);
 
@@ -108,6 +105,14 @@ public class Worker extends Resource {
         this.firstName = firstName;
         this.surname = surname;
         this.nif = nif;
+    }
+
+    /**
+     * This method is needed by autocomplete component on _machineConfigurationUnits.zul
+     */
+    @Override
+    public String toString () {
+        return this.getName() + " - " + this.getNif();
     }
 
     public String getDescription() {
@@ -159,15 +164,14 @@ public class Worker extends Resource {
     }
 
     @AssertTrue(message = "ID already used. It has to be be unique")
-    public boolean checkConstraintUniqueFiscalCode() {
+    public boolean isUniqueFiscalCodeConstraint() {
         if (!areFirstNameSurnameNifSpecified()) {
             return true;
         }
 
         try {
-        /* Check the constraint. */
-            Worker worker = Registry.getWorkerDAO()
-                    .findByNifAnotherTransaction(nif);
+        /* Check the constraint */
+            Worker worker = Registry.getWorkerDAO().findByNifAnotherTransaction(nif);
             if (isNewObject()) {
                 return false;
             } else {
@@ -180,18 +184,18 @@ public class Worker extends Resource {
 
     protected boolean areFirstNameSurnameNifSpecified() {
 
-       return !StringUtils.isBlank(firstName) &&
-           !StringUtils.isBlank(surname) &&
-           !StringUtils.isBlank(nif);
+        return !StringUtils.isBlank(firstName) &&
+                !StringUtils.isBlank(surname) &&
+                !StringUtils.isBlank(nif);
 
-   }
+    }
 
-   @Override
-   protected boolean isCriterionSatisfactionOfCorrectType(
-      CriterionSatisfaction c) {
+    @Override
+    protected boolean isCriterionSatisfactionOfCorrectType(
+            CriterionSatisfaction c) {
         return c.getResourceType().equals(ResourceEnum.WORKER);
 
-   }
+    }
 
     @Override
     public ResourceEnum getType() {
@@ -222,7 +226,7 @@ public class Worker extends Resource {
     }
 
     @AssertTrue(message = "User already bound to other worker")
-    public boolean checkConstraintUserNotBoundToOtherWorker() {
+    public boolean isUserNotBoundToOtherWorkerConstraint() {
         if (user == null || user.isNewObject()) {
             return true;
         }
@@ -246,7 +250,7 @@ public class Worker extends Resource {
     }
 
     @AssertTrue(message = "Queue-based resources cannot be bound to any user")
-    public boolean checkConstraintLimitingResourceNotBoundToUser() {
+    public boolean isLimitingResourceNotBoundToUserConstraint() {
         if (isLimitingResource()) {
             return user == null;
         }
@@ -254,7 +258,7 @@ public class Worker extends Resource {
     }
 
     @AssertTrue(message = "Virtual resources cannot be bound to any user")
-    public boolean checkConstraintVirtualResourceNotBoundToUser() {
+    public boolean isVirtualResourceNotBoundToUserConstraint() {
         if (isVirtual()) {
             return user == null;
         }
@@ -269,7 +273,7 @@ public class Worker extends Resource {
     }
 
     @AssertTrue(message = "Bound user does not have the proper role")
-    public boolean checkConstraintBoundUserHaveProperRole() {
+    public boolean isBoundUserHaveProperRoleConstraint() {
         if (user == null) {
             return true;
         }

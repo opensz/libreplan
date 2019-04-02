@@ -24,7 +24,7 @@ package org.libreplan.business.workreports.entities;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.hibernate.validator.NotNull;
+import javax.validation.constraints.NotNull;
 import org.libreplan.business.common.BaseEntity;
 import org.libreplan.business.orders.entities.OrderElement;
 import org.libreplan.business.resources.entities.Criterion;
@@ -38,19 +38,22 @@ public class Task extends BaseEntity {
 
     public static final String RESOURCE = "resource";
 
-    public static final String ORDER_ELEMENT = "orderElement";
-
     public static Task create() {
         Task workReportLine = new Task();
         workReportLine.setNewObject(true);
+
         return workReportLine;
     }
 
-    public static Task create(Integer numHours, Resource resource,
-            OrderElement orderElement, Set<Criterion> criterions) {
-        Task workReportLine = new Task(numHours, resource,
-                orderElement, criterions);
+    public static Task create(
+            Integer numHours,
+            Resource resource,
+            OrderElement orderElement,
+            Set<Criterion> criterions) {
+
+        Task workReportLine = new Task(numHours, resource, orderElement, criterions);
         workReportLine.setNewObject(true);
+
         return workReportLine;
     }
 
@@ -64,7 +67,7 @@ public class Task extends BaseEntity {
 
     private WorkReport workReport;
 
-    private Set<Criterion> criterions = new HashSet<Criterion>();
+    private Set<Criterion> criterions = new HashSet<>();
 
     /**
      * Constructor for hibernate. Do not use!
@@ -73,8 +76,7 @@ public class Task extends BaseEntity {
 
     }
 
-    private Task(Integer numHours, Resource resource,
-            OrderElement orderElement, Set<Criterion> criterions) {
+    private Task(Integer numHours, Resource resource, OrderElement orderElement, Set<Criterion> criterions) {
         this.numHours = numHours;
         this.resource = resource;
         this.orderElement = orderElement;
@@ -106,7 +108,7 @@ public class Task extends BaseEntity {
     }
 
     public Set<Criterion> getCriterions() {
-        return new HashSet<Criterion>(criterions);
+        return new HashSet<>(criterions);
     }
 
     public void setCriterions(Set<Criterion> criterions) {

@@ -23,8 +23,8 @@ package org.libreplan.business.costcategories.entities;
 
 import java.math.BigDecimal;
 
-import org.hibernate.validator.AssertTrue;
-import org.hibernate.validator.NotNull;
+import javax.validation.constraints.AssertTrue;
+import javax.validation.constraints.NotNull;
 import org.joda.time.LocalDate;
 import org.libreplan.business.common.IntegrationEntity;
 import org.libreplan.business.common.Registry;
@@ -45,9 +45,8 @@ public class HourCost extends IntegrationEntity {
 
     private CostCategory category;
 
-    // Default constructor, needed by Hibernate
+    /** Default constructor, needed by Hibernate */
     protected HourCost() {
-
     }
 
     public static HourCost createUnvalidated(String code, BigDecimal priceCost,
@@ -72,11 +71,11 @@ public class HourCost extends IntegrationEntity {
     }
 
     public static HourCost create(BigDecimal priceCost, LocalDate initDate) {
-        return (HourCost) create(new HourCost(priceCost, initDate));
+        return create(new HourCost(priceCost, initDate));
     }
 
     public static HourCost create() {
-        return (HourCost) create(new HourCost());
+        return create(new HourCost());
     }
 
     protected HourCost(BigDecimal priceCost, LocalDate initDate) {
@@ -151,7 +150,7 @@ public class HourCost extends IntegrationEntity {
     }
 
     @AssertTrue(message="The end date cannot be before the start date")
-    public boolean checkPositiveTimeInterval() {
+    public boolean isPositiveTimeIntervalConstraint() {
         if (initDate == null) {
             return true;
         }

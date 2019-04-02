@@ -26,7 +26,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.hibernate.Criteria;
 import org.hibernate.criterion.Restrictions;
 import org.libreplan.business.calendars.entities.BaseCalendar;
@@ -53,8 +53,7 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Repository
 @Scope(BeanDefinition.SCOPE_SINGLETON)
-public class BaseCalendarDAO extends IntegrationEntityDAO<BaseCalendar>
-        implements IBaseCalendarDAO {
+public class BaseCalendarDAO extends IntegrationEntityDAO<BaseCalendar> implements IBaseCalendarDAO {
 
     @Override
     public List<BaseCalendar> getBaseCalendars() {
@@ -65,10 +64,9 @@ public class BaseCalendarDAO extends IntegrationEntityDAO<BaseCalendar>
     }
 
     private void removeResourceCalendarInstances(List<BaseCalendar> list) {
-        for (Iterator<BaseCalendar> iterator = list.iterator(); iterator
-                .hasNext();) {
+        for (Iterator<BaseCalendar> iterator = list.iterator(); iterator.hasNext();) {
             BaseCalendar baseCalendar = iterator.next();
-            if (baseCalendar instanceof ResourceCalendar) {
+            if ( baseCalendar instanceof ResourceCalendar ) {
                 iterator.remove();
             }
         }
@@ -154,7 +152,7 @@ public class BaseCalendarDAO extends IntegrationEntityDAO<BaseCalendar>
                 .add(Restrictions.eq("calendarData.parent", calendar)).list();
         if (!calendars.isEmpty()) {
             throw ValidationException
-                    .invalidValue(
+                    .invalidValueException(
                             "Cannot delete calendar. It is being used at this moment by some resources.",
                             calendar);
         }
@@ -165,7 +163,7 @@ public class BaseCalendarDAO extends IntegrationEntityDAO<BaseCalendar>
                 .add(Restrictions.eq("calendar", calendar)).list();
         if (!orders.isEmpty()) {
             throw ValidationException
-                    .invalidValue(
+                    .invalidValueException(
                             "Cannot delete calendar. It is being used at this moment by some orders.",
                             calendar);
         }
@@ -176,7 +174,7 @@ public class BaseCalendarDAO extends IntegrationEntityDAO<BaseCalendar>
                 .add(Restrictions.eq("calendar", calendar)).list();
         if (!tasks.isEmpty()) {
             throw ValidationException
-                    .invalidValue(
+                    .invalidValueException(
                             "Cannot delete calendar. It is being used at this moment by some tasks.",
                             calendar);
         }
@@ -187,7 +185,7 @@ public class BaseCalendarDAO extends IntegrationEntityDAO<BaseCalendar>
                 .add(Restrictions.eq("calendar", calendar)).list();
         if (!templates.isEmpty()) {
             throw ValidationException
-                    .invalidValue(
+                    .invalidValueException(
                             "Cannot delete calendar. It is being used at this moment by some templates.",
                             calendar);
         }

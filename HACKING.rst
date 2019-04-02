@@ -1,8 +1,8 @@
 Hacking
 =======
 
-This is a guide about how to start hacking on *LibrePlan* project. If you want
-more information about *LibrePlan* development you should visit the wiki
+This is a guide about how to start hacking on *LibrePlan* project.
+If you want more information about *LibrePlan* development you should visit the wiki
 available at: http://wiki.libreplan.org/.
 
 .. contents::
@@ -15,17 +15,21 @@ Compilation requirements
 
   Needed to clone source code repository
 
-* *Maven 2* - Java software project management and comprehension tool
+* *Maven 3* - Java software project management and comprehension tool
 
   Needed to build and compile the project
 
-* *JDK 6* - Java Development Kit
+* *JDK 8* - Java Development Kit
 
-  Project depends on Java 6 and JDK is needed in order to compile it
+  Project depends on Java 8 and JDK is needed in order to compile it
 
 * *PostgreSQL* - Object-relational SQL database
 
   Database server
+
+* *MySQL* - Relational SQL database
+
+  Alternative database server
 
 * *Python Docutils* - Utilities for the documentation of Python modules
 
@@ -52,7 +56,7 @@ Debian/Ubuntu
 
 * Install requirements::
 
-    # apt-get install git-core maven2 openjdk-6-jdk postgresql postgresql-client python-docutils make gettext cutycapt
+    # apt-get install git-core maven openjdk-8-jdk postgresql postgresql-client python-docutils make gettext cutycapt
 
 * Connect to database::
 
@@ -68,7 +72,7 @@ Debian/Ubuntu
 
 * Download source code::
 
-    $ git clone git://github.com/Igalia/libreplan.git
+    $ git clone git://github.com/LibrePlan/libreplan.git
 
 * Compile project::
 
@@ -80,18 +84,18 @@ Debian/Ubuntu
     $ cd libreplan-webapp/
     $ mvn jetty:run
 
-* Go to http://localhost:8080/libreplan-webapp/
+* Go to http://localhost:8080/
 
 Fedora
 ~~~~~~
 
 * Install requirements::
 
-    # yum install git maven java-1.7.0-openjdk-devel postgresql postgresql-server python-docutils make gettext gnu-free-fonts-compat
+    # yum install git maven java-1.8.0-openjdk-devel postgresql postgresql-server python-docutils make gettext gnu-free-fonts-compat
 
 .. WARNING:: Use the following command in Fedora 16 or below::
 
-               # yum install git maven java-1.6.0-openjdk postgresql postgresql-server python-docutils make gettext gnu-free-fonts-compat
+               # yum install git maven java-1.8.0-openjdk postgresql postgresql-server python-docutils make gettext gnu-free-fonts-compat
 
 * Start database service::
 
@@ -129,7 +133,7 @@ Fedora
 
 * Download source code::
 
-    $ git clone git://github.com/Igalia/libreplan.git
+    $ git clone git://github.com/LibrePlan/libreplan.git
 
 * Compile project::
 
@@ -141,26 +145,26 @@ Fedora
     $ cd libreplan-webapp/
     $ mvn jetty:run
 
-* Go to http://localhost:8080/libreplan-webapp/
+* Go to http://localhost:8080/
 
 openSUSE
 ~~~~~~~~
 
 * Install requirements::
 
-    # zypper install git-core java-1_6_0-openjdk-devel postgresql-server postgresql docutils make gettext-tools
+    # zypper install git-core java-1_8_0-openjdk-devel postgresql-server postgresql docutils make gettext-tools
 
 * Install Maven::
 
     # cd /opt/
-    # wget http://www.apache.org/dist//maven/binaries/apache-maven-2.2.1-bin.tar.gz
-    # tar -xzvf apache-maven-2.2.1-bin.tar.gz
+    # wget http://www.apache.org/dist//maven/binaries/apache-maven-3.0.5-bin.tar.gz
+    # tar -xzvf apache-maven-3.0.5-bin.tar.gz
 
   Edit ``/etc/bash.bashrc.local`` and add the following lines::
 
-    export M2_HOME=/opt/apache-maven-2.2.1
-    export M2=$M2_HOME/bin
-    export PATH=$M2:$PATH
+    export M2_HOME=/opt/apache-maven-3.0.5
+    export MVN=$M2_HOME/bin
+    export PATH=$MVN:$PATH
 
 * Start database service::
 
@@ -190,7 +194,7 @@ openSUSE
 
 * Download source code::
 
-    $ git clone git://github.com/Igalia/libreplan.git
+    $ git clone git://github.com/LibrePlan/libreplan.git
 
 * Compile project::
 
@@ -202,7 +206,122 @@ openSUSE
     $ cd libreplan-webapp/
     $ mvn jetty:run
 
-* Go to http://localhost:8080/libreplan-webapp/
+* Go to http://localhost:8080/
+
+
+Microsoft Windows
+~~~~~~~~~~~~~~~~~
+
+* Download and install latest Java Development Kit 8uXX (JDK8uXX)::
+
+    # http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html
+
+* Download and install latest Gettext runtime::
+
+    # https://mlocati.github.io/articles/gettext-iconv-windows.html
+
+* Add Gettext_installed_directory\bin (for example ``C:\Program Files\gettext-iconv\bin``) to ``Path`` variable
+
+* Download and install latest PostgreSQL database::
+
+    # http://www.enterprisedb.com/products-services-training/pgdownload#windows
+
+* Download and install Apache Tomcat 8::
+
+    # http://tomcat.apache.org/download-80.cgi
+    # Note: in JDK folder there is JRE folder
+
+* Set up JDBC41 PostgreSQL Driver::
+
+    # Download latest driver: https://jdbc.postgresql.org/download.html
+    # Copy downloaded *.jar file to JRE location: (e.g. C:\Program Files\Java\jre8\lib\ext)
+    # Copy downloaded *.jar file to JAVA_HOME location: (e.g. C:\Program Files\Java\jdk1.8.0_111\jre\lib\ext)
+    # Put downloaded *.jar file to Tomcat lib location: (e.g. C:\Program Files\Apache Software Foundation\Tomcat 8.0\lib)
+
+* Create database::
+
+    CREATE DATABASE libreplan;
+
+* Use SQL sentences::
+
+    CREATE USER libreplan WITH PASSWORD 'libreplan';
+    GRANT ALL PRIVILEGES ON DATABASE libreplan TO libreplan;
+* Download and install Git
+
+    # https://git-scm.com/download/win
+
+* Download Maven
+
+    # https://maven.apache.org/download.cgi
+
+.. WARNING::
+
+    Check if latest Maven version is compatible with your JDK
+
+* Connect to database::
+
+    # Go to PostgreSQL bin folder and command window from here
+    # psql -U postgres
+
+* Use SQL sentences::
+
+    CREATE DATABASE libreplandev;
+    CREATE DATABASE libreplandevtest;
+
+    CREATE USER libreplan WITH PASSWORD 'libreplan';
+
+    GRANT ALL PRIVILEGES ON DATABASE libreplan TO libreplan;
+
+* Create an Environment Variable JAVA_HOME
+
+    # You need to set it to your JDK installed directory
+
+* Configure Apache Tomcat Server
+
+* Go to (e.g. C:/Program Files/Apache Software Foundation/Tomcat 8.0/conf/Catalina/localhost/)
+  and create there libreplan.xml file with this lines of code::
+
+    <?xml version="1.0" encoding="UTF-8"?>
+
+    <Context antiJARLocking="true" path="">
+        <Resource name="jdbc/libreplan-ds" auth="Container"
+            type="javax.sql.DataSource"
+            maxActive="100" maxIdle="30" maxWait="10000"
+            username="libreplan" password="libreplan"
+            driverClassName="org.postgresql.Driver"
+            url="jdbc:postgresql://localhost/libreplan" />
+    </Context>
+
+=======
+
+* Download source code::
+
+    # Open GitBash
+    # git clone https://github.com/LibrePlan/libreplan.git
+
+* Set JAVA_HOME environment variable::
+
+    # You need to set it to your JDK installed directory (e.g. C:\Program Files\Java\jdk1.8.0_111)
+
+* Add path of unpacked distributions bin directory of Maven to 'Path' environment variable
+
+    # (e.g. C:/Program Files/apache-maven-3.3.3/bin)
+
+* Compile project::
+
+    # cd libreplan
+    # mvn clean install
+
+* Launch application::
+
+    * Get *.war file from project folder (e.g ../libreplan/libreplan-webapp/target/libreplan-webapp.war)
+    * Rename it to libreplan.war
+    * Put your libreplan.war file to Apache Tomcat webapps folder (e.g. C:\Program Files\Apache Software Foundation\Tomcat 8.0\webapps\)
+    * Start Apache Tomcat server
+
+    # Possible location: C:\Program Files\Apache Software Foundation\Tomcat 8.0\bin\Tomcat8.exe
+
+* Go to http://localhost:8080/
 
 
 CutyCapt compilation
@@ -218,6 +337,12 @@ Ubuntu/Debian
     # apt-get install subversion libqt4-dev libqtwebkit-dev qt4-qmake g++ make
 
   In Ubuntu Lucid 10.04 remove ``libqtwebkit-dev`` package.
+
+  * Install::
+
+    # apt-get install cutycapt
+
+If it doesn't work. Try to do it:
 
 * Download source code::
 
@@ -275,6 +400,42 @@ openSUSE
 
     # cp CutyCapt /user/bin/cutycapt
 
+LibrePlan documentation generation
+----------------------------------
+
+In the doc/src folder you'll find several types of documentation
+available: technical documentation, user manual, some training documentation and training exercises.
+This documentation is available in several languages.
+
+The supported outputs are HTML and PDF.
+
+Debian/Ubuntu
+~~~~~~~~~~~~~
+
+* Install requirements if generating HTML::
+
+    # apt-get install make python-docutils
+
+* Install requirements if generating PDF::
+
+    # apt-get install make python-docutils texlive-latex-base texlive-latex-recommended texlive-latex-extra textlive-fonts-recommended
+
+* Go to the directory where the documentation you want to generate is.
+  For example, if you want to generate the user manual in English::
+
+   # cd doc/src/user/en
+
+* Generate HTML::
+
+    # make html
+
+* Generate PDF::
+
+    # make pdf
+
+* Generate both formats::
+
+    # make
 
 Compilation profiles
 --------------------
@@ -395,6 +556,9 @@ example:
 
     mvn -Ddefault.passwordsControl=false -Ddefault.exampleUsersDisabled=false clean install
 
+* Set *default.emailSendingEnabled* to false::
+
+    mvn -Ddefault.emailSendingEnabled=false clean install
 
 Tests
 -----
@@ -411,6 +575,7 @@ pushing a patch.
 
 MySQL
 -----
+Strongly preferred to use 5.6+ version
 
 For MySQL users here are specific instructions.
 
@@ -418,8 +583,9 @@ For MySQL users here are specific instructions.
 
     CREATE DATABASE libreplandev;
     CREATE DATABASE libreplandevtest;
-    GRANT ALL ON libreplandev.* to 'libreplan'@'localhost' identified by 'libreplan';
-    GRANT ALL ON libreplandevtest.* to 'libreplan'@'localhost' identified by 'libreplan';
+    CREATE USER 'libreplan'@'localhost' IDENTIFIED BY 'libreplan';
+    GRANT ALL PRIVILEGES ON libreplandev.* TO 'libreplan'@'localhost' WITH GRANT OPTION;
+    GRANT ALL PRIVILEGES ON libreplandevtest.* TO 'libreplan'@'localhost' WITH GRANT OPTION;
 
 * Compile project::
 
@@ -429,3 +595,5 @@ For MySQL users here are specific instructions.
 
     $ cd libreplan-webapp/
     $ mvn -Pdev,mysql jetty:run
+
+* Go to http://localhost:8080/libreplan-webapp/

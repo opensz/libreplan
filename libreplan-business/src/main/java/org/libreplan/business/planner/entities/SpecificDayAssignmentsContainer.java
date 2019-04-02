@@ -24,9 +24,9 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.commons.lang.Validate;
-import org.hibernate.validator.NotNull;
-import org.hibernate.validator.Valid;
+import org.apache.commons.lang3.Validate;
+import javax.validation.constraints.NotNull;
+import javax.validation.Valid;
 import org.libreplan.business.common.BaseEntity;
 import org.libreplan.business.scenarios.entities.Scenario;
 import org.libreplan.business.util.deepcopy.OnCopy;
@@ -38,14 +38,12 @@ import org.libreplan.business.workingday.IntraDayDate;
  * for a {@link ResourceAllocation} at a {@link Scenario} <br />
  * @author Óscar González Fernández <ogonzalez@igalia.com>
  */
-public class SpecificDayAssignmentsContainer extends BaseEntity implements
-        IDayAssignmentsContainer<SpecificDayAssignment> {
+public class SpecificDayAssignmentsContainer extends BaseEntity
+        implements IDayAssignmentsContainer<SpecificDayAssignment> {
 
-    public static SpecificDayAssignmentsContainer create(
-            SpecificResourceAllocation specificResourceAllocation,
-            Scenario scenario) {
-        return create(new SpecificDayAssignmentsContainer(specificResourceAllocation,
-                scenario));
+    public static SpecificDayAssignmentsContainer create(SpecificResourceAllocation specificResourceAllocation,
+                                                         Scenario scenario) {
+        return create(new SpecificDayAssignmentsContainer(specificResourceAllocation, scenario));
     }
 
     private SpecificResourceAllocation resourceAllocation;
@@ -71,8 +69,7 @@ public class SpecificDayAssignmentsContainer extends BaseEntity implements
         return new HashSet<SpecificDayAssignment>(dayAssignments);
     }
 
-    private SpecificDayAssignmentsContainer(
-            SpecificResourceAllocation resourceAllocation, Scenario scenario) {
+    private SpecificDayAssignmentsContainer(SpecificResourceAllocation resourceAllocation, Scenario scenario) {
         Validate.notNull(resourceAllocation);
         Validate.notNull(scenario);
         this.resourceAllocation = resourceAllocation;
@@ -112,8 +109,7 @@ public class SpecificDayAssignmentsContainer extends BaseEntity implements
         dayAssignments.addAll(copyToThisContainer(assignments));
     }
 
-    private Set<SpecificDayAssignment> copyToThisContainer(
-            Collection<? extends SpecificDayAssignment> assignments) {
+    private Set<SpecificDayAssignment> copyToThisContainer(Collection<? extends SpecificDayAssignment> assignments) {
         return SpecificDayAssignment.copy(this, assignments);
     }
 

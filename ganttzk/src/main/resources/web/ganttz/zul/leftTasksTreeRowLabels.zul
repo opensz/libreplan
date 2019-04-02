@@ -19,17 +19,25 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -->
 
-<treerow sclass="taskdetail_grid taskdetail-company-view">
-    <zscript><![CDATA[
-    ]]>
-</zscript>
+<treerow sclass="taskdetail-grid taskdetail-company-view">
+
     <treecell>
-        <label class="task_title"/>
+        <label sclass="task_title"/>
     </treecell>
+
     <treecell>
-        <label class="order-startdate" />
+        <label sclass="order-startdate" />
     </treecell>
+
     <treecell>
-        <label class="order-enddate" />
+        <label sclass="order-enddate" />
+    </treecell>
+
+    <treecell>
+        <hlayout sclass="projectstatus-layout">
+            <div />
+            <label>/</label>
+            <div />
+        </hlayout>
     </treecell>
 </treerow>

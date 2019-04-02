@@ -36,7 +36,7 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import org.apache.commons.lang.Validate;
+import org.apache.commons.lang3.Validate;
 import org.libreplan.business.advance.entities.AdvanceMeasurement;
 import org.libreplan.business.advance.entities.DirectAdvanceAssignment;
 import org.libreplan.business.advance.entities.IndirectAdvanceAssignment;
@@ -47,6 +47,7 @@ import org.libreplan.business.common.daos.IConfigurationDAO;
 import org.libreplan.business.common.entities.Configuration;
 import org.libreplan.business.common.entities.EntityNameEnum;
 import org.libreplan.business.common.exceptions.InstanceNotFoundException;
+import org.libreplan.business.email.entities.EmailNotification;
 import org.libreplan.business.externalcompanies.daos.IExternalCompanyDAO;
 import org.libreplan.business.externalcompanies.entities.EndDateCommunication;
 import org.libreplan.business.externalcompanies.entities.ExternalCompany;
@@ -59,8 +60,8 @@ import org.libreplan.business.orders.entities.Order;
 import org.libreplan.business.orders.entities.OrderElement;
 import org.libreplan.business.orders.entities.OrderLineGroup;
 import org.libreplan.business.orders.entities.OrderStatusEnum;
-import org.libreplan.business.planner.entities.IMoneyCostCalculator;
 import org.libreplan.business.planner.entities.PositionConstraintType;
+import org.libreplan.business.planner.entities.TaskElement;
 import org.libreplan.business.qualityforms.daos.IQualityFormDAO;
 import org.libreplan.business.qualityforms.entities.QualityForm;
 import org.libreplan.business.requirements.entities.DirectCriterionRequirement;
@@ -85,10 +86,13 @@ import org.libreplan.business.users.entities.UserRole;
 import org.libreplan.web.calendars.BaseCalendarModel;
 import org.libreplan.web.common.IntegrationEntityModel;
 import org.libreplan.web.common.concurrentdetection.OnConcurrentModification;
+import org.libreplan.web.email.IEmailNotificationModel;
+import org.libreplan.web.logs.IIssueLogModel;
+import org.libreplan.web.logs.IRiskLogModel;
+import org.libreplan.web.orders.files.IOrderFileModel;
 import org.libreplan.web.orders.labels.LabelsOnConversation;
 import org.libreplan.web.planner.order.ISaveCommand.IBeforeSaveActions;
 import org.libreplan.web.planner.order.PlanningStateCreator;
-import org.libreplan.web.planner.order.PlanningStateCreator.IActionsOnRetrieval;
 import org.libreplan.web.planner.order.PlanningStateCreator.PlanningState;
 import org.libreplan.web.security.SecurityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -100,8 +104,8 @@ import org.zkoss.ganttz.IPredicate;
 import org.zkoss.zk.ui.Desktop;
 
 /**
- * Model for UI operations related to {@link Order}. <br />
- *
+ * Model for UI operations related to {@link Order}.
+ * <br />
  * @author Óscar González Fernández <ogonzalez@igalia.com>
  * @author Diego Pino García <dpino@igalia.com>
  * @author Jacobo Aragunde Pérez <jaragunde@igalia.com>
@@ -118,9 +122,9 @@ public class OrderModel extends IntegrationEntityModel implements IOrderModel {
     @Autowired
     private IExternalCompanyDAO externalCompanyDAO;
 
-    private final Map<CriterionType, List<Criterion>> mapCriterions = new HashMap<CriterionType, List<Criterion>>();
+    private final Map<CriterionType, List<Criterion>> mapCriterions = new HashMap<>();
 
-    private List<ExternalCompany> externalCompanies = new ArrayList<ExternalCompany>();
+    private List<ExternalCompany> externalCompanies = new ArrayList<>();
 
     @Autowired
     private IOrderDAO orderDAO;
@@ -162,8 +166,6 @@ public class OrderModel extends IntegrationEntityModel implements IOrderModel {
     @Autowired
     private IOrderAuthorizationDAO orderAuthorizationDAO;
 
-    private List<Order> orderList = new ArrayList<Order>();
-
     @Autowired
     private IScenarioDAO scenarioDAO;
 
@@ -174,7 +176,18 @@ public class OrderModel extends IntegrationEntityModel implements IOrderModel {
     private IOrderVersionDAO orderVersionDAO;
 
     @Autowired
-    private IMoneyCostCalculator moneyCostCalculator;
+    private IOrderFileModel orderFileModel;
+
+    @Autowired
+    private IRiskLogModel riskLogModel;
+
+    @Autowired
+    private IIssueLogModel issueLogModel;
+
+    @Autowired
+    private IEmailNotificationModel emailNotificationModel;
+
+    private List<Order> orderList = new ArrayList<>();
 
     @Override
     @Transactional(readOnly = true)
@@ -185,19 +198,20 @@ public class OrderModel extends IntegrationEntityModel implements IOrderModel {
     private LabelsOnConversation labelsOnConversation;
 
     private LabelsOnConversation getLabelsOnConversation() {
-        if (labelsOnConversation == null) {
+        if ( labelsOnConversation == null ) {
             labelsOnConversation = new LabelsOnConversation(labelDAO);
         }
+
         return labelsOnConversation;
     }
 
     private QualityFormsOnConversation qualityFormsOnConversation;
 
     private QualityFormsOnConversation getQualityFormsOnConversation() {
-        if (qualityFormsOnConversation == null) {
-            qualityFormsOnConversation = new QualityFormsOnConversation(
-                    qualityFormDAO);
+        if ( qualityFormsOnConversation == null ) {
+            qualityFormsOnConversation = new QualityFormsOnConversation(qualityFormDAO);
         }
+
         return qualityFormsOnConversation;
     }
 
@@ -225,17 +239,28 @@ public class OrderModel extends IntegrationEntityModel implements IOrderModel {
 
     @Override
     @Transactional(readOnly = true)
+    public List<Order> getAllOrders() {
+        getLabelsOnConversation().reattachLabels();
+        List<Order> orders = orderDAO.getOrders();
+
+        initializeOrders(orders);
+        return orders;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<Order> getOrders(Date startDate, Date endDate,
-            List<Label> labels, List<Criterion> criteria,
-            ExternalCompany customer, OrderStatusEnum state) {
+                                 List<Label> labels, List<Criterion> criteria,
+                                 ExternalCompany customer, OrderStatusEnum state, Boolean excludeFinishedProject) {
         getLabelsOnConversation().reattachLabels();
         List<Order> orders = orderDAO
                 .getOrdersByReadAuthorizationBetweenDatesByLabelsCriteriaCustomerAndState(
                         SecurityUtils.getSessionUserLoginName(),
                         scenarioManager.getCurrent(), startDate, endDate,
-                        labels, criteria, customer, state);
+                        labels, criteria, customer, state, excludeFinishedProject);
 
         initializeOrders(orders);
+
         return orders;
     }
 
@@ -256,11 +281,9 @@ public class OrderModel extends IntegrationEntityModel implements IOrderModel {
 
     private void loadCriterions() {
         mapCriterions.clear();
-        List<CriterionType> criterionTypes = criterionTypeDAO
-                .getCriterionTypes();
+        List<CriterionType> criterionTypes = criterionTypeDAO.getCriterionTypes();
         for (CriterionType criterionType : criterionTypes) {
-            List<Criterion> criterions = new ArrayList<Criterion>(criterionDAO
-                    .findByType(criterionType));
+            List<Criterion> criterions = new ArrayList<>(criterionDAO.findByType(criterionType));
 
             mapCriterions.put(criterionType, criterions);
         }
@@ -268,9 +291,9 @@ public class OrderModel extends IntegrationEntityModel implements IOrderModel {
 
     @Override
     public Map<CriterionType, List<Criterion>> getMapCriterions(){
-        final Map<CriterionType, List<Criterion>> result =
-                new HashMap<CriterionType, List<Criterion>>();
+        final Map<CriterionType, List<Criterion>> result = new HashMap<>();
         result.putAll(mapCriterions);
+
         return result;
     }
 
@@ -279,14 +302,10 @@ public class OrderModel extends IntegrationEntityModel implements IOrderModel {
     public void initEdit(Order orderToEdit, Desktop desktop) {
         Validate.notNull(orderToEdit);
         loadNeededDataForConversation();
-        this.planningState = planningStateCreator.retrieveOrCreate(desktop,
-                orderToEdit, new IActionsOnRetrieval() {
 
-                    @Override
-                    public void onRetrieval(PlanningState planningState) {
-                        planningState.reattach();
-                    }
-                });
+        this.planningState =
+                planningStateCreator.retrieveOrCreate(desktop, orderToEdit, planningState1 -> planningState1.reattach());
+
         Order order = this.planningState.getOrder();
         this.orderElementTreeModel = new OrderElementTreeModel(order);
         forceLoadAdvanceAssignmentsAndMeasurements(order);
@@ -302,7 +321,7 @@ public class OrderModel extends IntegrationEntityModel implements IOrderModel {
     }
 
     private void forceLoadEndDateCommunicationToCustomer(Order order) {
-        if (order != null) {
+        if ( order != null ) {
             order.getEndDateCommunicationToCustomer().size();
         }
     }
@@ -357,20 +376,18 @@ public class OrderModel extends IntegrationEntityModel implements IOrderModel {
 
     private static void forceLoadCriterionRequirements(OrderElement orderElement) {
         orderElement.getHoursGroups().size();
+
         for (HoursGroup hoursGroup : orderElement.getHoursGroups()) {
-            attachDirectCriterionRequirement(hoursGroup
-                    .getDirectCriterionRequirement());
+            attachDirectCriterionRequirement(hoursGroup.getDirectCriterionRequirement());
         }
-        attachDirectCriterionRequirement(orderElement
-                .getDirectCriterionRequirement());
+        attachDirectCriterionRequirement(orderElement.getDirectCriterionRequirement());
 
         for (OrderElement child : orderElement.getChildren()) {
             forceLoadCriterionRequirements(child);
         }
     }
 
-    private static void attachDirectCriterionRequirement(
-            Set<DirectCriterionRequirement> requirements) {
+    private static void attachDirectCriterionRequirement(Set<DirectCriterionRequirement> requirements) {
         for (DirectCriterionRequirement requirement : requirements) {
             requirement.getChildren().size();
             requirement.getCriterion().getName();
@@ -378,20 +395,17 @@ public class OrderModel extends IntegrationEntityModel implements IOrderModel {
         }
     }
 
-    private void forceLoadAdvanceAssignmentsAndMeasurements(
-            OrderElement orderElement) {
-        for (DirectAdvanceAssignment directAdvanceAssignment : orderElement
-                .getDirectAdvanceAssignments()) {
+    private void forceLoadAdvanceAssignmentsAndMeasurements(OrderElement orderElement) {
+        for (DirectAdvanceAssignment directAdvanceAssignment : orderElement.getDirectAdvanceAssignments()) {
             directAdvanceAssignment.getAdvanceType().getUnitName();
-            for (AdvanceMeasurement advanceMeasurement : directAdvanceAssignment
-                    .getAdvanceMeasurements()) {
+
+            for (AdvanceMeasurement advanceMeasurement : directAdvanceAssignment.getAdvanceMeasurements()) {
                 advanceMeasurement.getValue();
             }
         }
 
         if (orderElement instanceof OrderLineGroup) {
-            for (IndirectAdvanceAssignment indirectAdvanceAssignment : ((OrderLineGroup) orderElement)
-                    .getIndirectAdvanceAssignments()) {
+            for (IndirectAdvanceAssignment indirectAdvanceAssignment : orderElement.getIndirectAdvanceAssignments()) {
                 indirectAdvanceAssignment.getAdvanceType().getUnitName();
             }
 
@@ -405,17 +419,16 @@ public class OrderModel extends IntegrationEntityModel implements IOrderModel {
     @Transactional(readOnly = true)
     public void prepareForCreate(Desktop desktop) {
         loadNeededDataForConversation();
-        this.planningState = planningStateCreator.createOn(desktop,
-                Order.create());
+        this.planningState = planningStateCreator.createOn(desktop, Order.create());
         planningState.getOrder().setInitDate(new Date());
+
         initializeOrder();
         initializeCode();
         initializeCalendar();
     }
 
     private void initializeOrder() {
-        this.orderElementTreeModel = new OrderElementTreeModel(
-                planningState.getOrder());
+        this.orderElementTreeModel = new OrderElementTreeModel(planningState.getOrder());
     }
 
     private void initializeCode() {
@@ -431,18 +444,17 @@ public class OrderModel extends IntegrationEntityModel implements IOrderModel {
     @Transactional(readOnly = true)
     public void prepareCreationFrom(OrderTemplate template, Desktop desktop) {
         loadNeededDataForConversation();
-        Order newOrder = createOrderFrom((OrderTemplate) templateDAO
-                .findExistingEntity(template.getId()));
+        Order newOrder = createOrderFrom((OrderTemplate) templateDAO.findExistingEntity(template.getId()));
 
         newOrder.setCode(getOrder().getCode());
         newOrder.setCodeAutogenerated(true);
-
         newOrder.setName(getOrder().getName());
-        newOrder.setCustomer(((Order) getOrder()).getCustomer());
+        newOrder.setCustomer(getOrder().getCustomer());
         newOrder.setCalendar(getCalendar());
-
         newOrder.setInitDate(getOrder().getInitDate());
-        if (getOrder().getDeadline() != null) {
+        newOrder.setDescription(getOrder().getDescription());
+        
+        if ( getOrder().getDeadline() != null ) {
             newOrder.setDeadline(getOrder().getDeadline());
         }
 
@@ -455,28 +467,28 @@ public class OrderModel extends IntegrationEntityModel implements IOrderModel {
         return template.createOrder(scenarioManager.getCurrent());
     }
 
-    private OrderElement createOrderElementFrom(OrderLineGroup parent,
-            OrderElementTemplate template) {
+    private OrderElement createOrderElementFrom(OrderLineGroup parent, OrderElementTemplate template) {
         Validate.notNull(parent);
+
         return template.createElement(parent);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public OrderElement createFrom(OrderLineGroup parent,
-            OrderElementTemplate template) {
+    public OrderElement createFrom(OrderLineGroup parent, OrderElementTemplate template) {
         reattachNeededDataForConversation();
-        OrderElement result = createOrderElementFrom(parent, templateDAO
-                .findExistingEntity(template.getId()));
-        if (isCodeAutogenerated()) {
+        OrderElement result = createOrderElementFrom(parent, templateDAO.findExistingEntity(template.getId()));
+        if ( isCodeAutogenerated() ) {
             setAllCodeToNull(result);
         }
         forceLoadAdvanceAssignmentsAndMeasurements(result);
+
         return result;
     }
 
     private void setAllCodeToNull(OrderElement result) {
         result.setCode(null);
+
         for (OrderElement each : result.getChildren()) {
             setAllCodeToNull(each);
         }
@@ -489,15 +501,11 @@ public class OrderModel extends IntegrationEntityModel implements IOrderModel {
 
     @Override
     public void save(boolean showSaveMessage) {
-        IBeforeSaveActions beforeSaveActions = new IBeforeSaveActions() {
-
-            @Override
-            public void doActions() {
-                reattachCalendar();
-                reattachCriterions();
-            }
+        IBeforeSaveActions beforeSaveActions = () -> {
+            reattachCalendar();
+            reattachCriterions();
         };
-        if (showSaveMessage) {
+        if ( showSaveMessage ) {
             this.planningState.getSaveCommand().save(beforeSaveActions);
         } else {
             this.planningState.getSaveCommand().save(beforeSaveActions, null);
@@ -505,7 +513,7 @@ public class OrderModel extends IntegrationEntityModel implements IOrderModel {
     }
 
     private void reattachCalendar() {
-        if (planningState.getOrder().getCalendar() == null) {
+        if  ( planningState.getOrder().getCalendar() == null ) {
             return;
         }
         BaseCalendar calendar = planningState.getOrder().getCalendar();
@@ -529,42 +537,72 @@ public class OrderModel extends IntegrationEntityModel implements IOrderModel {
     @Transactional
     public void remove(Order detachedOrder) {
         Order order = orderDAO.findExistingEntity(detachedOrder.getId());
+
+        removeNotifications(order);
+
+        removeFiles(order);
+
+        removeLogs(order);
+
         removeVersions(order);
-        if (order.hasNoVersions()) {
+
+        if ( order.hasNoVersions() ) {
             removeOrderFromDB(order);
         }
     }
 
+    private void removeLogs(Order order) {
+        riskLogModel.getByParent(order).forEach(riskLog -> riskLogModel.remove(riskLog));
+        issueLogModel.getByParent(order).forEach(issueLog -> issueLogModel.remove(issueLog));
+    }
+
+    private void removeFiles(Order order) {
+        orderFileModel.findByParent(order).forEach(orderFile -> orderFileModel.delete(orderFile));
+    }
+
+    private void removeNotifications(Order order) {
+
+        for ( Scenario scenario: currentAndDerivedScenarios()) {
+            order.useSchedulingDataFor(scenario.getOrderVersion(order));
+
+            TaskElement taskElement = order.getTaskElement();
+            if ( taskElement != null) {
+                emailNotificationModel.deleteByProject(taskElement);
+            }
+        }
+    }
+
     private void removeVersions(Order order) {
-        Map<Long, OrderVersion> versionsRemovedById = new HashMap<Long, OrderVersion>();
+        Map<Long, OrderVersion> versionsRemovedById = new HashMap<>();
         List<Scenario> currentAndDerived = currentAndDerivedScenarios();
+
         for (Scenario each : currentAndDerived) {
             OrderVersion versionRemoved = order.disassociateFrom(each);
-            if (versionRemoved != null) {
+            if ( versionRemoved != null ) {
                 versionsRemovedById.put(versionRemoved.getId(), versionRemoved);
             }
         }
+
         for (OrderVersion each : versionsRemovedById.values()) {
-            if (!order.isVersionUsed(each)) {
+            if ( !order.isVersionUsed(each) ) {
                 removeOrderVersionAt(each, currentAndDerived);
                 removeOrderVersionFromDB(each);
             }
         }
     }
 
-    private void removeOrderVersionAt(OrderVersion orderVersion,
-            Collection<? extends Scenario> currentAndDerived) {
+    private void removeOrderVersionAt(OrderVersion orderVersion, Collection<? extends Scenario> currentAndDerived) {
         for (Scenario each : currentAndDerived) {
             each.removeVersion(orderVersion);
         }
     }
 
     private List<Scenario> currentAndDerivedScenarios() {
-        List<Scenario> scenariosToBeDisassociatedFrom = new ArrayList<Scenario>();
+        List<Scenario> scenariosToBeDisassociatedFrom = new ArrayList<>();
         Scenario currentScenario = scenarioManager.getCurrent();
         scenariosToBeDisassociatedFrom.add(currentScenario);
-        scenariosToBeDisassociatedFrom.addAll(scenarioDAO
-                .getDerivedScenarios(currentScenario));
+        scenariosToBeDisassociatedFrom.addAll(scenarioDAO.getDerivedScenarios(currentScenario));
+
         return scenariosToBeDisassociatedFrom;
     }
 
@@ -591,12 +629,11 @@ public class OrderModel extends IntegrationEntityModel implements IOrderModel {
 
     @Override
     @Transactional(readOnly = true)
-    public OrderElementTreeModel getOrderElementsFilteredByPredicate(
-            IPredicate predicate) {
+    public OrderElementTreeModel getOrderElementsFilteredByPredicate(IPredicate predicate) {
         // Iterate through orderElements from order
-        List<OrderElement> orderElements = new ArrayList<OrderElement>();
-        for (OrderElement orderElement : planningState.getOrder()
-                .getAllOrderElements()) {
+        List<OrderElement> orderElements = new ArrayList<>();
+
+        for (OrderElement orderElement : planningState.getOrder().getAllOrderElements()) {
             if (!orderElement.isNewObject()) {
                 reattachOrderElement(orderElement);
             }
@@ -607,8 +644,7 @@ public class OrderModel extends IntegrationEntityModel implements IOrderModel {
             }
         }
         // Return list of filtered elements
-        return new OrderElementTreeModel(planningState.getOrder(),
-                orderElements);
+        return new OrderElementTreeModel(planningState.getOrder(), orderElements);
     }
 
     private void reattachLabels() {
@@ -624,6 +660,7 @@ public class OrderModel extends IntegrationEntityModel implements IOrderModel {
     public IOrderElementModel getOrderElementModel(OrderElement orderElement) {
         reattachCriterions();
         orderElementModel.setCurrent(orderElement, this);
+
         return orderElementModel;
     }
 
@@ -641,9 +678,11 @@ public class OrderModel extends IntegrationEntityModel implements IOrderModel {
     @Transactional(readOnly = true)
     public List<BaseCalendar> getBaseCalendars() {
         List<BaseCalendar> result = baseCalendarDAO.getBaseCalendars();
+
         for (BaseCalendar each : result) {
             BaseCalendarModel.forceLoadBaseCalendar(each);
         }
+
         return result;
     }
 
@@ -654,9 +693,9 @@ public class OrderModel extends IntegrationEntityModel implements IOrderModel {
         if (configuration == null) {
             return null;
         }
-        BaseCalendar defaultCalendar = configuration
-                .getDefaultCalendar();
+        BaseCalendar defaultCalendar = configuration.getDefaultCalendar();
         forceLoadCalendar(defaultCalendar);
+
         return defaultCalendar;
     }
 
@@ -693,15 +732,14 @@ public class OrderModel extends IntegrationEntityModel implements IOrderModel {
     }
 
     private void loadExternalCompaniesAreClient() {
-        this.externalCompanies = externalCompanyDAO
-                .getExternalCompaniesAreClient();
+        this.externalCompanies = externalCompanyDAO.getExternalCompaniesAreClient();
         Collections.sort(this.externalCompanies);
     }
 
     @Override
     public void setExternalCompany(ExternalCompany externalCompany) {
         if (this.getOrder() != null) {
-            Order order = (Order) getOrder();
+            Order order = getOrder();
             order.setCustomer(externalCompany);
         }
     }
@@ -712,19 +750,17 @@ public class OrderModel extends IntegrationEntityModel implements IOrderModel {
         orderDAO.reattachUnmodifiedEntity(order);
         StringBuilder result = new StringBuilder();
         result.append(_("Progress") + ": ").append(getEstimatedAdvance(order)).append("% , ");
-        result.append(_("Hours invested") + ": ")
-                .append(getHoursAdvancePercentage(order)).append("%\n");
+        result.append(_("Hours invested")).append(": ").append(getHoursAdvancePercentage(order)).append("%\n");
 
         if (!getDescription(order).equals("")) {
-            result.append(" , " + _("Description") + ": "
-                    + getDescription(order)
-                    + "\n");
+            result.append(" , " + _("Description") + ": " + getDescription(order) + "\n");
         }
 
         String labels = buildLabelsText(order);
         if (!labels.equals("")) {
             result.append(" , " + _("Labels") + ": " + labels);
         }
+
         return result.toString();
     }
 
@@ -732,6 +768,7 @@ public class OrderModel extends IntegrationEntityModel implements IOrderModel {
         if (order.getDescription() != null) {
             return order.getDescription();
         }
+
         return "";
     }
 
@@ -746,36 +783,41 @@ public class OrderModel extends IntegrationEntityModel implements IOrderModel {
         } else {
             result = new BigDecimal(0);
         }
+
         return result.multiply(new BigDecimal(100));
     }
 
     private String buildLabelsText(Order order) {
         StringBuilder result = new StringBuilder();
         Set<Label> labels = order.getLabels();
+
         if (!labels.isEmpty()) {
             for (Label label : labels) {
                 result.append(label.getName()).append(",");
             }
             result.delete(result.length() - 1, result.length());
         }
+
         return result.toString();
     }
 
-    /*
-     * Operation to filter the order list
+    /**
+     * Operation to filter the order list.
      */
 
     @Override
     @Transactional(readOnly = true)
     public List<Order> getFilterOrders(OrderPredicate predicate) {
         reattachLabels();
-        List<Order> filterOrderList = new ArrayList<Order>();
+        List<Order> filterOrderList = new ArrayList<>();
+
         for (Order order : orderList) {
             orderDAO.reattach(order);
             if (predicate.accepts(order)) {
                 filterOrderList.add(order);
             }
         }
+
         return filterOrderList;
     }
 
@@ -789,7 +831,7 @@ public class OrderModel extends IntegrationEntityModel implements IOrderModel {
         }
         if (order.isNewObject()
                 & SecurityUtils
-                        .isSuperuserOrUserInRoles(UserRole.ROLE_CREATE_PROJECTS)) {
+                .isSuperuserOrUserInRoles(UserRole.ROLE_CREATE_PROJECTS)) {
             return true;
         }
         try {
@@ -798,14 +840,14 @@ public class OrderModel extends IntegrationEntityModel implements IOrderModel {
                     orderAuthorizationDAO.listByOrderUserAndItsProfiles(order, user)) {
                 if(authorization.getAuthorizationType() ==
                         OrderAuthorizationType.READ_AUTHORIZATION ||
-                    authorization.getAuthorizationType() ==
-                        OrderAuthorizationType.WRITE_AUTHORIZATION) {
+                        authorization.getAuthorizationType() ==
+                                OrderAuthorizationType.WRITE_AUTHORIZATION) {
                     return true;
                 }
             }
         }
         catch(InstanceNotFoundException e) {
-            //this case shouldn't happen, because it would mean that there isn't a logged user
+            // This case shouldn't happen, because it would mean that there isn't a logged user
             //anyway, if it happenned we don't allow the user to pass
         }
         return false;
@@ -820,8 +862,7 @@ public class OrderModel extends IntegrationEntityModel implements IOrderModel {
     @Override
     @Transactional(readOnly = true)
     public boolean isAlreadyInUse(OrderElement orderElement) {
-        return orderElementDAO
-                .isAlreadyInUseThisOrAnyOfItsChildren(orderElement);
+        return orderElementDAO.isAlreadyInUseThisOrAnyOfItsChildren(orderElement);
     }
 
     @Override
@@ -844,10 +885,11 @@ public class OrderModel extends IntegrationEntityModel implements IOrderModel {
 
     @Override
     public Set<IntegrationEntity> getChildren() {
-        Set<IntegrationEntity> children = new HashSet<IntegrationEntity>();
+        Set<IntegrationEntity> children = new HashSet<>();
         if (planningState != null) {
             children.addAll(planningState.getOrder().getOrderElements());
         }
+
         return children;
     }
 
@@ -875,7 +917,7 @@ public class OrderModel extends IntegrationEntityModel implements IOrderModel {
     }
 
     public void removeAskedEndDate(EndDateCommunication endDate) {
-        Order order = (Order) getOrder();
+        Order order = getOrder();
         if (getOrder() != null && endDate != null) {
             order.removeAskedEndDate(endDate);
         }
@@ -883,55 +925,52 @@ public class OrderModel extends IntegrationEntityModel implements IOrderModel {
 
     @Override
     public SortedSet<EndDateCommunication> getEndDates() {
-        Order order = (Order) getOrder();
+        Order order = getOrder();
         if (getOrder() != null) {
             return order.getEndDateCommunicationToCustomer();
         }
-        return new TreeSet<EndDateCommunication>();
+
+        return new TreeSet<>();
     }
 
     @Override
     public void addAskedEndDate(Date value) {
         if (getOrder() != null) {
-            Order order = (Order) getOrder();
+            Order order = getOrder();
 
-            EndDateCommunication askedEndDate = EndDateCommunication.create(
-                    new Date(), value, null);
+            EndDateCommunication askedEndDate = EndDateCommunication.create(new Date(), value, null);
             order.addAskedEndDate(askedEndDate);
         }
     }
 
     @Override
     public boolean alreadyExistsRepeatedEndDate(Date value) {
-        if(getOrder() != null){
-            Order order = (Order) getOrder();
+        if (getOrder() != null) {
+            Order order = getOrder();
             if (order.getEndDateCommunicationToCustomer().isEmpty()) {
                 return false;
             }
 
-            EndDateCommunication endDateCommunicationToCustomer = order
-                    .getEndDateCommunicationToCustomer().first();
+            EndDateCommunication endDateCommunicationToCustomer = order.getEndDateCommunicationToCustomer().first();
             Date currentEndDate = endDateCommunicationToCustomer.getEndDate();
             return (currentEndDate.compareTo(value) == 0);
         }
+
         return false;
     }
 
     public boolean isAnyTaskWithConstraint(PositionConstraintType type) {
-        if ((planningState == null) || (planningState.getRootTask() == null)) {
-            return false;
-        }
+        return !((planningState == null) || (planningState.getRootTask() == null)) &&
+                planningState.getRootTask().isAnyTaskWithConstraint(type);
 
-        return planningState.getRootTask().isAnyTaskWithConstraint(type);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public boolean isOnlyChildAndParentAlreadyInUseByHoursOrExpenses(
-            OrderElement orderElement) {
+    public boolean isOnlyChildAndParentAlreadyInUseByHoursOrExpenses(OrderElement orderElement) {
         try {
             OrderLineGroup parent = orderElement.getParent();
-            if (!parent.isOrder() && parent.getChildren().size() == 1) {
+            if (!parent.isOrder() && !parent.isNewObject() && parent.getChildren().size() == 1) {
                 if (orderElementDAO.isAlreadyInUse(parent)) {
                     return true;
                 }
@@ -959,6 +998,7 @@ public class OrderModel extends IntegrationEntityModel implements IOrderModel {
         if (user.getProjectsFilterLabel() != null) {
             user.getProjectsFilterLabel().getFinderPattern();
         }
+
         return user;
     }
 

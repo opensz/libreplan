@@ -30,16 +30,15 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import org.hibernate.validator.AssertTrue;
-import org.hibernate.validator.NotNull;
-import org.hibernate.validator.Valid;
+import javax.validation.constraints.AssertTrue;
+import javax.validation.constraints.NotNull;
+import javax.validation.Valid;
 import org.joda.time.LocalDate;
 import org.libreplan.business.orders.entities.OrderElement;
 import org.libreplan.business.planner.entities.consolidations.NonCalculatedConsolidation;
 
 /**
- * Represents an {@link AdvanceAssignment} that is own of this
- * {@link OrderElement}.
+ * Represents an {@link AdvanceAssignment} that is own of this {@link OrderElement}.
  *
  * @author Manuel Rego Casasnovas <mrego@igalia.com>
  */
@@ -52,7 +51,7 @@ public class DirectAdvanceAssignment extends AdvanceAssignment {
     }
 
     public static DirectAdvanceAssignment create(boolean reportGlobalAdvance,
-            BigDecimal maxValue) {
+                                                 BigDecimal maxValue) {
         DirectAdvanceAssignment advanceAssignment = new DirectAdvanceAssignment(
                 reportGlobalAdvance, maxValue);
         advanceAssignment.setNewObject(true);
@@ -62,8 +61,7 @@ public class DirectAdvanceAssignment extends AdvanceAssignment {
     private BigDecimal maxValue;
 
     @Valid
-    private SortedSet<AdvanceMeasurement> advanceMeasurements = new TreeSet<AdvanceMeasurement>(
-            new AdvanceMeasurementComparator());
+    private SortedSet<AdvanceMeasurement> advanceMeasurements = new TreeSet<>(new AdvanceMeasurementComparator());
 
     @Valid
     private Set<NonCalculatedConsolidation> nonCalculatedConsolidations = new HashSet<NonCalculatedConsolidation>();
@@ -75,7 +73,7 @@ public class DirectAdvanceAssignment extends AdvanceAssignment {
     }
 
     private DirectAdvanceAssignment(boolean reportGlobalAdvance,
-            BigDecimal maxValue) {
+                                    BigDecimal maxValue) {
         super(reportGlobalAdvance);
         this.maxValue = maxValue;
         this.maxValue.setScale(2, BigDecimal.ROUND_HALF_UP);
@@ -193,7 +191,7 @@ public class DirectAdvanceAssignment extends AdvanceAssignment {
     }
 
     @AssertTrue(message = "Progress measurements must have a value lower than their following progress measurements.")
-    public boolean checkConstraintValidAdvanceMeasurements() {
+    public boolean isValidAdvanceMeasurementsConstraint() {
         if (advanceMeasurements.isEmpty()) {
             return true;
         }
@@ -207,7 +205,7 @@ public class DirectAdvanceAssignment extends AdvanceAssignment {
                     && (currentAdvance.getDate() != null)
                     && (nextAdvance.getDate() != null)
                     && (currentAdvance.getValue().compareTo(
-                            nextAdvance.getValue()) < 0)) {
+                    nextAdvance.getValue()) < 0)) {
                 return false;
             }
             currentAdvance = nextAdvance;
@@ -223,8 +221,8 @@ public class DirectAdvanceAssignment extends AdvanceAssignment {
         return fake;
     }
 
-    @AssertTrue(message = "maxixum value of percentage progress type must be 100")
-    public boolean checkConstraintMaxValueMustBe100ForPercentage() {
+    @AssertTrue(message = "maximum value of percentagee progress type must be 100")
+    public boolean isMaxValueMustBe100ForPercentageConstraint() {
         AdvanceType advanceType = getAdvanceType();
         if ((advanceType != null) && (advanceType.getPercentage())) {
             if (maxValue.compareTo(new BigDecimal(100)) != 0) {
@@ -235,7 +233,7 @@ public class DirectAdvanceAssignment extends AdvanceAssignment {
     }
 
     @AssertTrue(message = "maximum value must be greater than zero")
-    public boolean checkConstraintMaxValueMustBeGreaterThanZero() {
+    public boolean isMaxValueMustBeGreaterThanZeroConstraint() {
         return maxValue.compareTo(BigDecimal.ZERO) > 0;
     }
 

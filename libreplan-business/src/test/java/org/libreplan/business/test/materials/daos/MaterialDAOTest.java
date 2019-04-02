@@ -50,15 +50,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 
 /**
- * Test for {@MaterialDAO}
+ * Test for {@link org.libreplan.business.materials.daos.MaterialDAO}.
  *
  * @author Jacobo Aragunde Perez <jaragunde@igalia.com>
- *
  */
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(locations = { BUSINESS_SPRING_CONFIG_FILE,
-        BUSINESS_SPRING_CONFIG_TEST_FILE })
-@Transactional
+@ContextConfiguration(locations = { BUSINESS_SPRING_CONFIG_FILE, BUSINESS_SPRING_CONFIG_TEST_FILE })
 public class MaterialDAOTest {
 
     @Autowired
@@ -68,6 +65,7 @@ public class MaterialDAOTest {
     private IMaterialCategoryDAO materialCategoryDAO;
 
     @Test
+    @Transactional
     public void testInSpringContainer() {
         assertNotNull(materialDAO);
     }
@@ -82,15 +80,14 @@ public class MaterialDAOTest {
     private IDataBootstrap unitTypeBootstrap;
 
     @Before
-    public void loadRequiredaData() {
+    public void loadRequiredData() {
         configurationBootstrap.loadRequiredData();
         materialCategoryBootstrap.loadRequiredData();
         unitTypeBootstrap.loadRequiredData();
     }
 
     private MaterialCategory createValidMaterialCategory() {
-        MaterialCategory materialCategory = MaterialCategory.create(UUID.randomUUID().toString());
-        return materialCategory;
+        return MaterialCategory.create(UUID.randomUUID().toString());
     }
 
     private Material createValidMaterial() {
@@ -103,6 +100,7 @@ public class MaterialDAOTest {
     }
 
     @Test
+    @Transactional
     public void testSaveMaterial() {
         Material material = createValidMaterial();
         materialDAO.save(material);
@@ -110,6 +108,7 @@ public class MaterialDAOTest {
     }
 
     @Test(expected = ValidationException.class)
+    @Transactional
     public void testSaveMaterialWithoutDescription() {
         Material material = createValidMaterial();
         material.setDescription(null);
@@ -117,6 +116,7 @@ public class MaterialDAOTest {
     }
 
     @Test
+    @Transactional
     public void testRemoveMaterial() throws InstanceNotFoundException {
         Material material = createValidMaterial();
         materialDAO.save(material);
@@ -125,6 +125,7 @@ public class MaterialDAOTest {
     }
 
     @Test
+    @Transactional
     public void testListMaterials() {
         int previous = materialDAO.list(Material.class).size();
         Material material = createValidMaterial();
@@ -134,6 +135,7 @@ public class MaterialDAOTest {
     }
 
     @Test
+    @Transactional
     public void testListMaterialsFromCategory() {
         MaterialCategory category = createValidMaterialCategory();
         int previous = category.getMaterials().size();
@@ -144,8 +146,7 @@ public class MaterialDAOTest {
         try {
             category = materialCategoryDAO.find(category.getId());
             assertEquals(previous + 1, category.getMaterials().size());
-        } catch (InstanceNotFoundException e) {
-
+        } catch (InstanceNotFoundException ignored) {
         }
     }
 

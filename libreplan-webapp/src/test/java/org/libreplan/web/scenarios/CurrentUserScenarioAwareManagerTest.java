@@ -21,8 +21,8 @@
 package org.libreplan.web.scenarios;
 
 import static org.easymock.EasyMock.expect;
-import static org.easymock.classextension.EasyMock.createNiceMock;
-import static org.easymock.classextension.EasyMock.replay;
+import static org.easymock.EasyMock.createNiceMock;
+import static org.easymock.EasyMock.replay;
 import static org.junit.Assert.assertEquals;
 import static org.libreplan.business.BusinessGlobalNames.BUSINESS_SPRING_CONFIG_FILE;
 import static org.libreplan.web.WebappGlobalNames.WEBAPP_SPRING_CONFIG_FILE;
@@ -40,9 +40,9 @@ import org.libreplan.business.scenarios.bootstrap.PredefinedScenarios;
 import org.libreplan.business.scenarios.entities.Scenario;
 import org.libreplan.web.users.services.CustomUser;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.Authentication;
-import org.springframework.security.context.SecurityContext;
-import org.springframework.security.context.SecurityContextHolder;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
@@ -55,7 +55,6 @@ import org.springframework.transaction.annotation.Transactional;
         WEBAPP_SPRING_CONFIG_FILE, WEBAPP_SPRING_CONFIG_TEST_FILE,
         WEBAPP_SPRING_SECURITY_CONFIG_FILE,
         WEBAPP_SPRING_SECURITY_CONFIG_TEST_FILE })
-@Transactional
 public class CurrentUserScenarioAwareManagerTest {
 
     @Autowired
@@ -70,6 +69,7 @@ public class CurrentUserScenarioAwareManagerTest {
     }
 
     @Test
+    @Transactional
     public void ifNoUserAuthenticatedMainScenarioIsReturned() {
         Scenario current = scenarioManager.getCurrent();
         assertEquals(PredefinedScenarios.MASTER.getName(), current.getName());
@@ -77,6 +77,7 @@ public class CurrentUserScenarioAwareManagerTest {
     }
 
     @Test
+    @Transactional
     public void retrievesTheScenarioAssociatedWithTheAuthentication() {
         Scenario customScenario = mockScenario();
         givenUserAuthenticatedWith(customScenario);

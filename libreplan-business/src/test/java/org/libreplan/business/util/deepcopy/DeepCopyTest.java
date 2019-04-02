@@ -20,15 +20,16 @@
  */
 package org.libreplan.business.util.deepcopy;
 
+import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.everyItem;
+import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.junit.matchers.Each.each;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -42,6 +43,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Collections;
 
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
@@ -57,7 +59,6 @@ import org.libreplan.business.util.deepcopy.EntityExamples.TestEnum;
 
 /**
  * @author Óscar González Fernández <ogonzalez@igalia.com>
- *
  */
 public class DeepCopyTest {
 
@@ -68,8 +69,7 @@ public class DeepCopyTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void theEntityToCopyMustHaveNotEmptyConstructor() {
-        EntityWithoutNoArgsConstructor entity = new EntityWithoutNoArgsConstructor(
-                "bla");
+        EntityWithoutNoArgsConstructor entity = new EntityWithoutNoArgsConstructor("bla");
         new DeepCopy().copy(entity);
     }
 
@@ -105,12 +105,14 @@ public class DeepCopyTest {
 
     @Test
     public void itKnowsSomeTypesAreImmutable() {
-        Iterable<Class<?>> immutableTypes = Arrays.<Class<?>> asList(
+        Iterable<Class<?>> immutableTypes = Arrays.asList(
                 String.class, BigDecimal.class, Double.class, Float.class,
                 Integer.class, Short.class, Byte.class, Character.class,
                 LocalDate.class, Boolean.class, DateTime.class, double.class,
-                float.class, int.class, short.class, byte.class, char.class);
-        assertThat(immutableTypes, each(immutable()));
+                float.class, int.class, short.class, byte.class,
+                char.class);
+
+        assertThat(immutableTypes, everyItem(immutable()));
     }
 
     private Matcher<Class<?>> immutable() {
@@ -149,8 +151,7 @@ public class DeepCopyTest {
     @Test
     public void setsAreCopied() {
         EntityA entityA = new EntityA();
-        HashSet<Object> originalSet = new HashSet<Object>(Arrays.asList("test",
-                2, 3, new Date()));
+        HashSet<Object> originalSet = new HashSet<>(asList("test", 2, 3, new Date()));
         entityA.setSetProperty(originalSet);
         EntityA copy = new DeepCopy().copy(entityA);
         assertEquals(originalSet, copy.getSetProperty());
@@ -160,19 +161,17 @@ public class DeepCopyTest {
     @Test
     public void theSetImplementationClassIsPreservedIfPossible() {
         EntityA entityA = new EntityA();
-        Set<Object> originalSet = new LinkedHashSet<Object>(Arrays.asList(
-                "test", 2, 3, new Date()));
+        Set<Object> originalSet = new LinkedHashSet<>(asList("test", 2, 3, new Date()));
         entityA.setSetProperty(originalSet);
         EntityA copy = new DeepCopy().copy(entityA);
-        assertThat(copy.getSetProperty(), is(LinkedHashSet.class));
+        assertThat(copy.getSetProperty(), instanceOf(LinkedHashSet.class));
     }
 
     @Test
     public void setsInsideSetsAreRecursivelyCopiedWithoutProblem() {
         EntityA entityA = new EntityA();
-        HashSet<Object> innerSet = new HashSet<Object>(Arrays.asList("bla", 3));
-        HashSet<Object> originalSet = new HashSet<Object>(Arrays.asList("test",
-                2, 3, new Date(), innerSet));
+        HashSet<Object> innerSet = new HashSet<>(asList("bla", 3));
+        HashSet<Object> originalSet = new HashSet<>(asList("test", 2, 3, new Date(), innerSet));
         entityA.setSetProperty(originalSet);
         EntityA copy = new DeepCopy().copy(entityA);
         assertEquals(originalSet, copy.getSetProperty());
@@ -182,7 +181,7 @@ public class DeepCopyTest {
     @Test
     public void mapsAreCopied() {
         EntityA entityA = new EntityA();
-        HashMap<Object, Object> originalMap = new HashMap<Object, Object>();
+        HashMap<Object, Object> originalMap = new HashMap<>();
         originalMap.put("aa", "blabla");
         entityA.setMapProperty(originalMap);
         EntityA copy = new DeepCopy().copy(entityA);
@@ -193,17 +192,17 @@ public class DeepCopyTest {
     @Test
     public void mapImplementationIsPreservedIfPossible() {
         EntityA entityA = new EntityA();
-        LinkedHashMap<Object, Object> mapProperty = new LinkedHashMap<Object, Object>();
+        LinkedHashMap<Object, Object> mapProperty = new LinkedHashMap<>();
         mapProperty.put("ab", "abc");
         entityA.setMapProperty(mapProperty);
         EntityA copy = new DeepCopy().copy(entityA);
-        assertThat(copy.getMapProperty(), is(LinkedHashMap.class));
+        assertThat(copy.getMapProperty(), instanceOf(LinkedHashMap.class));
     }
 
     @Test
     public void listsAreCopied() {
         EntityA entityA = new EntityA();
-        ArrayList<Object> originalList = new ArrayList<Object>();
+        ArrayList<Object> originalList = new ArrayList<>();
         originalList.add(2);
         originalList.add(10);
         originalList.add("abla");
@@ -216,11 +215,11 @@ public class DeepCopyTest {
     @Test
     public void listImplementationIsPreservedIfPossible() {
         EntityA entityA = new EntityA();
-        LinkedList<Object> originalList = new LinkedList<Object>();
+        LinkedList<Object> originalList = new LinkedList<>();
         originalList.add(2);
         entityA.setListProperty(originalList);
         EntityA copy = new DeepCopy().copy(entityA);
-        assertThat(copy.getListProperty(), is(LinkedList.class));
+        assertThat(copy.getListProperty(), instanceOf(LinkedList.class));
     }
 
     @Test
@@ -243,7 +242,7 @@ public class DeepCopyTest {
     @Test
     public void sharedCollectionsAreCopiedWithTheSameReference() {
         EntityA entityA = new EntityA();
-        List<String> originalList = Arrays.asList("bla");
+        List<String> originalList = Collections.singletonList("bla");
         entityA.setSharedListProperty(originalList);
         EntityA copy = new DeepCopy().copy(entityA);
         assertSame(originalList, copy.getSharedListProperty());
@@ -252,64 +251,54 @@ public class DeepCopyTest {
     @Test
     public void sharedCollectionElementsKeptTheReferences() {
         EntityA entityA = new EntityA();
-        HashSet<Object> originalSet = new HashSet<Object>();
+        HashSet<Object> originalSet = new HashSet<>();
         originalSet.add(new Date());
         entityA.setSharedElementsProperty(originalSet);
         EntityA copy = new DeepCopy().copy(entityA);
         assertNotSame(originalSet, copy.getSharedElementsProperty());
-        assertSame(originalSet.iterator().next(), copy
-                .getSharedElementsProperty().iterator().next());
+        assertSame(originalSet.iterator().next(), copy.getSharedElementsProperty().iterator().next());
     }
 
     @Test
     public void sharedKeyElementsKeepTheSameReferencesForTheKeys() {
         EntityA entityA = new EntityA();
-        Map<Object, Object> originalMap = new HashMap<Object, Object>();
+        Map<Object, Object> originalMap = new HashMap<>();
         EntityA originalValue = new EntityA();
         Date originalKey = new Date();
         originalMap.put(originalKey, originalValue);
         entityA.setSharedKeysMapProperty(originalMap);
         EntityA copy = new DeepCopy().copy(entityA);
-        Map<Object, Object> sharedKeysMapProperty = copy
-                .getSharedKeysMapProperty();
-        assertSame(originalKey, sharedKeysMapProperty.keySet().iterator()
-                .next());
-        assertNotSame(originalValue, sharedKeysMapProperty.values().iterator()
-                .next());
+        Map<Object, Object> sharedKeysMapProperty = copy.getSharedKeysMapProperty();
+        assertSame(originalKey, sharedKeysMapProperty.keySet().iterator().next());
+        assertNotSame(originalValue, sharedKeysMapProperty.values().iterator().next());
     }
 
     @Test
     public void sharedValueElementsKeepTheSameReferencesForTheValues() {
         EntityA entityA = new EntityA();
-        Map<Object, Object> originalMap = new HashMap<Object, Object>();
+        Map<Object, Object> originalMap = new HashMap<>();
         EntityA originalValue = new EntityA();
         Date originalKey = new Date();
         originalMap.put(originalKey, originalValue);
         entityA.setSharedValuesMapProperty(originalMap);
         EntityA copy = new DeepCopy().copy(entityA);
-        Map<Object, Object> copiedMap = copy
-                .getSharedValuesMapProperty();
-        assertNotSame(originalKey, copiedMap.keySet().iterator()
-                .next());
-        assertSame(originalValue, copiedMap.values().iterator()
-                .next());
+        Map<Object, Object> copiedMap = copy.getSharedValuesMapProperty();
+        assertNotSame(originalKey, copiedMap.keySet().iterator().next());
+        assertSame(originalValue, copiedMap.values().iterator().next());
     }
 
     @Test
     public void aSharedCollectionElementsMapKeepTheSameReferencesForTheKeysAndTheValues() {
         EntityA entityA = new EntityA();
-        Map<Object, Object> originalMap = new HashMap<Object, Object>();
+        Map<Object, Object> originalMap = new HashMap<>();
         EntityA originalValue = new EntityA();
         Date originalKey = new Date();
         originalMap.put(originalKey, originalValue);
         entityA.setSharedCollectionElementsMapProperty(originalMap);
         EntityA copy = new DeepCopy().copy(entityA);
-        Map<Object, Object> copiedMap = copy
-                .getSharedCollectionElementsMapProperty();
-        assertSame(originalKey, copiedMap.keySet().iterator()
-                .next());
-        assertSame(originalValue, copiedMap.values().iterator()
-                .next());
+        Map<Object, Object> copiedMap = copy.getSharedCollectionElementsMapProperty();
+        assertSame(originalKey, copiedMap.keySet().iterator().next());
+        assertSame(originalValue, copiedMap.values().iterator().next());
     }
 
     @Test
@@ -341,12 +330,11 @@ public class DeepCopyTest {
         EntityA entityA = new EntityA();
         parent.setEntityAProperty(entityA);
         entityA.setParentProperty(parent);
-        HashSet<Object> originalSet = new HashSet<Object>();
+        HashSet<Object> originalSet = new HashSet<>();
         parent.setSetProperty(originalSet);
         entityA.setSetProperty(originalSet);
         Parent copy = new DeepCopy().copy(parent);
-        assertSame(copy.getSetProperty(), copy.getEntityAProperty()
-                .getSetProperty());
+        assertSame(copy.getSetProperty(), copy.getEntityAProperty().getSetProperty());
     }
 
     @Test
@@ -381,8 +369,8 @@ public class DeepCopyTest {
     public void equalObjectsButDifferentAreNotReused() {
         EntityA entityA = new EntityA();
         DeepCopy deepCopy = new DeepCopy();
-        entityA.setSet1(new HashSet<Object>());
-        entityA.setSet2(new HashSet<Object>());
+        entityA.setSet1(new HashSet<>());
+        entityA.setSet2(new HashSet<>());
         EntityA copied = deepCopy.copy(entityA);
         assertNotSame(copied.getSet1(), copied.getSet2());
     }

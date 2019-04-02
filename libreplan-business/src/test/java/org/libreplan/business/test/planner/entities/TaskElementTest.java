@@ -22,8 +22,8 @@
 package org.libreplan.business.test.planner.entities;
 
 import static org.easymock.EasyMock.expect;
-import static org.easymock.classextension.EasyMock.createNiceMock;
-import static org.easymock.classextension.EasyMock.replay;
+import static org.easymock.EasyMock.createNiceMock;
+import static org.easymock.EasyMock.replay;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -69,16 +69,14 @@ import org.springframework.transaction.annotation.Transactional;
  * @author Óscar González Fernández <ogonzalez@igalia.com>
  */
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(locations = { BUSINESS_SPRING_CONFIG_FILE,
-        BUSINESS_SPRING_CONFIG_TEST_FILE })
-@Transactional
+@ContextConfiguration(locations = { BUSINESS_SPRING_CONFIG_FILE, BUSINESS_SPRING_CONFIG_TEST_FILE })
 public class TaskElementTest {
 
     @Resource
     private IDataBootstrap defaultAdvanceTypesBootstrapListener;
 
     @Before
-    public void loadRequiredaData() {
+    public void loadRequiredData() {
         defaultAdvanceTypesBootstrapListener.loadRequiredData();
     }
 
@@ -87,27 +85,30 @@ public class TaskElementTest {
     private Dependency exampleDependency;
 
     public TaskElementTest() {
-        this.exampleDependency = Dependency.create(new Task(), new Task(),
-                Type.END_START);
+        this.exampleDependency = Dependency.create(new Task(), new Task(), Type.END_START);
     }
 
     @Test
+    @Transactional
     public void initiallyAssociatedDependenciesAreEmpty() {
         assertTrue(task.getDependenciesWithThisDestination().isEmpty());
         assertTrue(task.getDependenciesWithThisOrigin().isEmpty());
     }
 
     @Test(expected = UnsupportedOperationException.class)
+    @Transactional
     public void dependenciesWithThisOriginCollectionCannotBeModified() {
         task.getDependenciesWithThisOrigin().add(exampleDependency);
     }
 
     @Test(expected = UnsupportedOperationException.class)
+    @Transactional
     public void dependenciesWithThisDestinationCollectionCannotBeModified() {
         task.getDependenciesWithThisDestination().add(exampleDependency);
     }
 
     @Test
+    @Transactional
     public void taskElementHasStartDatePropertyAndItIsRoundedToTheStartOfTheDay() {
         Date now = new Date();
         task.setStartDate(now);
@@ -117,55 +118,49 @@ public class TaskElementTest {
     }
 
     private static Date toStartOfDay(Date date) {
-        return LocalDate.fromDateFields(date)
-                .toDateTimeAtStartOfDay().toDate();
+        return LocalDate.fromDateFields(date).toDateTimeAtStartOfDay().toDate();
     }
 
     @Test
+    @Transactional
     public void aDependencyWithThisOriginCanBeRemoved() {
         Task origin = new Task();
         Task destination = new Task();
         Type type = Type.START_END;
         Dependency.create(origin, destination, type);
         assertThat(origin.getDependenciesWithThisOrigin().size(), equalTo(1));
-        assertThat(destination.getDependenciesWithThisDestination().size(),
-                equalTo(1));
+        assertThat(destination.getDependenciesWithThisDestination().size(), equalTo(1));
         origin.removeDependencyWithDestination(destination, type);
         assertThat(origin.getDependenciesWithThisOrigin().size(), equalTo(0));
-        assertThat(destination.getDependenciesWithThisDestination().size(),
-                equalTo(0));
+        assertThat(destination.getDependenciesWithThisDestination().size(), equalTo(0));
     }
 
-    private void addDependenciesForChecking(TaskElement taskBeingTransformed,
-            TaskElement sourceDependencyTask,
-            TaskElement destinationDependencyTask) {
-        Dependency.create(sourceDependencyTask, taskBeingTransformed,
-                Type.END_START);
-        Dependency.create(taskBeingTransformed, destinationDependencyTask,
-                Type.END_START);
+    private void addDependenciesForChecking(TaskElement taskBeingTransformed, TaskElement sourceDependencyTask,
+                                            TaskElement destinationDependencyTask) {
+
+        Dependency.create(sourceDependencyTask, taskBeingTransformed, Type.END_START);
+        Dependency.create(taskBeingTransformed, destinationDependencyTask, Type.END_START);
     }
 
     public void detachRemovesDependenciesFromRelatedTasks() {
-        Task taskToDetach = (Task) TaskTest.createValidTask();
-        Task sourceDependencyTask = (Task) TaskTest.createValidTask();
-        Task destinationDependencyTask = (Task) TaskTest.createValidTask();
+        Task taskToDetach = TaskTest.createValidTask();
+        Task sourceDependencyTask = TaskTest.createValidTask();
+        Task destinationDependencyTask = TaskTest.createValidTask();
         taskToDetach.setName("prueba");
         taskToDetach.setNotes("blabla");
         taskToDetach.setStartDate(new Date());
-        addDependenciesForChecking(taskToDetach, sourceDependencyTask,
-                destinationDependencyTask);
+        addDependenciesForChecking(taskToDetach, sourceDependencyTask, destinationDependencyTask);
         taskToDetach.detach();
-        assertThat(sourceDependencyTask.getDependenciesWithThisOrigin().size(),
-                equalTo(0));
-        assertThat(destinationDependencyTask
-                .getDependenciesWithThisDestination().size(), equalTo(0));
+        assertThat(sourceDependencyTask.getDependenciesWithThisOrigin().size(), equalTo(0));
+        assertThat(destinationDependencyTask.getDependenciesWithThisDestination().size(), equalTo(0));
     }
 
     @Test
+    @Transactional
     public void detachRemovesTaskFromParent() {
         TaskGroup parent = TaskGroupTest.createValidTaskGroup();
-        Task child = (Task) TaskTest.createValidTask();
-        Task anotherChild = (Task) TaskTest.createValidTask();
+        Task child = TaskTest.createValidTask();
+        Task anotherChild = TaskTest.createValidTask();
         parent.addTaskElement(child);
         parent.addTaskElement(anotherChild);
         child.detach();
@@ -173,12 +168,14 @@ public class TaskElementTest {
     }
 
     @Test
+    @Transactional
     public void MilestoneOrderElementIsNull() {
         TaskMilestone milestone = TaskMilestone.create(new Date());
         assertThat(milestone.getOrderElement(), nullValue());
     }
 
     @Test
+    @Transactional
     public void theDeadlineOfTheOrderElementIsCopied() {
         OrderLine orderLine = OrderLine.create();
         addOrderTo(orderLine);
@@ -191,15 +188,13 @@ public class TaskElementTest {
 
     private TaskSource asTaskSource(OrderLine orderLine) {
         List<HoursGroup> hoursGroups = orderLine.getHoursGroups();
-        if (hoursGroups.isEmpty()) {
+        if ( hoursGroups.isEmpty() ) {
             hoursGroups = Collections.singletonList(createHoursGroup(100));
         }
-        return TaskSource.create(mockSchedulingDataForVersion(orderLine),
-                hoursGroups);
+        return TaskSource.create(mockSchedulingDataForVersion(orderLine), hoursGroups);
     }
 
-    public static SchedulingDataForVersion mockSchedulingDataForVersion(
-            OrderElement orderElement) {
+    public static SchedulingDataForVersion mockSchedulingDataForVersion(OrderElement orderElement) {
         SchedulingDataForVersion result = createNiceMock(SchedulingDataForVersion.class);
         TaskSource taskSource = createNiceMock(TaskSource.class);
         expect(result.getOrderElement()).andReturn(orderElement).anyTimes();
@@ -220,13 +215,13 @@ public class TaskElementTest {
     }
 
     @Test
+    @Transactional
     public void ifNoParentWithStartDateThePositionConstraintIsSoonAsPossible() {
         OrderLine orderLine = OrderLine.create();
         addOrderTo(orderLine);
         TaskSource taskSource = asTaskSource(orderLine);
         Task task = Task.createTask(taskSource);
-        assertThat(task.getPositionConstraint(),
-                isOfType(PositionConstraintType.AS_SOON_AS_POSSIBLE));
+        assertThat(task.getPositionConstraint(), isOfType(PositionConstraintType.AS_SOON_AS_POSSIBLE));
     }
 
     private void addOrderTo(OrderElement orderElement) {
@@ -237,6 +232,7 @@ public class TaskElementTest {
     }
 
     @Test
+    @Transactional
     @SuppressWarnings("unchecked")
     public void ifSomeParentHasInitDateThePositionConstraintIsNotEarlierThan() {
         LocalDate initDate = new LocalDate(2005, 10, 5);
@@ -247,12 +243,12 @@ public class TaskElementTest {
         group.add(orderLine);
         TaskSource taskSource = asTaskSource(orderLine);
         Task task = Task.createTask(taskSource);
-        assertThat(task.getPositionConstraint(), allOf(
-                isOfType(PositionConstraintType.START_NOT_EARLIER_THAN),
-                hasValue(initDate)));
+        assertThat(task.getPositionConstraint(),
+                allOf(isOfType(PositionConstraintType.START_NOT_EARLIER_THAN), hasValue(initDate)));
     }
 
     @Test
+    @Transactional
     public void unlessTheOnlyParentWithInitDateNotNullIsTheOrder() {
         OrderLine orderLine = OrderLine.create();
         addOrderTo(orderLine);
@@ -261,17 +257,14 @@ public class TaskElementTest {
         order.setInitDate(initDate);
         TaskSource taskSource = asTaskSource(orderLine);
         Task task = Task.createTask(taskSource);
-        assertThat(task.getPositionConstraint(),
-                isOfType(PositionConstraintType.AS_SOON_AS_POSSIBLE));
+        assertThat(task.getPositionConstraint(), isOfType(PositionConstraintType.AS_SOON_AS_POSSIBLE));
     }
 
-    private static Matcher<TaskPositionConstraint> isOfType(
-            final PositionConstraintType type) {
+    private static Matcher<TaskPositionConstraint> isOfType(final PositionConstraintType type) {
         return new BaseMatcher<TaskPositionConstraint>() {
-
             @Override
             public boolean matches(Object object) {
-                if (object instanceof TaskPositionConstraint) {
+                if ( object instanceof TaskPositionConstraint ) {
                     TaskPositionConstraint startConstraint = (TaskPositionConstraint) object;
                     return startConstraint.getConstraintType() == type;
                 }
@@ -280,35 +273,29 @@ public class TaskElementTest {
 
             @Override
             public void describeTo(Description description) {
-                description.appendText("the start constraint must be of type "
-                        + type);
+                description.appendText("the start constraint must be of type " + type);
             }
         };
     }
 
-    private static Matcher<TaskPositionConstraint> hasValue(
-            final LocalDate value) {
+    private static Matcher<TaskPositionConstraint> hasValue(final LocalDate value) {
         return new BaseMatcher<TaskPositionConstraint>() {
 
             @Override
             public boolean matches(Object object) {
-                if (object instanceof TaskPositionConstraint) {
+                if ( object instanceof TaskPositionConstraint ) {
                     TaskPositionConstraint startConstraint = (TaskPositionConstraint) object;
-                    LocalDate constraintDate = startConstraint
-                            .getConstraintDate().toDateTimeAtStartOfDay()
-                            .toLocalDate();
-                    boolean bothNotNull = value != null
-                                                && constraintDate != null;
-                    return value == constraintDate || bothNotNull
-                            && constraintDate.equals(value);
+                    LocalDate constraintDate = startConstraint.getConstraintDate().toDateTimeAtStartOfDay().toLocalDate();
+                    boolean bothNotNull = value != null && constraintDate != null;
+
+                    return value == constraintDate || bothNotNull && constraintDate.equals(value);
                 }
                 return false;
             }
 
             @Override
             public void describeTo(Description description) {
-                description.appendText("the start constraint must have date "
-                        + value);
+                description.appendText("the start constraint must have date " + value);
             }
         };
     }

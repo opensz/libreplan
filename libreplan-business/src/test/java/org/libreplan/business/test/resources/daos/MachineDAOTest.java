@@ -30,6 +30,7 @@ import static org.libreplan.business.test.BusinessGlobalNames.BUSINESS_SPRING_CO
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.UUID;
 
 import javax.annotation.Resource;
 
@@ -49,21 +50,18 @@ import org.libreplan.business.resources.entities.Criterion;
 import org.libreplan.business.resources.entities.Machine;
 import org.libreplan.business.resources.entities.MachineWorkersConfigurationUnit;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.annotation.NotTransactional;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(locations = { BUSINESS_SPRING_CONFIG_FILE,
-        BUSINESS_SPRING_CONFIG_TEST_FILE })
+@ContextConfiguration(locations = { BUSINESS_SPRING_CONFIG_FILE, BUSINESS_SPRING_CONFIG_TEST_FILE })
 /**
- * Test for {@MachineDAO}
+ * Test for {@link org.libreplan.business.resources.daos.MachineDAO}.
  *
  * @author Diego Pino Garcia <dpino@igalia.com>
  * @author Javier Moran Rua <jmoran@igalia.com>
  */
-@Transactional
 public class MachineDAOTest {
 
     @Autowired
@@ -85,24 +83,31 @@ public class MachineDAOTest {
     private IDataBootstrap configurationBootstrap;
 
     @Before
-    public void loadRequiredaData() {
+    public void loadRequiredData() {
         configurationBootstrap.loadRequiredData();
     }
 
     private Machine createValidMachine() {
+        String code = UUID.randomUUID().toString();
+        return createValidMachine(code);
+    }
+
+    private Machine createValidMachine(String code) {
         Machine machine = Machine.create();
-        machine.setCode("code");
+        machine.setCode(code);
         machine.setName("name");
         machine.setDescription("description");
         return machine;
     }
 
     @Test
+    @Transactional
     public void testInSpringContainer() {
         assertNotNull(machineDAO);
     }
 
     @Test
+    @Transactional
     public void testSaveMachine() {
         Machine machine = createValidMachine();
         machineDAO.save(machine);
@@ -110,6 +115,7 @@ public class MachineDAOTest {
     }
 
     @Test
+    @Transactional
     public void testRemoveMachine() throws InstanceNotFoundException {
         Machine machine = createValidMachine();
         machineDAO.save(machine);
@@ -118,6 +124,7 @@ public class MachineDAOTest {
     }
 
     @Test
+    @Transactional
     public void testListMachines() {
         int previous = machineDAO.list(Machine.class).size();
         Machine machine = createValidMachine();
@@ -127,14 +134,16 @@ public class MachineDAOTest {
     }
 
     @Test
-    @NotTransactional
     public void testSaveConfigurationUnits() throws InstanceNotFoundException {
         final Machine machine = createValidMachine();
-        MachineWorkersConfigurationUnit configurationUnit = MachineWorkersConfigurationUnit
-                .create(machine, "Operation", new BigDecimal(1));
+
+        MachineWorkersConfigurationUnit configurationUnit =
+                MachineWorkersConfigurationUnit.create(machine, "Operation", new BigDecimal(1));
+
         final Criterion criterion = CriterionDAOTest.createValidCriterion();
         configurationUnit.addRequiredCriterion(criterion);
         machine.addMachineWorkersConfigurationUnit(configurationUnit);
+
         transactionService.runOnTransaction(new IOnTransaction<Void>() {
             @Override
             public Void execute() {
@@ -144,19 +153,20 @@ public class MachineDAOTest {
                 return null;
             }
         });
+
         assertTrue(machine.getId() != null);
         assertTrue(machine.getConfigurationUnits().size() != 0);
-        assertTrue(machine.getConfigurationUnits().iterator().next()
-                .getRequiredCriterions().size() != 0);
+        assertTrue(machine.getConfigurationUnits().iterator().next().getRequiredCriterions().size() != 0);
     }
 
     @Test(expected = ValidationException.class)
-    @NotTransactional
     public void testSaveTwoMachinesWithSameCodeForbidden() {
+        final String sameCode = UUID.randomUUID().toString();
+
         transactionService.runOnTransaction(new IOnTransaction<Void>() {
             @Override
             public Void execute() {
-                machineDAO.save(createValidMachine());
+                machineDAO.save(createValidMachine(sameCode));
                 return null;
             }
         });
@@ -164,7 +174,7 @@ public class MachineDAOTest {
         transactionService.runOnTransaction(new IOnTransaction<Void>() {
             @Override
             public Void execute() {
-                machineDAO.save(createValidMachine());
+                machineDAO.save(createValidMachine(sameCode));
                 return null;
             }
         });

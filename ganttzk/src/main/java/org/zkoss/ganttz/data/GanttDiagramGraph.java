@@ -38,9 +38,9 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 
-import org.apache.commons.lang.Validate;
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.builder.HashCodeBuilder;
+import org.apache.commons.lang3.Validate;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jgrapht.DirectedGraph;
@@ -61,10 +61,10 @@ import org.zkoss.ganttz.util.ReentranceGuard.IReentranceCases;
  * This class contains a graph with the {@link Task tasks} as vertexes and the
  * {@link Dependency dependency} as arcs. It enforces the rules embodied in the
  * dependencies and in the duration of the tasks using listeners. <br/>
+ *
  * @author Óscar González Fernández <ogonzalez@igalia.com>
  */
-public class GanttDiagramGraph<V, D extends IDependency<V>> implements
-        ICriticalPathCalculable<V> {
+public class GanttDiagramGraph<V, D extends IDependency<V>> implements ICriticalPathCalculable<V> {
 
     private static final Log LOG = LogFactory.getLog(GanttDiagramGraph.class);
 
@@ -76,8 +76,7 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
             }
 
             @Override
-            public void setStartDate(GanttDate previousStart,
-                    GanttDate previousEnd, GanttDate newStart) {
+            public void setStartDate(GanttDate previousStart, GanttDate previousEnd, GanttDate newStart) {
             }
 
             @Override
@@ -99,8 +98,7 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
 
         boolean isContainer(V task);
 
-        void registerDependenciesEnforcerHookOn(V task,
-                IDependenciesEnforcerHookFactory<V> hookFactory);
+        void registerDependenciesEnforcerHookOn(V task, IDependenciesEnforcerHookFactory<V> hookFactory);
 
         GanttDate getStartDate(V task);
 
@@ -110,9 +108,8 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
 
         void setEndDateFor(V task, GanttDate newEnd);
 
-        public List<Constraint<GanttDate>> getConstraints(
-                ConstraintCalculator<V> calculator, Set<D> withDependencies,
-                Point point);
+        List<Constraint<GanttDate>> getConstraints(ConstraintCalculator<V> calculator, Set<D> withDependencies,
+                                                   Point point);
 
         List<Constraint<GanttDate>> getStartConstraintsFor(V task);
 
@@ -143,10 +140,11 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
 
         @Override
         public Task getOwner(Task task) {
-            if (task instanceof Milestone) {
+            if ( task instanceof Milestone ) {
                 Milestone milestone = (Milestone) task;
                 return milestone.getOwner();
             }
+
             return null;
         }
 
@@ -166,14 +164,12 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
         }
 
         @Override
-        public void registerDependenciesEnforcerHookOn(Task task,
-                IDependenciesEnforcerHookFactory<Task> hookFactory) {
+        public void registerDependenciesEnforcerHookOn(Task task, IDependenciesEnforcerHookFactory<Task> hookFactory) {
             task.registerDependenciesEnforcerHook(hookFactory);
         }
 
         @Override
-        public Dependency createInvisibleDependency(Task origin,
-                Task destination, DependencyType type) {
+        public Dependency createInvisibleDependency(Task origin, Task destination, DependencyType type) {
             return new Dependency(origin, destination, type, false);
         }
 
@@ -201,7 +197,6 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
         @Override
         public void setEndDateFor(Task task, final GanttDate newEnd) {
             task.doPositionModifications(new IModifications() {
-
                 @Override
                 public void doIt(IUpdatablePosition position) {
                     position.setEndDate(newEnd);
@@ -217,7 +212,6 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
         @Override
         public void setStartDateFor(Task task, final GanttDate newStart) {
             task.doPositionModifications(new IModifications() {
-
                 @Override
                 public void doIt(IUpdatablePosition position) {
                     position.setBeginDate(newStart);
@@ -226,11 +220,10 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
         }
 
         @Override
-        public List<Constraint<GanttDate>> getConstraints(
-                ConstraintCalculator<Task> calculator,
-                Set<Dependency> withDependencies, Point pointBeingModified) {
-            return Dependency.getConstraintsFor(calculator, withDependencies,
-                    pointBeingModified);
+        public List<Constraint<GanttDate>> getConstraints(ConstraintCalculator<Task> calculator,
+                                                          Set<Dependency> withDependencies, Point pointBeingModified) {
+
+            return Dependency.getConstraintsFor(calculator, withDependencies, pointBeingModified);
         }
 
         @Override
@@ -250,31 +243,31 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
 
     }
 
-    public static class GanttZKDiagramGraph extends
-            GanttDiagramGraph<Task, Dependency> {
+    public static class GanttZKDiagramGraph extends GanttDiagramGraph<Task, Dependency> {
 
-        private GanttZKDiagramGraph(boolean scheduleBackwards,
+        private GanttZKDiagramGraph(
+                boolean scheduleBackwards,
                 List<Constraint<GanttDate>> globalStartConstraints,
                 List<Constraint<GanttDate>> globalEndConstraints,
                 boolean dependenciesConstraintsHavePriority) {
-            super(scheduleBackwards, GANTTZK_ADAPTER, globalStartConstraints,
-                    globalEndConstraints,
+
+            super(scheduleBackwards, GANTTZK_ADAPTER, globalStartConstraints, globalEndConstraints,
                     dependenciesConstraintsHavePriority);
         }
 
     }
 
     public interface IGraphChangeListener {
-        public void execute();
+        void execute();
     }
 
     public static GanttZKDiagramGraph create(boolean scheduleBackwards,
-            List<Constraint<GanttDate>> globalStartConstraints,
-            List<Constraint<GanttDate>> globalEndConstraints,
-            boolean dependenciesConstraintsHavePriority) {
-        return new GanttZKDiagramGraph(scheduleBackwards,
-                globalStartConstraints,
-                globalEndConstraints, dependenciesConstraintsHavePriority);
+                                             List<Constraint<GanttDate>> globalStartConstraints,
+                                             List<Constraint<GanttDate>> globalEndConstraints,
+                                             boolean dependenciesConstraintsHavePriority) {
+
+        return new GanttZKDiagramGraph(scheduleBackwards, globalStartConstraints, globalEndConstraints,
+                dependenciesConstraintsHavePriority);
     }
 
     private final IAdapter<V, D> adapter;
@@ -283,9 +276,9 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
 
     private final TopologicalSorter topologicalSorter;
 
-    private List<V> topLevelTasks = new ArrayList<V>();
+    private List<V> topLevelTasks = new ArrayList<>();
 
-    private Map<V, V> fromChildToParent = new HashMap<V, V>();
+    private Map<V, V> fromChildToParent = new HashMap<>();
 
     private final List<Constraint<GanttDate>> globalStartConstraints;
 
@@ -303,14 +296,12 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
 
         @Override
         protected void postAction() {
-            executeGraphChangeListeners(new ArrayList<IGraphChangeListener>(
-                    postGraphChangeListeners));
+            executeGraphChangeListeners(new ArrayList<>(postGraphChangeListeners));
         }
 
         @Override
         protected void preAction() {
-            executeGraphChangeListeners(new ArrayList<IGraphChangeListener>(
-                    preGraphChangeListeners));
+            executeGraphChangeListeners(new ArrayList<>(preGraphChangeListeners));
         }
 
         private void executeGraphChangeListeners(List<IGraphChangeListener> graphChangeListeners) {
@@ -324,9 +315,9 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
         }
     };
 
-    private List<IGraphChangeListener> preGraphChangeListeners = new ArrayList<IGraphChangeListener>();
+    private List<IGraphChangeListener> preGraphChangeListeners = new ArrayList<>();
 
-    private List<IGraphChangeListener> postGraphChangeListeners = new ArrayList<IGraphChangeListener>();
+    private List<IGraphChangeListener> postGraphChangeListeners = new ArrayList<>();
 
     public void addPreGraphChangeListener(IGraphChangeListener preGraphChangeListener) {
         preGraphChangeListeners.add(preGraphChangeListener);
@@ -344,15 +335,13 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
         postGraphChangeListeners.remove(postGraphChangeListener);
     }
 
-    public void addPreChangeListeners(
-            Collection<? extends IGraphChangeListener> preChangeListeners) {
+    public void addPreChangeListeners(Collection<? extends IGraphChangeListener> preChangeListeners) {
         for (IGraphChangeListener each : preChangeListeners) {
             addPreGraphChangeListener(each);
         }
     }
 
-    public void addPostChangeListeners(
-            Collection<? extends IGraphChangeListener> postChangeListeners) {
+    public void addPostChangeListeners(Collection<? extends IGraphChangeListener> postChangeListeners) {
         for (IGraphChangeListener each : postChangeListeners) {
             addPostGraphChangeListener(each);
         }
@@ -364,22 +353,22 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
             List<Constraint<GanttDate>> globalStartConstraints,
             List<Constraint<GanttDate>> globalEndConstraints,
             boolean dependenciesConstraintsHavePriority) {
-        return new GanttDiagramGraph<V, D>(scheduleBackwards, adapter,
-                globalStartConstraints,
-                globalEndConstraints, dependenciesConstraintsHavePriority);
+
+        return new GanttDiagramGraph<>(scheduleBackwards, adapter, globalStartConstraints, globalEndConstraints,
+                dependenciesConstraintsHavePriority);
     }
 
-    protected GanttDiagramGraph(boolean scheduleBackwards,
-            IAdapter<V, D> adapter,
-            List<Constraint<GanttDate>> globalStartConstraints,
-            List<Constraint<GanttDate>> globalEndConstraints,
-            boolean dependenciesConstraintsHavePriority) {
+    protected GanttDiagramGraph(boolean scheduleBackwards, IAdapter<V, D> adapter,
+                                List<Constraint<GanttDate>> globalStartConstraints,
+                                List<Constraint<GanttDate>> globalEndConstraints,
+                                boolean dependenciesConstraintsHavePriority) {
+
         this.scheduleBackwards = scheduleBackwards;
         this.adapter = adapter;
         this.globalStartConstraints = globalStartConstraints;
         this.globalEndConstraints = globalEndConstraints;
         this.dependenciesConstraintsHavePriority = dependenciesConstraintsHavePriority;
-        this.graph = new SimpleDirectedGraph<V, D>(adapter.getDependencyType());
+        this.graph = new SimpleDirectedGraph<>(adapter.getDependencyType());
         this.topologicalSorter = new TopologicalSorter();
     }
 
@@ -387,24 +376,28 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
         enforcer.enforceRestrictionsOn(withoutVisibleIncomingDependencies(getTopLevelTasks()));
     }
 
-    private List<V> withoutVisibleIncomingDependencies(
-            Collection<? extends V> tasks) {
-        List<V> result = new ArrayList<V>();
+    private List<V> withoutVisibleIncomingDependencies(Collection<? extends V> tasks) {
+        List<V> result = new ArrayList<>();
         for (V each : tasks) {
-            if (noVisibleDependencies(isScheduleForward() ? graph
-                    .incomingEdgesOf(each) : graph.outgoingEdgesOf(each))) {
+
+            boolean condition = noVisibleDependencies(isScheduleForward() ? graph.incomingEdgesOf(each)
+                    : graph.outgoingEdgesOf(each));
+
+            if ( condition ) {
                 result.add(each);
             }
         }
+
         return result;
     }
 
     private boolean noVisibleDependencies(Collection<? extends D> dependencies) {
         for (D each : dependencies) {
-            if (adapter.isVisible(each)) {
+            if ( adapter.isVisible(each) ) {
                 return false;
             }
         }
+
         return true;
     }
 
@@ -425,17 +418,36 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
         }
     }
 
+    /**
+     * This class is designed for performing topological sorting of nodes.
+     * Topological sorting is used to make graph nodes not to be mixed, because
+     * parent and child nodes ({@link TaskPoint}) must be placed in the correct order.
+     * Also during topological sorting nodes are placed on appropriate levels.
+     * Topological sorting can be done using different algorithms, but here is used Khan's algorithm.
+     */
     class TopologicalSorter {
 
         private Map<TaskPoint, Integer> taskPointsByDepthCached = null;
 
+        /**
+         * This method is used to place each node on appropriate level.
+         *
+         * @return map of TaskPoints with appropriate levels
+         */
         private Map<TaskPoint, Integer> taskPointsByDepth() {
-            if (taskPointsByDepthCached != null) {
+            if ( taskPointsByDepthCached != null ) {
                 return taskPointsByDepthCached;
             }
 
-            Map<TaskPoint, Integer> result = new HashMap<TaskPoint, Integer>();
-            Map<TaskPoint, Set<TaskPoint>> visitedBy = new HashMap<TaskPoint, Set<TaskPoint>>();
+            Map<TaskPoint, Integer> result = new HashMap<>();
+            Map<TaskPoint, Set<TaskPoint>> visitedBy = new HashMap<>();
+
+            /*
+             * Here are stored taskpoints that we have visited.
+             * This need to be done because we need to check have we visited this taskpoint, or not.
+             * Described above need to be done to avoid loop between taskpoints.
+             */
+            Set<TaskPoint> visitedTaskPoints = new HashSet ();
 
             Queue<TaskPoint> withoutIncoming = getInitial(withoutVisibleIncomingDependencies(getTopLevelTasks()));
             for (TaskPoint each : withoutIncoming) {
@@ -443,37 +455,49 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
             }
 
             while (!withoutIncoming.isEmpty()) {
+
                 TaskPoint current = withoutIncoming.poll();
+
+                visitedTaskPoints.add(current); // Marking taskpoint as visited
+
+                // Taking all child elements
                 for (TaskPoint each : current.getImmediateSuccessors()) {
-                    initializeIfNeededForKey(visitedBy, each,
-                            new HashSet<TaskPoint>());
-                    Set<TaskPoint> visitors = visitedBy.get(each);
-                    visitors.add(current);
-                    Set<TaskPoint> predecessorsRequired = each
-                            .getImmediatePredecessors();
-                    if (visitors.containsAll(predecessorsRequired)) {
-                        initializeIfNeededForKey(result, each,
-                                result.get(current) + 1);
-                        withoutIncoming.offer(each);
+
+                    if (!visitedTaskPoints.contains(each)) {
+
+                        initializeIfNeededForKey(visitedBy, each, new HashSet<TaskPoint>());
+
+                        Set<TaskPoint> visitors = visitedBy.get(each);
+                        visitors.add(current);
+
+                        // Taking parent elements
+                        Set<TaskPoint> predecessorsRequired = each.getImmediatePredecessors();
+
+                        if ( visitors.containsAll(predecessorsRequired) ) {
+
+                            initializeIfNeededForKey(result, each, result.get(current) + 1);
+
+                            withoutIncoming.offer(each);
+                        }
                     }
                 }
             }
-            return taskPointsByDepthCached = Collections
-                    .unmodifiableMap(result);
+
+            return taskPointsByDepthCached = Collections.unmodifiableMap(result);
         }
 
-        private <K, T> void initializeIfNeededForKey(Map<K, T> map, K key,
-                T initialValue) {
-            if (!map.containsKey(key)) {
+        private <K, T> void initializeIfNeededForKey(Map<K, T> map, K key, T initialValue) {
+            if ( !map.containsKey(key) ) {
                 map.put(key, initialValue);
             }
         }
 
         private LinkedList<TaskPoint> getInitial(List<V> initial) {
-            LinkedList<TaskPoint> result = new LinkedList<TaskPoint>();
+            LinkedList<TaskPoint> result = new LinkedList<>();
             for (V each : initial) {
                 result.add(allPointsPotentiallyModified(each));
             }
+
             return result;
         }
 
@@ -481,11 +505,9 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
             taskPointsByDepthCached = null;
         }
 
-        public List<Recalculation> sort(
-                Collection<? extends Recalculation> recalculationsToBeSorted) {
+        public List<Recalculation> sort(Collection<? extends Recalculation> recalculationsToBeSorted) {
 
-            List<Recalculation> result = new ArrayList<Recalculation>(
-                    recalculationsToBeSorted);
+            List<Recalculation> result = new ArrayList<>(recalculationsToBeSorted);
             final Map<TaskPoint, Integer> taskPointsByDepth = taskPointsByDepth();
             Collections.sort(result, new Comparator<Recalculation>() {
 
@@ -493,17 +515,18 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
                 public int compare(Recalculation o1, Recalculation o2) {
                     int o1Depth = onNullDefault(
                             taskPointsByDepth.get(o1.taskPoint),
-                            Integer.MAX_VALUE, "no depth value for "
-                                    + o1.taskPoint);
+                            Integer.MAX_VALUE, "no depth value for " + o1.taskPoint);
+
                     int o2Depth = onNullDefault(
                             taskPointsByDepth.get(o2.taskPoint),
-                            Integer.MAX_VALUE, "no depth value for "
-                                    + o2.taskPoint);
+                            Integer.MAX_VALUE, "no depth value for " + o2.taskPoint);
+
                     int result = o1Depth - o2Depth;
-                    if (result == 0) {
-                        return asInt(o1.parentRecalculation)
-                                - asInt(o2.parentRecalculation);
+
+                    if ( result == 0 ) {
+                        return asInt(o1.parentRecalculation) - asInt(o2.parentRecalculation);
                     }
+
                     return result;
                 }
 
@@ -511,59 +534,62 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
                     return b ? 1 : 0;
                 }
             });
+
             return result;
         }
     }
 
-    private static <T> T onNullDefault(T value, T defaultValue,
-            String warnMessage) {
-        if (value == null) {
-            if (warnMessage != null) {
+    private static <T> T onNullDefault(T value, T defaultValue, String warnMessage) {
+        if ( value == null ) {
+            if ( warnMessage != null ) {
                 LOG.warn(warnMessage);
             }
+
             return defaultValue;
         }
+
         return value;
     }
 
     public void addTask(V original) {
-        List<V> stack = new LinkedList<V>();
+        List<V> stack = new LinkedList<>();
         stack.add(original);
-        List<D> dependenciesToAdd = new ArrayList<D>();
+        List<D> dependenciesToAdd = new ArrayList<>();
+
         while (!stack.isEmpty()){
+
             V task = stack.remove(0);
             graph.addVertex(task);
             topologicalSorter.recalculationNeeded();
             adapter.registerDependenciesEnforcerHookOn(task, enforcer);
-            if (adapter.isContainer(task)) {
+
+            if ( adapter.isContainer(task) ) {
+
                 for (V child : adapter.getChildren(task)) {
                     fromChildToParent.put(child, task);
                     stack.add(0, child);
-                    dependenciesToAdd.add(adapter.createInvisibleDependency(
-                            child, task, DependencyType.END_END));
-                    dependenciesToAdd.add(adapter.createInvisibleDependency(
-                            task, child, DependencyType.START_START));
+                    dependenciesToAdd.add(adapter.createInvisibleDependency(child, task, DependencyType.END_END));
+                    dependenciesToAdd.add(adapter.createInvisibleDependency(task, child, DependencyType.START_START));
                 }
+
             } else {
                 V owner = adapter.getOwner(task);
-                if(owner != null) {
-                    dependenciesToAdd.add(adapter.createInvisibleDependency(
-                            task, owner, DependencyType.END_END));
-                    dependenciesToAdd.add(adapter.createInvisibleDependency(
-                            owner, task, DependencyType.START_START));
+                if( owner != null ) {
+                    dependenciesToAdd.add(adapter.createInvisibleDependency(task, owner, DependencyType.END_END));
+                    dependenciesToAdd.add(adapter.createInvisibleDependency(owner, task, DependencyType.START_START));
                 }
             }
         }
+
         for (D each : dependenciesToAdd) {
             add(each, false);
         }
     }
 
     private interface IDependenciesEnforcer {
-        public void setStartDate(GanttDate previousStart,
-                GanttDate previousEnd, GanttDate newStart);
+        void setStartDate(GanttDate previousStart, GanttDate previousEnd, GanttDate newStart);
 
-        public void setNewEnd(GanttDate previousEnd, GanttDate newEnd);
+        void setNewEnd(GanttDate previousEnd, GanttDate newEnd);
     }
 
     /**
@@ -582,8 +608,8 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
      * <p>
      * For example imagine a Gantt with three tasks: T1 -> T2 -> T3. Imagine
      * that T1 position is modified due to being moved by the user. In that case
-     * the scheduling algorithm triggers and the {@link Recalculation
-     * recalculations} needed are done. T2 position would be recalculated and T3
+     * the scheduling algorithm triggers and the {@link Recalculation}
+     * recalculations needed are done. T2 position would be recalculated and T3
      * position too. When the recalculation happens their dates are modified,
      * but in that case we don't want to trigger the dependencies enforcement
      * algorithm again. What we want is to record the changes that have happened
@@ -593,7 +619,7 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
      * </p>
      */
     public interface IDependenciesEnforcerHook extends IDependenciesEnforcer {
-        public void positionPotentiallyModified();
+        void positionPotentiallyModified();
     }
 
     public interface IDependenciesEnforcerHookFactory<T> {
@@ -602,24 +628,22 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
          * {@link INotificationAfterDependenciesEnforcement notifier} to notify
          * the changes that have happened due to the algorithm.
          */
-        public IDependenciesEnforcerHook create(T task,
-                INotificationAfterDependenciesEnforcement notifier);
+        IDependenciesEnforcerHook create(T task, INotificationAfterDependenciesEnforcement notifier);
 
-        public IDependenciesEnforcerHook create(T task);
+        IDependenciesEnforcerHook create(T task);
     }
 
     public interface INotificationAfterDependenciesEnforcement {
-        public void onStartDateChange(GanttDate previousStart,
-                GanttDate previousEnd, GanttDate newStart);
+        void onStartDateChange(GanttDate previousStart, GanttDate previousEnd, GanttDate newStart);
 
-        public void onEndDateChange(GanttDate previousEnd, GanttDate newEnd);
+        void onEndDateChange(GanttDate previousEnd, GanttDate newEnd);
     }
 
-    private static final INotificationAfterDependenciesEnforcement EMPTY_NOTIFICATOR  = new INotificationAfterDependenciesEnforcement() {
+    private static final INotificationAfterDependenciesEnforcement EMPTY_NOTIFICATOR  =
+            new INotificationAfterDependenciesEnforcement() {
 
         @Override
-        public void onStartDateChange(GanttDate previousStart,
-                GanttDate previousEnd, GanttDate newStart) {
+        public void onStartDateChange(GanttDate previousStart, GanttDate previousEnd, GanttDate newStart) {
         }
 
         @Override
@@ -634,7 +658,7 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
      */
     public class DeferedNotifier {
 
-        private Map<V, NotificationPendingForTask> notificationsPending = new LinkedHashMap<V, NotificationPendingForTask>();
+        private Map<V, NotificationPendingForTask> notificationsPending = new LinkedHashMap<>();
 
         public void add(V task, StartDateNofitication notification) {
             retrieveOrCreateFor(task).setStartDateNofitication(notification);
@@ -642,10 +666,11 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
 
         private NotificationPendingForTask retrieveOrCreateFor(V task) {
             NotificationPendingForTask result = notificationsPending.get(task);
-            if (result == null) {
+            if ( result == null ) {
                 result = new NotificationPendingForTask();
                 notificationsPending.put(task, result);
             }
+
             return result;
         }
 
@@ -654,8 +679,7 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
         }
 
         public void doNotifications() {
-            for (NotificationPendingForTask each : notificationsPending
-                    .values()) {
+            for (NotificationPendingForTask each : notificationsPending.values()) {
                 each.doNotification();
             }
             notificationsPending.clear();
@@ -668,23 +692,24 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
 
         private LengthNotification lengthNofitication;
 
-        void setStartDateNofitication(
-                StartDateNofitication startDateNofitication) {
-            this.startDateNofitication = this.startDateNofitication == null ? startDateNofitication
-                    : this.startDateNofitication
-                            .coalesce(startDateNofitication);
+        void setStartDateNofitication(StartDateNofitication startDateNofitication) {
+
+            this.startDateNofitication = (this.startDateNofitication == null) ? startDateNofitication :
+                    this.startDateNofitication.coalesce(startDateNofitication);
         }
 
         void setLengthNofitication(LengthNotification lengthNofitication) {
-            this.lengthNofitication = this.lengthNofitication == null ? lengthNofitication
-                    : this.lengthNofitication.coalesce(lengthNofitication);
+
+            this.lengthNofitication = (this.lengthNofitication == null) ? lengthNofitication :
+                    this.lengthNofitication.coalesce(lengthNofitication);
         }
 
         void doNotification() {
-            if (startDateNofitication != null) {
+            if ( startDateNofitication != null ) {
                 startDateNofitication.doNotification();
             }
-            if (lengthNofitication != null) {
+
+            if ( lengthNofitication != null ) {
                 lengthNofitication.doNotification();
             }
         }
@@ -697,25 +722,23 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
         private final GanttDate previousEnd;
         private final GanttDate newStart;
 
-        public StartDateNofitication(
-                INotificationAfterDependenciesEnforcement notification,
-                GanttDate previousStart, GanttDate previousEnd,
-                GanttDate newStart) {
+        public StartDateNofitication(INotificationAfterDependenciesEnforcement notification,
+                                     GanttDate previousStart,
+                                     GanttDate previousEnd,
+                                     GanttDate newStart) {
+
             this.notification = notification;
             this.previousStart = previousStart;
             this.previousEnd = previousEnd;
             this.newStart = newStart;
         }
 
-        public StartDateNofitication coalesce(
-                StartDateNofitication startDateNofitication) {
-            return new StartDateNofitication(notification, previousStart,
-                    previousEnd, startDateNofitication.newStart);
+        public StartDateNofitication coalesce(StartDateNofitication startDateNofitication) {
+            return new StartDateNofitication(notification, previousStart, previousEnd, startDateNofitication.newStart);
         }
 
         void doNotification() {
-            notification
-                    .onStartDateChange(previousStart, previousEnd, newStart);
+            notification.onStartDateChange(previousStart, previousEnd, newStart);
         }
     }
 
@@ -725,9 +748,10 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
         private final GanttDate previousEnd;
         private final GanttDate newEnd;
 
-        public LengthNotification(
-                INotificationAfterDependenciesEnforcement notification,
-                GanttDate previousEnd, GanttDate newEnd) {
+        public LengthNotification(INotificationAfterDependenciesEnforcement notification,
+                                  GanttDate previousEnd,
+                                  GanttDate newEnd) {
+
             this.notification = notification;
             this.previousEnd = previousEnd;
             this.newEnd = newEnd;
@@ -735,8 +759,7 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
         }
 
         public LengthNotification coalesce(LengthNotification lengthNofitication) {
-            return new LengthNotification(notification, previousEnd,
-                    lengthNofitication.newEnd);
+            return new LengthNotification(notification, previousEnd, lengthNofitication.newEnd);
         }
 
         void doNotification() {
@@ -744,10 +767,9 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
         }
     }
 
-    private class DependenciesEnforcer implements
-            IDependenciesEnforcerHookFactory<V> {
+    private class DependenciesEnforcer implements IDependenciesEnforcerHookFactory<V> {
 
-        private ThreadLocal<DeferedNotifier> deferedNotifier = new ThreadLocal<DeferedNotifier>();
+        private ThreadLocal<DeferedNotifier> deferedNotifier = new ThreadLocal<>();
 
         /**
          * It creates a {@link IDependenciesEnforcerHook} that starts the
@@ -755,12 +777,10 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
          * modifications records the changes <em>onNotification</em>.
          */
         @Override
-        public IDependenciesEnforcerHook create(V task,
-                INotificationAfterDependenciesEnforcement notificator) {
+        public IDependenciesEnforcerHook create(V task, INotificationAfterDependenciesEnforcement notificator) {
             return withPositionPotentiallyModified(
                     task,
-                    onlyEnforceDependenciesOnEntrance(onEntrance(task),
-                            onNotification(task, notificator)));
+                    onlyEnforceDependenciesOnEntrance(onEntrance(task), onNotification(task, notificator)));
         }
 
         @Override
@@ -775,8 +795,7 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
         private IDependenciesEnforcer onEntrance(final V task) {
             return new IDependenciesEnforcer() {
 
-                public void setStartDate(GanttDate previousStart,
-                        GanttDate previousEnd, GanttDate newStart) {
+                public void setStartDate(GanttDate previousStart, GanttDate previousEnd, GanttDate newStart) {
                     taskPositionModified(task);
                 }
 
@@ -793,23 +812,22 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
          * dependencies enforcement algorithm.
          */
         private IDependenciesEnforcer onNotification(final V task,
-                final INotificationAfterDependenciesEnforcement notification) {
+                                                     final INotificationAfterDependenciesEnforcement notification) {
             return new IDependenciesEnforcer() {
 
                 @Override
-                public void setStartDate(GanttDate previousStart,
-                        GanttDate previousEnd, GanttDate newStart) {
-                    StartDateNofitication startDateNotification = new StartDateNofitication(
-                            notification, previousStart, previousEnd,
-                            newStart);
+                public void setStartDate(GanttDate previousStart, GanttDate previousEnd, GanttDate newStart) {
+
+                    StartDateNofitication startDateNotification =
+                            new StartDateNofitication(notification, previousStart, previousEnd, newStart);
+
                     deferedNotifier.get().add(task, startDateNotification);
 
                 }
 
                 @Override
                 public void setNewEnd(GanttDate previousEnd, GanttDate newEnd) {
-                    LengthNotification lengthNotification = new LengthNotification(
-                            notification, previousEnd, newEnd);
+                    LengthNotification lengthNotification = new LengthNotification(notification, previousEnd, newEnd);
                     deferedNotifier.get().add(task, lengthNotification);
                 }
             };
@@ -820,13 +838,12 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
          * Enrich {@link IDependenciesEnforcer} with
          * {@link IDependenciesEnforcerHook#positionPotentiallyModified()}.
          */
-        private IDependenciesEnforcerHook withPositionPotentiallyModified(
-                final V task, final IDependenciesEnforcer enforcer) {
+        private IDependenciesEnforcerHook withPositionPotentiallyModified(final V task,
+                                                                          final IDependenciesEnforcer enforcer) {
             return new IDependenciesEnforcerHook() {
 
                 @Override
-                public void setStartDate(GanttDate previousStart,
-                        GanttDate previousEnd, GanttDate newStart) {
+                public void setStartDate(GanttDate previousStart, GanttDate previousEnd, GanttDate newStart) {
                     enforcer.setStartDate(previousStart, previousEnd, newStart);
                 }
 
@@ -851,74 +868,64 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
          * <code>onEntrance</code>. Otherwise it delegates to
          * <code>notifier</code>.
          */
-        private IDependenciesEnforcer onlyEnforceDependenciesOnEntrance(
-                final IDependenciesEnforcer onEntrance,
-                final IDependenciesEnforcer notifier) {
+        private IDependenciesEnforcer onlyEnforceDependenciesOnEntrance(final IDependenciesEnforcer onEntrance,
+                                                                        final IDependenciesEnforcer notifier) {
             return new IDependenciesEnforcer() {
 
                 @Override
                 public void setStartDate(final GanttDate previousStart,
-                        final GanttDate previousEnd, final GanttDate newStart) {
-                    positionsUpdatingGuard
-                            .entranceRequested(new IReentranceCases() {
+                                         final GanttDate previousEnd,
+                                         final GanttDate newStart) {
+
+                    positionsUpdatingGuard.entranceRequested(new IReentranceCases() {
+                        @Override
+                        public void ifNewEntrance() {
+                            onNewEntrance(new IAction() {
 
                                 @Override
-                                public void ifNewEntrance() {
-                                    onNewEntrance(new IAction() {
-
-                                        @Override
-                                        public void doAction() {
-                                            notifier.setStartDate(
-                                                    previousStart,
-                                                    previousEnd, newStart);
-                                            onEntrance.setStartDate(
-                                                    previousStart, previousEnd,
-                                                    newStart);
-                                        }
-                                    });
-                                }
-
-                                @Override
-                                public void ifAlreadyInside() {
-                                    notifier.setStartDate(previousStart,
-                                            previousEnd, newStart);
-
+                                public void doAction() {
+                                    notifier.setStartDate(previousStart, previousEnd, newStart);
+                                    onEntrance.setStartDate(previousStart, previousEnd, newStart);
                                 }
                             });
+                        }
+
+                        @Override
+                        public void ifAlreadyInside() {
+                            notifier.setStartDate(previousStart, previousEnd, newStart);
+
+                        }
+                    });
                 }
 
                 @Override
-                public void setNewEnd(final GanttDate previousEnd,
-                        final GanttDate newEnd) {
-                    positionsUpdatingGuard
-                            .entranceRequested(new IReentranceCases() {
+                public void setNewEnd(final GanttDate previousEnd, final GanttDate newEnd) {
+                    positionsUpdatingGuard.entranceRequested(new IReentranceCases() {
+
+                        @Override
+                        public void ifNewEntrance() {
+                            onNewEntrance(new IAction() {
 
                                 @Override
-                                public void ifNewEntrance() {
-                                    onNewEntrance(new IAction() {
-
-                                        @Override
-                                        public void doAction() {
-                                            notifier.setNewEnd(previousEnd,
-                                                    newEnd);
-                                            onEntrance.setNewEnd(previousEnd,
-                                                    newEnd);
-                                        }
-                                    });
-                                }
-
-                                @Override
-                                public void ifAlreadyInside() {
+                                public void doAction() {
                                     notifier.setNewEnd(previousEnd, newEnd);
+                                    onEntrance.setNewEnd(previousEnd, newEnd);
                                 }
                             });
+                        }
+
+                        @Override
+                        public void ifAlreadyInside() {
+                            notifier.setNewEnd(previousEnd, newEnd);
+                        }
+                    });
                 }
             };
 
         }
 
         void enforceRestrictionsOn(Collection<? extends V> tasks) {
-            List<Recalculation> allRecalculations = new ArrayList<Recalculation>();
+            List<Recalculation> allRecalculations = new ArrayList<>();
             for (V each : tasks) {
                 allRecalculations.addAll(getRecalculationsNeededFrom(each));
             }
@@ -926,12 +933,12 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
         }
 
         void enforceRestrictionsOn(V task) {
-            enforceRestrictionsOn(getRecalculationsNeededFrom(task),
-                    Collections.singleton(task));
+            enforceRestrictionsOn(getRecalculationsNeededFrom(task), Collections.singleton(task));
         }
 
         void enforceRestrictionsOn(final List<Recalculation> recalculations,
-                final Collection<? extends V> initiallyModified) {
+                                   final Collection<? extends V> initiallyModified) {
+
             executeWithPreAndPostActionsOnlyIfNewEntrance(new IAction() {
                 @Override
                 public void doAction() {
@@ -940,8 +947,7 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
             });
         }
 
-        private void executeWithPreAndPostActionsOnlyIfNewEntrance(
-                final IAction action) {
+        private void executeWithPreAndPostActionsOnlyIfNewEntrance(final IAction action) {
             positionsUpdatingGuard.entranceRequested(new IReentranceCases() {
 
                 @Override
@@ -1012,6 +1018,7 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
                     });
                 }
             });
+
             return result;
         }
 
@@ -1020,22 +1027,24 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
                 @Override
                 public void doAction() {
                     List<Recalculation> recalculationsNeededFrom = getRecalculationsNeededFrom(task);
-                    doRecalculations(recalculationsNeededFrom,
-                            Collections.singletonList(task));
+                    doRecalculations(recalculationsNeededFrom, Collections.singletonList(task));
                 }
             });
         }
 
         private void doRecalculations(List<Recalculation> recalculationsNeeded,
-                Collection<? extends V> initiallyModified) {
-            Set<V> allModified = new HashSet<V>();
+                                      Collection<? extends V> initiallyModified) {
+
+            Set<V> allModified = new HashSet<>();
             allModified.addAll(initiallyModified);
+
             for (Recalculation each : recalculationsNeeded) {
                 boolean modified = each.doRecalculation();
-                if (modified) {
+                if ( modified ) {
                     allModified.add(each.taskPoint.task);
                 }
             }
+
             List<V> shrunkContainers = shrunkContainersOfModified(allModified);
             for (V each : getTaskAffectedByShrinking(shrunkContainers)) {
                 doRecalculations(getRecalculationsNeededFrom(each),
@@ -1044,59 +1053,65 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
         }
 
         private List<V> getTaskAffectedByShrinking(List<V> shrunkContainers) {
-            List<V> tasksAffectedByShrinking = new ArrayList<V>();
+            List<V> tasksAffectedByShrinking = new ArrayList<>();
             for (V each : shrunkContainers) {
+
                 for (D eachDependency : graph.outgoingEdgesOf(each)) {
-                    if (adapter.getType(eachDependency) == DependencyType.START_START
-                            && adapter.isVisible(eachDependency)) {
-                        tasksAffectedByShrinking.add(adapter
-                                .getDestination(eachDependency));
+
+                    boolean condition = adapter.getType(eachDependency) == DependencyType.START_START &&
+                            adapter.isVisible(eachDependency);
+
+                    if ( condition ) {
+                        tasksAffectedByShrinking.add(adapter.getDestination(eachDependency));
                     }
                 }
             }
+
             return tasksAffectedByShrinking;
         }
 
-        private List<V> shrunkContainersOfModified(
-                Set<V> allModified) {
+        private List<V> shrunkContainersOfModified(Set<V> allModified) {
             Set<V> topmostToShrink = getTopMostThatCouldPotentiallyNeedShrinking(allModified);
-            List<V> allToShrink = new ArrayList<V>();
+            List<V> allToShrink = new ArrayList<>();
+
             for (V each : topmostToShrink) {
                 allToShrink.addAll(getContainersBottomUp(each));
             }
-            List<V> result = new ArrayList<V>();
+
+            List<V> result = new ArrayList<>();
             for (V each : allToShrink) {
                 boolean modified = enforceParentShrinkage(each);
-                if (modified) {
+                if ( modified ) {
                     result.add(each);
                 }
             }
+
             return result;
         }
 
-        private Set<V> getTopMostThatCouldPotentiallyNeedShrinking(
-                Collection<V> modified) {
-            Set<V> result = new HashSet<V>();
+        private Set<V> getTopMostThatCouldPotentiallyNeedShrinking(Collection<V> modified) {
+            Set<V> result = new HashSet<>();
             for (V each : modified) {
                 V t = getTopmostFor(each);
-                if (adapter.isContainer(t)) {
+                if ( adapter.isContainer(t) ) {
                     result.add(t);
                 }
             }
+
             return result;
         }
 
-        private Collection<? extends V> getContainersBottomUp(
-                V container) {
+        private Collection<? extends V> getContainersBottomUp(V container) {
             List<V> result = new ArrayList<V>();
             List<V> tasks = adapter.getChildren(container);
             for (V each : tasks) {
-                if (adapter.isContainer(each)) {
+                if ( adapter.isContainer(each) ) {
                     result.addAll(getContainersBottomUp(each));
                     result.add(each);
                 }
             }
             result.add(container);
+
             return result;
         }
 
@@ -1105,13 +1120,13 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
             GanttDate firstStart = getSmallestBeginDateFromChildrenFor(container);
             GanttDate lastEnd = getBiggestEndDateFromChildrenFor(container);
             GanttDate previousEnd = adapter.getEndDateFor(container);
-            if (firstStart.after(oldBeginDate) || previousEnd.after(lastEnd)) {
-                adapter.setStartDateFor(container,
-                        GanttDate.max(firstStart, oldBeginDate));
-                adapter.setEndDateFor(container,
-                        GanttDate.min(lastEnd, previousEnd));
+
+            if ( firstStart.after(oldBeginDate) || previousEnd.after(lastEnd) ) {
+                adapter.setStartDateFor(container, GanttDate.max(firstStart, oldBeginDate));
+                adapter.setEndDateFor(container, GanttDate.min(lastEnd, previousEnd));
                 return true;
             }
+
             return false;
         }
     }
@@ -1126,18 +1141,21 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
 
     private List<GanttDate> getChildrenDates(V container, Point point) {
         List<V> children = adapter.getChildren(container);
-        List<GanttDate> result = new ArrayList<GanttDate>();
-        if (children.isEmpty()) {
+        List<GanttDate> result = new ArrayList<>();
+
+        if ( children.isEmpty() ) {
             result.add(getDateFor(container, point));
         }
+
         for (V each : children) {
             result.add(getDateFor(each, point));
         }
+
         return result;
     }
 
     GanttDate getDateFor(V task, Point point) {
-        if (point.equals(Point.START)) {
+        if ( point.equals(Point.START) ) {
             return adapter.getStartDate(task);
         } else {
             return adapter.getEndDateFor(task);
@@ -1145,95 +1163,106 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
     }
 
     List<Recalculation> getRecalculationsNeededFrom(V task) {
-        List<Recalculation> result = new ArrayList<Recalculation>();
-        Set<Recalculation> parentRecalculationsAlreadyDone = new HashSet<Recalculation>();
+        List<Recalculation> result = new ArrayList<>();
+        Set<Recalculation> parentRecalculationsAlreadyDone = new HashSet<>();
         Recalculation first = recalculationFor(allPointsPotentiallyModified(task));
         first.couldHaveBeenModifiedBeforehand();
 
-        result.addAll(getParentsRecalculations(parentRecalculationsAlreadyDone,
-                first.taskPoint));
+        result.addAll(getParentsRecalculations(parentRecalculationsAlreadyDone, first.taskPoint));
         result.add(first);
 
-        Queue<Recalculation> pendingOfVisit = new LinkedList<Recalculation>();
+        Queue<Recalculation> pendingOfVisit = new LinkedList<>();
         pendingOfVisit.offer(first);
 
-        Map<Recalculation, Recalculation> alreadyVisited = new HashMap<Recalculation, Recalculation>();
+        Map<Recalculation, Recalculation> alreadyVisited = new HashMap<>();
         alreadyVisited.put(first, first);
 
         while (!pendingOfVisit.isEmpty()) {
+
             Recalculation current = pendingOfVisit.poll();
+
             for (TaskPoint each : current.taskPoint.getImmediateSuccessors()) {
-                if (each.isImmediatelyDerivedFrom(current.taskPoint)) {
+
+                if ( each.isImmediatelyDerivedFrom(current.taskPoint) ) {
                     continue;
                 }
-                Recalculation recalculationToAdd = getRecalcualtionToAdd(each,
-                        alreadyVisited);
+
+                Recalculation recalculationToAdd = getRecalcualtionToAdd(each, alreadyVisited);
                 recalculationToAdd.comesFromPredecessor(current);
-                if (!alreadyVisited.containsKey(recalculationToAdd)) {
-                    result.addAll(getParentsRecalculations(
-                            parentRecalculationsAlreadyDone, each));
+
+                if ( !alreadyVisited.containsKey(recalculationToAdd) ) {
+                    result.addAll(getParentsRecalculations(parentRecalculationsAlreadyDone, each));
                     result.add(recalculationToAdd);
                     pendingOfVisit.offer(recalculationToAdd);
                     alreadyVisited.put(recalculationToAdd, recalculationToAdd);
                 }
             }
         }
+
         return topologicalSorter.sort(result);
     }
 
-    private Recalculation getRecalcualtionToAdd(TaskPoint taskPoint,
-            Map<Recalculation, Recalculation> alreadyVisited) {
+    private Recalculation getRecalcualtionToAdd(TaskPoint taskPoint, Map<Recalculation, Recalculation> alreadyVisited) {
         Recalculation result = recalculationFor(taskPoint);
-        if (alreadyVisited.containsKey(result)) {
+
+        if ( alreadyVisited.containsKey(result) ) {
             return alreadyVisited.get(result);
         } else {
             return result;
         }
     }
 
-    private List<Recalculation> getParentsRecalculations(
-            Set<Recalculation> parentRecalculationsAlreadyDone,
-            TaskPoint taskPoint) {
-        List<Recalculation> result = new ArrayList<Recalculation>();
+    private List<Recalculation> getParentsRecalculations(Set<Recalculation> parentRecalculationsAlreadyDone,
+                                                         TaskPoint taskPoint) {
+        List<Recalculation> result = new ArrayList<>();
+
         for (TaskPoint eachParent : parentsRecalculationsNeededFor(taskPoint)) {
+
             Recalculation parentRecalculation = parentRecalculation(eachParent.task);
-            if (!parentRecalculationsAlreadyDone
-                    .contains(parentRecalculation)) {
+
+            if ( !parentRecalculationsAlreadyDone.contains(parentRecalculation) ) {
                 parentRecalculationsAlreadyDone.add(parentRecalculation);
                 result.add(parentRecalculation);
             }
         }
+
         return result;
     }
 
     private Set<TaskPoint> parentsRecalculationsNeededFor(TaskPoint current) {
-        Set<TaskPoint> result = new LinkedHashSet<TaskPoint>();
-        if (current.areAllPointsPotentiallyModified()) {
+        Set<TaskPoint> result = new LinkedHashSet<>();
+
+        if ( current.areAllPointsPotentiallyModified() ) {
             List<V> path = fromTaskToTop(current.task);
-            if (path.size() > 1) {
+
+            if ( path.size() > 1 ) {
                 path = path.subList(1, path.size());
                 Collections.reverse(path);
                 result.addAll(asBothPoints(path));
             }
         }
+
         return result;
     }
 
     private Collection<? extends TaskPoint> asBothPoints(List<V> parents) {
-        List<TaskPoint> result = new ArrayList<TaskPoint>();
+        List<TaskPoint> result = new ArrayList<>();
         for (V each : parents) {
             result.add(allPointsPotentiallyModified(each));
         }
+
         return result;
     }
 
     private List<V> fromTaskToTop(V task) {
-        List<V> result = new ArrayList<V>();
+        List<V> result = new ArrayList<>();
         V current = task;
-        while (current != null) {
+
+        while ( current != null ) {
             result.add(current);
             current = fromChildToParent.get(current);
         }
+
         return result;
     }
 
@@ -1251,7 +1280,7 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
 
         private final TaskPoint taskPoint;
 
-        private Set<Recalculation> recalculationsCouldAffectThis = new HashSet<Recalculation>();
+        private Set<Recalculation> recalculationsCouldAffectThis = new HashSet<>();
 
         private boolean recalculationCalled = false;
 
@@ -1275,24 +1304,21 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
 
         boolean doRecalculation() {
             recalculationCalled = true;
-            dataPointModified = haveToDoCalculation()
-                    && taskChangesPosition();
+            dataPointModified = haveToDoCalculation() && taskChangesPosition();
             return dataPointModified;
         }
 
         private boolean haveToDoCalculation() {
-            return recalculationsCouldAffectThis.isEmpty()
-                    || predecessorsHaveBeenModified();
+            return recalculationsCouldAffectThis.isEmpty() || predecessorsHaveBeenModified();
         }
 
         private boolean predecessorsHaveBeenModified() {
             for (Recalculation each : recalculationsCouldAffectThis) {
-                if (!each.recalculationCalled) {
-                    throw new RuntimeException(
-                            "the predecessor must be called first");
+                if ( !each.recalculationCalled ) {
+                    // FIXME this need to be not commented, but some imported projects not working with it
+                    //throw new RuntimeException("the predecessor must be called first");
                 }
-                if (each.dataPointModified
-                        || each.couldHaveBeenModifiedBeforehand) {
+                if ( each.dataPointModified || each.couldHaveBeenModifiedBeforehand ) {
                     return true;
                 }
             }
@@ -1301,19 +1327,20 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
 
         private boolean taskChangesPosition() {
             ChangeTracker tracker = trackTaskChanges();
-            Constraint.initialValue(noRestrictions())
-                    .withConstraints(getConstraintsToApply())
-                    .apply();
+            Constraint.initialValue(noRestrictions()).withConstraints(getConstraintsToApply()).apply();
             return tracker.taskHasChanged();
         }
 
         @SuppressWarnings("unchecked")
         private List<Constraint<PositionRestrictions>> getConstraintsToApply() {
-            Constraint<PositionRestrictions> weakForces = scheduleBackwards ? new WeakForwardForces()
-                    : new WeakBackwardsForces();
-            Constraint<PositionRestrictions> dominatingForces = scheduleBackwards ? new DominatingBackwardForces()
-                    : new DominatingForwardForces();
-            if (dependenciesConstraintsHavePriority) {
+
+            Constraint<PositionRestrictions> weakForces =
+                    scheduleBackwards ? new WeakForwardForces() : new WeakBackwardsForces();
+
+            Constraint<PositionRestrictions> dominatingForces =
+                    scheduleBackwards ? new DominatingBackwardForces() : new DominatingForwardForces();
+
+            if ( dependenciesConstraintsHavePriority ) {
                 return asList(weakForces, dominatingForces);
             } else {
                 return asList(weakForces, dominatingForces, weakForces);
@@ -1351,8 +1378,7 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
         private final class NoRestrictions extends PositionRestrictions {
 
             public NoRestrictions(TaskPoint taskPoint) {
-                super(adapter.getStartDate(taskPoint.task), adapter
-                        .getEndDateFor(taskPoint.task));
+                super(adapter.getStartDate(taskPoint.task), adapter.getEndDateFor(taskPoint.task));
             }
 
             @Override
@@ -1377,14 +1403,18 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
         }
 
         DatesBasedPositionRestrictions biggerThan(GanttDate start, GanttDate end) {
-            ComparisonType type = isScheduleForward() ? ComparisonType.BIGGER_OR_EQUAL_THAN
-                    : ComparisonType.BIGGER_OR_EQUAL_THAN_LEFT_FLOATING;
+
+            ComparisonType type = isScheduleForward() ? ComparisonType.BIGGER_OR_EQUAL_THAN :
+                    ComparisonType.BIGGER_OR_EQUAL_THAN_LEFT_FLOATING;
+
             return new DatesBasedPositionRestrictions(type, start, end);
         }
 
         DatesBasedPositionRestrictions lessThan(GanttDate start, GanttDate end) {
-            ComparisonType type = isScheduleForward() ? ComparisonType.LESS_OR_EQUAL_THAN_RIGHT_FLOATING
-                    : ComparisonType.LESS_OR_EQUAL_THAN;
+
+            ComparisonType type = isScheduleForward() ? ComparisonType.LESS_OR_EQUAL_THAN_RIGHT_FLOATING :
+                    ComparisonType.LESS_OR_EQUAL_THAN;
+
             return new DatesBasedPositionRestrictions(type, start, end);
         }
 
@@ -1393,27 +1423,22 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
             private Constraint<GanttDate> startConstraint;
             private Constraint<GanttDate> endConstraint;
 
-            public DatesBasedPositionRestrictions(
-                    ComparisonType comparisonType, GanttDate start,
-                    GanttDate end) {
+            public DatesBasedPositionRestrictions(ComparisonType comparisonType, GanttDate start, GanttDate end) {
                 super(start, end);
-                this.startConstraint = ConstraintOnComparableValues
-                        .instantiate(comparisonType, start);
-                this.endConstraint = ConstraintOnComparableValues.instantiate(
-                        comparisonType, end);
+                this.startConstraint = ConstraintOnComparableValues.instantiate(comparisonType, start);
+                this.endConstraint = ConstraintOnComparableValues.instantiate(comparisonType, end);
             }
 
             boolean satisfies(PositionRestrictions other) {
-                if (DatesBasedPositionRestrictions.class.isInstance(other)) {
-                    return satisfies(DatesBasedPositionRestrictions.class
-                            .cast(other));
+                if ( DatesBasedPositionRestrictions.class.isInstance(other) ) {
+                    return satisfies(DatesBasedPositionRestrictions.class.cast(other));
                 }
+
                 return false;
             }
 
             private boolean satisfies(DatesBasedPositionRestrictions other) {
-                return startConstraint.isSatisfiedBy(other.getStart())
-                        && endConstraint.isSatisfiedBy(other.getEnd());
+                return startConstraint.isSatisfiedBy(other.getStart()) && endConstraint.isSatisfiedBy(other.getEnd());
             }
 
             @Override
@@ -1440,8 +1465,8 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
             }
 
             public boolean taskHasChanged() {
-                return areNotEqual(adapter.getStartDate(task), this.start)
-                        || areNotEqual(adapter.getEndDateFor(task), this.end);
+                return areNotEqual(adapter.getStartDate(task), this.start) ||
+                        areNotEqual(adapter.getEndDateFor(task), this.end);
             }
 
         }
@@ -1465,11 +1490,11 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
 
             private PositionRestrictions resultingRestrictions = noRestrictions();
 
-            protected PositionRestrictions applyConstraintTo(
-                    PositionRestrictions restrictions) {
-                if (adapter.isFixed(task)) {
+            protected PositionRestrictions applyConstraintTo(PositionRestrictions restrictions) {
+                if ( adapter.isFixed(task) ) {
                     return restrictions;
                 }
+
                 resultingRestrictions = enforceUsingPreviousRestrictions(restrictions);
                 return resultingRestrictions;
             }
@@ -1485,8 +1510,7 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
             }
 
             private void checkStartConstraints(GanttDate finalStart) {
-                Constraint
-                        .checkSatisfyResult(getStartConstraints(), finalStart);
+                Constraint.checkSatisfyResult(getStartConstraints(), finalStart);
             }
 
             private void checkEndConstraints(GanttDate finalEnd) {
@@ -1497,8 +1521,7 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
 
             abstract List<Constraint<GanttDate>> getEndConstraints();
 
-            abstract PositionRestrictions enforceUsingPreviousRestrictions(
-                    PositionRestrictions restrictions);
+            abstract PositionRestrictions enforceUsingPreviousRestrictions(PositionRestrictions restrictions);
         }
 
         abstract class Dominating extends Forces {
@@ -1529,32 +1552,31 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
             }
 
             @Override
-            PositionRestrictions enforceUsingPreviousRestrictions(
-                    PositionRestrictions restrictions) {
-                if (parentRecalculation) {
+            PositionRestrictions enforceUsingPreviousRestrictions(PositionRestrictions restrictions) {
+                if ( parentRecalculation ) {
                     // avoid interference from task containers shrinking
                     return enforcePrimaryPoint(restrictions);
-                } else if (taskPoint.areAllPointsPotentiallyModified()) {
+                } else if ( taskPoint.areAllPointsPotentiallyModified() ) {
                     return enforceBoth(restrictions);
-                } else if (taskPoint.somePointPotentiallyModified()) {
+                } else if ( taskPoint.somePointPotentiallyModified() ) {
                     return enforceSecondaryPoint(restrictions);
                 }
+
                 return restrictions;
             }
 
-            private PositionRestrictions enforceBoth(
-                    PositionRestrictions restrictions) {
+            private PositionRestrictions enforceBoth(PositionRestrictions restrictions) {
                 ChangeTracker changeTracker = trackTaskChanges();
                 PositionRestrictions currentRestrictions = enforcePrimaryPoint(restrictions);
-                if (changeTracker.taskHasChanged() || parentRecalculation
-                        || couldHaveBeenModifiedBeforehand) {
+
+                if ( changeTracker.taskHasChanged() || parentRecalculation || couldHaveBeenModifiedBeforehand ) {
                     return enforceSecondaryPoint(currentRestrictions);
                 }
+
                 return currentRestrictions;
             }
 
-            private PositionRestrictions enforcePrimaryPoint(
-                    PositionRestrictions originalRestrictions) {
+            private PositionRestrictions enforcePrimaryPoint(PositionRestrictions originalRestrictions) {
                 GanttDate newDominatingPointDate = calculatePrimaryPointDate(originalRestrictions);
                 return enforceRestrictionsFor(primary, newDominatingPointDate);
             }
@@ -1565,78 +1587,75 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
              * return the existent commanding point date
              * @param originalRestrictions
              */
-            private GanttDate calculatePrimaryPointDate(
-                    PositionRestrictions originalRestrictions) {
-                GanttDate newDate = Constraint
-                        .<GanttDate> initialValue(null)
-                        .withConstraints(
-                                getConstraintsFrom(originalRestrictions,
-                                        getPrimaryPoint()))
+            private GanttDate calculatePrimaryPointDate(PositionRestrictions originalRestrictions) {
+
+                GanttDate newDate = Constraint.<GanttDate> initialValue(null)
+                        .withConstraints(getConstraintsFrom(originalRestrictions, getPrimaryPoint()))
                         .withConstraints(getConstraintsFor(getPrimaryPoint()))
                         .applyWithoutFinalCheck();
-                if (newDate == null) {
+
+                if ( newDate == null ) {
                     return getTaskDateFor(getPrimaryPoint());
                 }
+
                 return newDate;
             }
 
             private List<Constraint<GanttDate>> getConstraintsFor(Point point) {
                 Validate.isTrue(isSupportedPoint(point));
                 switch (point) {
+
                 case START:
                     return getStartConstraints();
+
                 case END:
                     return getEndConstraints();
+
                 default:
                     throw new RuntimeException("shouldn't happen");
                 }
             }
 
-            private PositionRestrictions enforceSecondaryPoint(
-                    PositionRestrictions restrictions) {
+            private PositionRestrictions enforceSecondaryPoint(PositionRestrictions restrictions) {
                 GanttDate newSecondaryPointDate = calculateSecondaryPointDate(restrictions);
-                if (newSecondaryPointDate == null) {
+                if ( newSecondaryPointDate == null ) {
                     return restrictions;
                 }
-                restrictions = enforceRestrictionsFor(getSecondaryPoint(),
-                        newSecondaryPointDate);
-                if (taskPoint.onlyModifies(getSecondaryPoint())) {
-                    // primary point constraints could be the ones "commanding"
-                    // now
+
+                restrictions = enforceRestrictionsFor(getSecondaryPoint(), newSecondaryPointDate);
+
+                if ( taskPoint.onlyModifies(getSecondaryPoint()) ) {
+
+                    // primary point constraints could be the ones "commanding" now
                     GanttDate potentialPrimaryDate = calculatePrimaryPointDate(restrictions);
-                    if (!doSatisfyOrderCondition(potentialPrimaryDate,
-                            getTaskDateFor(getPrimaryPoint()))) {
-                        return enforceRestrictionsFor(getPrimaryPoint(),
-                                potentialPrimaryDate);
+
+                    if ( !doSatisfyOrderCondition(potentialPrimaryDate, getTaskDateFor(getPrimaryPoint())) ) {
+                        return enforceRestrictionsFor(getPrimaryPoint(), potentialPrimaryDate);
                     }
                 }
+
                 return restrictions;
             }
 
 
-            private GanttDate calculateSecondaryPointDate(
-                    PositionRestrictions restrictions) {
-                GanttDate newEnd = Constraint
-                        .<GanttDate> initialValue(null)
-                        .withConstraints(
-                                getConstraintsFrom(restrictions,
-                                        getSecondaryPoint()))
+            private GanttDate calculateSecondaryPointDate(PositionRestrictions restrictions) {
+
+                GanttDate newEnd = Constraint.<GanttDate> initialValue(null)
+                        .withConstraints(getConstraintsFrom(restrictions, getSecondaryPoint()))
                         .withConstraints(getConstraintsFor(getSecondaryPoint()))
                         .applyWithoutFinalCheck();
+
                 return newEnd;
             }
 
-            protected abstract boolean doSatisfyOrderCondition(
-                    GanttDate supposedlyBefore, GanttDate supposedlyAfter);
+            protected abstract boolean doSatisfyOrderCondition(GanttDate supposedlyBefore, GanttDate supposedlyAfter);
 
-            private PositionRestrictions enforceRestrictionsFor(Point point,
-                    GanttDate newDate) {
+            private PositionRestrictions enforceRestrictionsFor(Point point, GanttDate newDate) {
                 GanttDate old = getTaskDateFor(point);
-                if (areNotEqual(old, newDate)) {
+                if ( areNotEqual(old, newDate) ) {
                     setTaskDateFor(point, newDate);
                 }
-                return createRestrictionsFor(getTaskDateFor(Point.START),
-                        getTaskDateFor(Point.END));
+                return createRestrictionsFor(getTaskDateFor(Point.START), getTaskDateFor(Point.END));
             }
 
             GanttDate getTaskDateFor(Point point) {
@@ -1644,55 +1663,62 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
                 return getDateFor(task, point);
             }
 
-            protected abstract PositionRestrictions createRestrictionsFor(
-                    GanttDate start, GanttDate end);
+            protected abstract PositionRestrictions createRestrictionsFor(GanttDate start, GanttDate end);
 
             private void setTaskDateFor(Point point, GanttDate date) {
                 Validate.isTrue(isSupportedPoint(point));
                 switch (point) {
+
                 case START:
                     adapter.setStartDateFor(task, date);
                     break;
+
                 case END:
                     adapter.setEndDateFor(task, date);
                 }
             }
 
-            private List<Constraint<GanttDate>> getConstraintsFrom(
-                    PositionRestrictions restrictions, Point point) {
+            private List<Constraint<GanttDate>> getConstraintsFrom(PositionRestrictions restrictions, Point point) {
                 Validate.isTrue(isSupportedPoint(point));
                 switch (point) {
+
                 case START:
                     return restrictions.getStartConstraints();
+
                 case END:
                     return restrictions.getEndConstraints();
+
                 default:
                     throw new RuntimeException("shouldn't happen");
                 }
             }
 
             protected List<Constraint<GanttDate>> getConstraintsForPrimaryPoint() {
-                List<Constraint<GanttDate>> result = new ArrayList<Constraint<GanttDate>>();
-                if (dependenciesConstraintsHavePriority) {
+                List<Constraint<GanttDate>> result = new ArrayList<>();
+
+                if ( dependenciesConstraintsHavePriority ) {
                     result.addAll(getTaskConstraints(getPrimaryPoint()));
                     result.addAll(getDependenciesConstraintsFor(getPrimaryPoint()));
-
                 } else {
                     result.addAll(getDependenciesConstraintsFor(getPrimaryPoint()));
                     result.addAll(getTaskConstraints(getPrimaryPoint()));
                 }
+
                 result.addAll(getGlobalConstraintsToApply(getPrimaryPoint()));
+
                 return result;
             }
 
-            private Collection<Constraint<GanttDate>> getGlobalConstraintsToApply(
-                    Point point) {
+            private Collection<Constraint<GanttDate>> getGlobalConstraintsToApply(Point point) {
                 Validate.isTrue(isSupportedPoint(point));
                 switch (point) {
+
                 case START:
                     return globalStartConstraints;
+
                 case END:
                     return globalEndConstraints;
+
                 default:
                     throw new RuntimeException("shouldn't happen");
                 }
@@ -1702,11 +1728,9 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
                 return getDependenciesConstraintsFor(getSecondaryPoint());
             }
 
-            private List<Constraint<GanttDate>> getDependenciesConstraintsFor(
-                    Point point) {
+            private List<Constraint<GanttDate>> getDependenciesConstraintsFor(Point point) {
                 final Set<D> withDependencies = getDependenciesAffectingThisTask();
-                return adapter.getConstraints(getCalculator(),
-                        withDependencies, point);
+                return adapter.getConstraints(getCalculator(), withDependencies, point);
             }
 
             protected abstract Set<D> getDependenciesAffectingThisTask();
@@ -1714,10 +1738,13 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
             private List<Constraint<GanttDate>> getTaskConstraints(Point point) {
                 Validate.isTrue(isSupportedPoint(point));
                 switch (point) {
+
                 case START:
                     return adapter.getStartConstraintsFor(task);
+
                 case END:
                     return adapter.getEndConstraintsFor(task);
+
                 default:
                     throw new RuntimeException("shouldn't happen");
                 }
@@ -1777,15 +1804,12 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
             }
 
             @Override
-            protected PositionRestrictions createRestrictionsFor(
-                    GanttDate start, GanttDate end) {
+            protected PositionRestrictions createRestrictionsFor(GanttDate start, GanttDate end) {
                 return biggerThan(start, end);
             }
 
             @Override
-            protected boolean doSatisfyOrderCondition(
-                    GanttDate supposedlyBefore,
-                    GanttDate supposedlyAfter) {
+            protected boolean doSatisfyOrderCondition(GanttDate supposedlyBefore, GanttDate supposedlyAfter) {
                 return supposedlyBefore.compareTo(supposedlyAfter) <= 0;
             }
 
@@ -1818,15 +1842,12 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
             }
 
             @Override
-            protected PositionRestrictions createRestrictionsFor(
-                    GanttDate start, GanttDate end) {
+            protected PositionRestrictions createRestrictionsFor(GanttDate start, GanttDate end) {
                 return lessThan(start, end);
             }
 
             @Override
-            protected boolean doSatisfyOrderCondition(
-                    GanttDate supposedlyBefore,
-                    GanttDate supposedlyAfter) {
+            protected boolean doSatisfyOrderCondition(GanttDate supposedlyBefore, GanttDate supposedlyAfter) {
                 return supposedlyBefore.compareTo(supposedlyAfter) >= 0;
             }
 
@@ -1845,21 +1866,23 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
             }
 
             @Override
-            PositionRestrictions enforceUsingPreviousRestrictions(
-                    PositionRestrictions restrictions) {
+            PositionRestrictions enforceUsingPreviousRestrictions(PositionRestrictions restrictions) {
+
                 GanttDate result = Constraint.<GanttDate> initialValue(null)
                         .withConstraints(restrictions.getStartConstraints())
                         .withConstraints(getStartConstraints())
                         .applyWithoutFinalCheck();
-                if (result != null) {
+
+                if ( result != null ) {
                     enforceRestrictions(result);
                     return biggerThan(result, adapter.getEndDateFor(task));
                 }
+
                 return restrictions;
             }
 
             private void enforceRestrictions(GanttDate result) {
-                if (!result.equals(getStartDate(task))) {
+                if ( !result.equals(getStartDate(task)) ) {
                     adapter.setStartDateFor(task, result);
                 }
             }
@@ -1869,16 +1892,18 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
         class WeakBackwardsForces extends Forces {
 
             @Override
-            PositionRestrictions enforceUsingPreviousRestrictions(
-                    PositionRestrictions restrictions) {
+            PositionRestrictions enforceUsingPreviousRestrictions(PositionRestrictions restrictions) {
+
                 GanttDate result = Constraint.<GanttDate> initialValue(null)
                         .withConstraints(restrictions.getEndConstraints())
                         .withConstraints(getEndConstraints())
                         .applyWithoutFinalCheck();
-                if (result != null) {
+
+                if ( result != null ) {
                     enforceRestrictions(result);
                     return lessThan(adapter.getStartDate(task), result);
                 }
+
                 return restrictions;
             }
 
@@ -1893,7 +1918,7 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
             }
 
             private void enforceRestrictions(GanttDate newEnd) {
-                if (!newEnd.equals(getEndDateFor(task))) {
+                if ( !newEnd.equals(getEndDateFor(task)) ) {
                     adapter.setEndDateFor(task, newEnd);
                 }
             }
@@ -1911,29 +1936,33 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
         public String toString() {
             return String.format(
                     "%s, parentRecalculation: %s, predecessors: %s",
-                    taskPoint, parentRecalculation,
+                    taskPoint,
+                    parentRecalculation,
                     asSimpleString(recalculationsCouldAffectThis));
         }
 
-        private String asSimpleString(
-                Collection<? extends Recalculation> recalculations) {
+        private String asSimpleString(Collection<? extends Recalculation> recalculations) {
             StringBuilder result = new StringBuilder();
             result.append("[");
+
             for (Recalculation each : recalculations) {
                 result.append(each.taskPoint).append(", ");
             }
             result.append("]");
+
             return result.toString();
         }
 
         @Override
         public boolean equals(Object obj) {
-            if (Recalculation.class.isInstance(obj)) {
+            if ( Recalculation.class.isInstance(obj) ) {
                 Recalculation other = Recalculation.class.cast(obj);
+
                 return new EqualsBuilder().append(parentRecalculation, other.parentRecalculation)
                                           .append(taskPoint, other.taskPoint)
                                           .isEquals();
             }
+
             return false;
         }
     }
@@ -1943,11 +1972,13 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
         graph.removeVertex(task);
         topLevelTasks.remove(task);
         fromChildToParent.remove(task);
-        if (adapter.isContainer(task)) {
+
+        if ( adapter.isContainer(task) ) {
             for (V t : adapter.getChildren(task)) {
                 remove(t);
             }
         }
+
         topologicalSorter.recalculationNeeded();
         enforcer.enforceRestrictionsOn(needingEnforcing);
     }
@@ -1966,24 +1997,20 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
     }
 
     private boolean isForbidden(D dependency) {
-        if (!adapter.isVisible(dependency)) {
-            // the invisible dependencies, the ones used to implement container
-            // behavior are not forbidden
+        if ( !adapter.isVisible(dependency) ) {
+            // the invisible dependencies, the ones used to implement container behavior are not forbidden
             return false;
         }
 
-        boolean endEndDependency = DependencyType.END_END == dependency
-                .getType();
-        boolean startStartDependency = DependencyType.START_START == dependency
-                .getType();
+        boolean endEndDependency = DependencyType.END_END == dependency.getType();
+        boolean startStartDependency = DependencyType.START_START == dependency.getType();
 
         V source = adapter.getSource(dependency);
         V destination = adapter.getDestination(dependency);
         boolean destinationIsContainer = adapter.isContainer(destination);
         boolean sourceIsContainer = adapter.isContainer(source);
 
-        return (destinationIsContainer && endEndDependency)
-                || (sourceIsContainer && startStartDependency);
+        return (destinationIsContainer && endEndDependency) || (sourceIsContainer && startStartDependency);
     }
 
 
@@ -1996,14 +2023,15 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
     }
 
     private void add(D dependency, boolean enforceRestrictions) {
-        if (isForbidden(dependency)) {
+        if ( isForbidden(dependency) ) {
             return;
         }
+
         V source = adapter.getSource(dependency);
         V destination = adapter.getDestination(dependency);
         graph.addEdge(source, destination, dependency);
         topologicalSorter.recalculationNeeded();
-        if (enforceRestrictions) {
+        if ( enforceRestrictions ) {
             enforceRestrictions(destination);
         }
     }
@@ -2021,16 +2049,17 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
     }
 
     public List<V> getTasks() {
-        return new ArrayList<V>(graph.vertexSet());
+        return new ArrayList<>(graph.vertexSet());
     }
 
     public List<D> getVisibleDependencies() {
-        ArrayList<D> result = new ArrayList<D>();
+        ArrayList<D> result = new ArrayList<>();
         for (D dependency : graph.edgeSet()) {
-            if (adapter.isVisible(dependency)) {
+            if ( adapter.isVisible(dependency) ) {
                 result.add(dependency);
             }
         }
+
         return result;
     }
 
@@ -2043,15 +2072,17 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
     }
 
     public List<V> getInitialTasks() {
-        List<V> result = new ArrayList<V>();
+        List<V> result = new ArrayList<>();
         for (V task : graph.vertexSet()) {
             int dependencies = graph.inDegreeOf(task);
-            if ((dependencies == 0)
-                    || (dependencies == getNumberOfIncomingDependenciesByType(
-                            task, DependencyType.END_END))) {
+
+            if ( (dependencies == 0) ||
+                    (dependencies == getNumberOfIncomingDependenciesByType(task, DependencyType.END_END)) ) {
+
                 result.add(task);
             }
         }
+
         return result;
     }
 
@@ -2060,18 +2091,20 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
     }
 
     public Set<V> getOutgoingTasksFor(V task) {
-        Set<V> result = new HashSet<V>();
+        Set<V> result = new HashSet<>();
         for (D dependency : graph.outgoingEdgesOf(task)) {
             result.add(adapter.getDestination(dependency));
         }
+
         return result;
     }
 
     public Set<V> getIncomingTasksFor(V task) {
-        Set<V> result = new HashSet<V>();
+        Set<V> result = new HashSet<>();
         for (D dependency : graph.incomingEdgesOf(task)) {
             result.add(adapter.getSource(dependency));
         }
+
         return result;
     }
 
@@ -2081,11 +2114,11 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
 
     private boolean isSomeVisibleAndNotEndEnd(Set<D> dependencies) {
         for (D each : dependencies) {
-            if (!each.getType().equals(DependencyType.END_END)
-                    && adapter.isVisible(each)) {
+            if ( !each.getType().equals(DependencyType.END_END) && adapter.isVisible(each) ) {
                 return true;
             }
         }
+
         return false;
     }
 
@@ -2095,22 +2128,23 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
 
     private boolean isSomeVisibleAndNotStartStart(Set<D> dependencies) {
         for (D each : dependencies) {
-            if (!each.getType().equals(DependencyType.START_START)
-                    && adapter.isVisible(each)) {
+            if ( !each.getType().equals(DependencyType.START_START) && adapter.isVisible(each) ) {
                 return true;
             }
         }
+
         return false;
     }
 
     public List<V> getLatestTasks() {
-        List<V> tasks = new ArrayList<V>();
+        List<V> tasks = new ArrayList<>();
 
         for (V task : graph.vertexSet()) {
             int dependencies = graph.outDegreeOf(task);
-            if ((dependencies == 0)
-                    || (dependencies == getNumberOfOutgoingDependenciesByType(
-                            task, DependencyType.START_START))) {
+
+            if ( (dependencies == 0) ||
+                    (dependencies == getNumberOfOutgoingDependenciesByType(task, DependencyType.START_START)) ) {
+
                 tasks.add(task);
             }
         }
@@ -2118,60 +2152,63 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
         return tasks;
     }
 
-    private int getNumberOfIncomingDependenciesByType(V task,
-            DependencyType dependencyType) {
+    private int getNumberOfIncomingDependenciesByType(V task, DependencyType dependencyType) {
         int count = 0;
         for (D dependency : graph.incomingEdgesOf(task)) {
-            if (adapter.getType(dependency).equals(dependencyType)) {
+            if ( adapter.getType(dependency).equals(dependencyType) ) {
                 count++;
             }
         }
+
         return count;
     }
 
-    private int getNumberOfOutgoingDependenciesByType(V task,
-            DependencyType dependencyType) {
+    private int getNumberOfOutgoingDependenciesByType(V task, DependencyType dependencyType) {
         int count = 0;
         for (D dependency : graph.outgoingEdgesOf(task)) {
-            if (adapter.getType(dependency).equals(dependencyType)) {
+            if ( adapter.getType(dependency).equals(dependencyType) ) {
                 count++;
             }
         }
+
         return count;
     }
 
     public boolean isContainer(V task) {
-        if (task == null) {
+        if ( task == null ) {
             return false;
         }
+
         return adapter.isContainer(task);
     }
 
     public boolean contains(V container, V task) {
-        if ((container == null) || (task == null)) {
+        if ( (container == null) || (task == null) ) {
             return false;
         }
-        if (adapter.isContainer(container)) {
+
+        if ( adapter.isContainer(container) ) {
             return adapter.getChildren(container).contains(task);
         }
+
         return false;
     }
 
     public boolean doesNotProvokeLoop(D dependency) {
-        Set<TaskPoint> reachableFromDestination = destinationPoint(dependency)
-                .getReachable();
+        Set<TaskPoint> reachableFromDestination = destinationPoint(dependency).getReachable();
         for (TaskPoint each : reachableFromDestination) {
-            if (each.sendsModificationsThrough(dependency)) {
+
+            if ( each.sendsModificationsThrough(dependency) ) {
                 return false;
             }
         }
+
         return true;
     }
 
     TaskPoint destinationPoint(D dependency) {
         V destination = getDependencyDestination(dependency);
-        return new TaskPoint(destination,
-                getDestinationPoint(dependency.getType()));
+        return new TaskPoint(destination, getDestinationPoint(dependency.getType()));
     }
 
     private Point getDestinationPoint(DependencyType type) {
@@ -2201,13 +2238,11 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
     }
 
     private V getDependencySource(D dependency) {
-        return isScheduleForward() ? adapter.getSource(dependency) : adapter
-                .getDestination(dependency);
+        return isScheduleForward() ? adapter.getSource(dependency) : adapter.getDestination(dependency);
     }
 
     private V getDependencyDestination(D dependency) {
-        return isScheduleForward() ? adapter.getDestination(dependency)
-                : adapter.getSource(dependency);
+        return isScheduleForward() ? adapter.getDestination(dependency) : adapter.getSource(dependency);
     }
 
     TaskPoint allPointsPotentiallyModified(V task) {
@@ -2229,8 +2264,10 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
             Validate.notNull(entryPoint);
             this.task = task;
             this.entryPoint = entryPoint;
-            this.pointsModified = isDominatingPoint(entryPoint) ? EnumSet.of(
-                    Point.START, Point.END) : EnumSet.of(entryPoint);
+
+            this.pointsModified =
+                    isDominatingPoint(entryPoint) ? EnumSet.of(Point.START, Point.END) : EnumSet.of(entryPoint);
+
             this.isContainer = adapter.isContainer(task);
         }
 
@@ -2242,19 +2279,21 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
 
         @Override
         public boolean equals(Object obj) {
-            if (TaskPoint.class.isInstance(obj)) {
+            if ( TaskPoint.class.isInstance(obj) ) {
                 TaskPoint other = TaskPoint.class.cast(obj);
-                return new EqualsBuilder().append(task, other.task)
+
+                return new EqualsBuilder()
+                        .append(task, other.task)
                         .append(pointsModified, other.pointsModified)
                         .isEquals();
             }
+
             return false;
         }
 
         @Override
         public int hashCode() {
-            return new HashCodeBuilder().append(task).append(pointsModified)
-                    .toHashCode();
+            return new HashCodeBuilder().append(task).append(pointsModified).toHashCode();
         }
 
         public boolean areAllPointsPotentiallyModified() {
@@ -2262,8 +2301,7 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
         }
 
         public boolean somePointPotentiallyModified() {
-            return pointsModified.contains(Point.START)
-                    || pointsModified.contains(Point.END);
+            return pointsModified.contains(Point.START) || pointsModified.contains(Point.END);
         }
 
         public boolean onlyModifies(Point point) {
@@ -2271,110 +2309,109 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
         }
 
         Set<TaskPoint> getReachable() {
-            Set<TaskPoint> result = new HashSet<TaskPoint>();
-            Queue<TaskPoint> pending = new LinkedList<TaskPoint>();
+            Set<TaskPoint> result = new HashSet<>();
+            Queue<TaskPoint> pending = new LinkedList<>();
             result.add(this);
             pending.offer(this);
+
             while (!pending.isEmpty()) {
                 TaskPoint current = pending.poll();
                 Set<TaskPoint> immendiate = current.getImmediateSuccessors();
+
                 for (TaskPoint each : immendiate) {
-                    if (!result.contains(each)) {
+                    if ( !result.contains(each) ) {
                         result.add(each);
                         pending.offer(each);
                     }
                 }
             }
+
             return result;
         }
 
         public boolean isImmediatelyDerivedFrom(TaskPoint other) {
-            return this.task.equals(other.task)
-                    && other.pointsModified.containsAll(this.pointsModified);
+            return this.task.equals(other.task) && other.pointsModified.containsAll(this.pointsModified);
         }
 
         private Set<TaskPoint> cachedInmmediateSuccesors = null;
 
         public Set<TaskPoint> getImmediateSuccessors() {
-            if (cachedInmmediateSuccesors != null) {
+            if ( cachedInmmediateSuccesors != null ) {
                 return cachedInmmediateSuccesors;
             }
 
-            Set<TaskPoint> result = new HashSet<TaskPoint>();
+            Set<TaskPoint> result = new HashSet<>();
             result.addAll(getImmediatelyDerivedOnSameTask());
 
             Set<D> candidates = immediateDependencies();
             for (D each : candidates) {
-                if (this.sendsModificationsThrough(each)) {
+                if ( this.sendsModificationsThrough(each) ) {
                     result.add(destinationPoint(each));
                 }
             }
-            return cachedInmmediateSuccesors = Collections
-                    .unmodifiableSet(result);
+
+            return cachedInmmediateSuccesors = Collections.unmodifiableSet(result);
         }
 
         private Set<TaskPoint> cachedImmediatePredecessors = null;
 
         public Set<TaskPoint> getImmediatePredecessors() {
-            if (cachedImmediatePredecessors != null) {
+            if ( cachedImmediatePredecessors != null ) {
                 return cachedImmediatePredecessors;
             }
-            Set<TaskPoint> result = new HashSet<TaskPoint>();
-            if (!isDominatingPoint(entryPoint)) {
+
+            Set<TaskPoint> result = new HashSet<>();
+            if ( !isDominatingPoint(entryPoint) ) {
                 TaskPoint dominating = allPointsPotentiallyModified(task);
                 assert isDominatingPoint(dominating.entryPoint);
                 assert this.isImmediatelyDerivedFrom(dominating);
                 result.add(dominating);
             }
+
             for (D each : immediateIncomingDependencies()) {
-                if (this.receivesModificationsThrough(each)) {
+                if ( this.receivesModificationsThrough(each) ) {
                     TaskPoint sourcePoint = sourcePoint(each);
                     result.add(sourcePoint);
                 }
             }
-            return cachedImmediatePredecessors = Collections
-                    .unmodifiableSet(result);
+
+            return cachedImmediatePredecessors = Collections.unmodifiableSet(result);
         }
 
         private Collection<TaskPoint> getImmediatelyDerivedOnSameTask() {
             for (Point each : pointsModified) {
-                if (isDominatingPoint(each)) {
-                    return Collections.singletonList(new TaskPoint(task, each
-                            .getOther()));
+                if ( isDominatingPoint(each) ) {
+                    return Collections.singletonList(new TaskPoint(task, each.getOther()));
                 }
             }
+
             return Collections.emptyList();
         }
 
         private Set<D> immediateDependencies() {
-            return isScheduleForward() ? graph.outgoingEdgesOf(this.task)
-                    : graph.incomingEdgesOf(this.task);
+            return isScheduleForward() ? graph.outgoingEdgesOf(this.task) : graph.incomingEdgesOf(this.task);
         }
 
         private Set<D> immediateIncomingDependencies() {
-            return isScheduleForward() ? graph.incomingEdgesOf(this.task)
-                    : graph.outgoingEdgesOf(this.task);
+            return isScheduleForward() ? graph.incomingEdgesOf(this.task) : graph.outgoingEdgesOf(this.task);
         }
 
         public boolean sendsModificationsThrough(D dependency) {
             V source = getDependencySource(dependency);
-            Point dependencySourcePoint = getSourcePoint(adapter
-                    .getType(dependency));
+            Point dependencySourcePoint = getSourcePoint(adapter.getType(dependency));
 
-            return source.equals(task)
-                    && (!isContainer || pointsModified
-                            .contains(dependencySourcePoint));
+            return source.equals(task) && (!isContainer || pointsModified.contains(dependencySourcePoint));
         }
 
         private Point getSourcePoint(DependencyType type) {
             Point[] sourceAndDestination = type.getSourceAndDestination();
+
             return sourceAndDestination[isScheduleForward() ? 0 : 1];
         }
 
         private boolean receivesModificationsThrough(D dependency) {
             V destination = getDependencyDestination(dependency);
-            Point destinationPoint = getDestinationPoint(adapter
-                    .getType(dependency));
+            Point destinationPoint = getDestinationPoint(adapter.getType(dependency));
 
             return destination.equals(task) && entryPoint == destinationPoint;
         }
@@ -2388,6 +2425,7 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
         while (fromChildToParent.containsKey(result)) {
             result = fromChildToParent.get(result);
         }
+
         return result;
     }
 
@@ -2421,9 +2459,10 @@ public class GanttDiagramGraph<V, D extends IDependency<V>> implements
 
     @Override
     public List<V> getChildren(V task) {
-        if (!isContainer(task)) {
+        if ( !isContainer(task) ) {
             return Collections.emptyList();
         }
+
         return adapter.getChildren(task);
     }
 

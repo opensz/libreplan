@@ -33,79 +33,77 @@ import org.springframework.transaction.annotation.Transactional;
 public class AdHocTransactionService implements IAdHocTransactionService {
 
     private static <T> T proxy(IAdHocTransactionService transactionService,
-            boolean readOnly,
-            Class<T> interfaceClass,
-            T interfaceObject) {
+                               boolean readOnly,
+                               Class<T> interfaceClass,
+                               T interfaceObject) {
+
         Class<?>[] interfaces = { interfaceClass };
-        return interfaceClass.cast(Proxy.newProxyInstance(interfaceClass
-                .getClassLoader(), interfaces, createHandler(interfaceObject,
-                transactionService, readOnly)));
+
+        return interfaceClass.cast(Proxy.newProxyInstance(
+                interfaceClass.getClassLoader(),
+                interfaces,
+                createHandler(interfaceObject, transactionService, readOnly)));
     }
 
     /**
-     * Returns a new object implementing the same interface but with its calls
-     * wrapped on read only transactions
+     * Returns a new object implementing the same interface but with its calls wrapped on read only transactions.
+     *
      * @param transactionService
      * @param interfaceClass
      * @param interfaceObject
-     * @return
+     * @return <T> T
      */
     public static <T> T readOnlyProxy(IAdHocTransactionService transactionService,
-            Class<T> interfaceClass, T interfaceObject) {
+                                      Class<T> interfaceClass,
+                                      T interfaceObject) {
+
         return proxy(transactionService, true, interfaceClass, interfaceObject);
     }
 
     /**
-     * Returns a new object implementing the same interface but with its calls
-     * wrapped on transactions
+     * Returns a new object implementing the same interface but with its calls wrapped on transactions.
+     *
      * @param transactionService
      * @param interfaceClass
      * @param interfaceObject
-     * @return
+     * @return <T> T
      */
     public static <T> T proxy(IAdHocTransactionService transactionService,
-            Class<T> interfaceClass, T interfaceObject) {
+                              Class<T> interfaceClass,
+                              T interfaceObject) {
+
         return proxy(transactionService, false, interfaceClass, interfaceObject);
     }
 
     private static InvocationHandler createHandler(final Object originalObject,
-            final IAdHocTransactionService transactionService,
-            final boolean readOnly) {
-        return new InvocationHandler() {
-            @Override
-            public Object invoke(final Object proxy, final Method method,
-                    final Object[] args) throws Throwable {
-                IOnTransaction<Object> onTransaction = createOnTransaction(originalObject, method, args);
-                try {
-                    if (readOnly) {
-                        return transactionService
-                                .runOnReadOnlyTransaction(onTransaction);
-                    } else {
-                        return transactionService.runOnTransaction(onTransaction);
-                    }
-                } catch (RuntimeException e) {
-                    throw e.getCause();
-                }
+                                                   final IAdHocTransactionService transactionService,
+                                                   final boolean readOnly) {
+        return (proxy, method, args) -> {
+            IOnTransaction<Object> onTransaction = createOnTransaction(originalObject, method, args);
+            try {
+                return readOnly
+                        ? transactionService.runOnReadOnlyTransaction(onTransaction)
+                        : transactionService.runOnTransaction(onTransaction);
+
+            } catch (RuntimeException e) {
+                throw e.getCause();
             }
         };
     }
 
-    private static IOnTransaction<Object> createOnTransaction(
-            final Object originalObject, final Method method,
-            final Object[] args) {
-        return new IOnTransaction<Object>() {
-
-            @Override
-            public Object execute() {
-                try {
-                    return method.invoke(originalObject, args);
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
+    private static IOnTransaction<Object> createOnTransaction(final Object originalObject,
+                                                              final Method method,
+                                                              final Object[] args) {
+        return () -> {
+            try {
+                return method.invoke(originalObject, args);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
             }
         };
     }
 
+    @Override
     @Transactional
     public <T> T runOnTransaction(IOnTransaction<T> onTransaction) {
         return onTransaction.execute();

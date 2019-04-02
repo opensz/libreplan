@@ -20,29 +20,39 @@
 
 package org.libreplan.business.common;
 
-import org.apache.commons.lang.BooleanUtils;
+import org.apache.commons.lang3.BooleanUtils;
 
 
 /**
  * This is a singleton that contains the compilation options passed from Maven.
  *
- * Currently we have two options:
+ * Currently we have four options:
  * <ul>
- * <li>Enable/Disable the warning changing default password</li>
- * <li>Enable/Disable default users (such as wsreader, wswriter,
- * wssubcontracting, manager, hresources, outsourcing and reports)</li>
+ *     <li>Enable/Disable the warning changing default password</li>
+ *     <li>
+ *         Enable/Disable default users
+ *         (such as wsreader, wswriter, wssubcontracting, manager, hresources, outsourcing and reports)
+ *     </li>
+ *     <li>Enable/Disable E-mail sending functionality</li>
+ *     <li>Enable/Disable "Delete all projects" button</li>
  * </ul>
  *
  * @author Susana Montes Pedreira <smontes@wirelessgalicia.com>
  * @author Manuel Rego Casasnovas <rego@igalia.com>
+ * @author Vova Perebykivskyi <vova@libreplan-enterprise.com>
  */
+
 public class Configuration {
 
     private static final Configuration singleton = new Configuration();
 
     private Boolean defaultPasswordsControl;
 
-    private Boolean exampleUsersDisabled;
+    private boolean exampleUsersDisabled;
+
+    private boolean emailSendingEnabled;
+
+    private boolean deleteAllProjectsButtonDisabled;
 
     private Configuration() {
     }
@@ -52,35 +62,49 @@ public class Configuration {
     }
 
     /**
-     * It returns the current state of the default passwords control in order to
-     * show or not warnings.
+     * It returns the current state of the default passwords control in order to show or not warnings.
      */
     public static Boolean isDefaultPasswordsControl() {
-        return singleton.getDefaultPasswordsControl() != null ? singleton
-                .getDefaultPasswordsControl() : true;
-    }
-
-    public void setDefaultPasswordsControl(Boolean defaultPasswordsControl) {
-        this.defaultPasswordsControl = defaultPasswordsControl;
+        return singleton.getDefaultPasswordsControl() != null ? singleton.getDefaultPasswordsControl() : true;
     }
 
     public Boolean getDefaultPasswordsControl() {
         return defaultPasswordsControl;
     }
 
-    public void setExampleUsersDisabled(Boolean exampleUsersDisabled) {
-        this.exampleUsersDisabled = exampleUsersDisabled;
+    public void setDefaultPasswordsControl(Boolean defaultPasswordsControl) {
+        this.defaultPasswordsControl = defaultPasswordsControl;
     }
 
-    public Boolean getExampleUsersDisabled() {
-        return exampleUsersDisabled;
-    }
-
-    /**
-     * Returns the value of example users disabled compilation option
-     */
     public static boolean isExampleUsersDisabled() {
         return BooleanUtils.isNotFalse(singleton.getExampleUsersDisabled());
     }
 
+    public boolean getExampleUsersDisabled() {
+        return exampleUsersDisabled;
+    }
+
+    public void setExampleUsersDisabled(boolean exampleUsersDisabled) {
+        this.exampleUsersDisabled = exampleUsersDisabled;
+    }
+
+    public static boolean isEmailSendingEnabled() {
+        return BooleanUtils.isNotFalse(singleton.getEmailSendingEnabled());
+    }
+
+    public boolean getEmailSendingEnabled() {
+        return emailSendingEnabled;
+    }
+
+    public void setEmailSendingEnabled(boolean emailSendingEnabled) {
+        this.emailSendingEnabled = emailSendingEnabled;
+    }
+
+    public boolean isDeleteAllProjectsButtonDisabled() {
+        return deleteAllProjectsButtonDisabled;
+    }
+
+    public void setDeleteAllProjectsButtonDisabled(boolean deleteAllProjectsButtonDisabled) {
+        this.deleteAllProjectsButtonDisabled = deleteAllProjectsButtonDisabled;
+    }
 }

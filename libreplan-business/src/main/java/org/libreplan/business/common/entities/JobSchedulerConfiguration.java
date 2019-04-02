@@ -19,37 +19,25 @@
 
 package org.libreplan.business.common.entities;
 
-import org.apache.commons.lang.StringUtils;
-import org.hibernate.validator.AssertTrue;
-import org.hibernate.validator.NotNull;
+import org.apache.commons.lang3.StringUtils;
+import javax.validation.constraints.AssertTrue;
+import javax.validation.constraints.NotNull;
 import org.libreplan.business.common.BaseEntity;
 import org.libreplan.business.common.IHumanIdentifiable;
 import org.libreplan.business.common.Registry;
 import org.libreplan.business.common.daos.IJobSchedulerConfigurationDAO;
 
 /**
- * JobSchedulerConfiguration entity, represents parameters for the jobs to be
- * scheduled. This entity is used by the <code>SchedulerManager</code> to
+ * JobSchedulerConfiguration entity, represents parameters for the jobs to be scheduled.
+ * This entity is used by the <code>SchedulerManager</code> to
  * schedule jobs and in UI to show the scheduler status.
  *
  * The <code>jobGroup</code> and <code>jobName</code> together forms a job key
- * and non of the fields must be null. Moreover it should contain a valid
- * <code>cronExpression</code>
+ * and non of the fields must be null. Moreover it should contain a valid <code>cronExpression</code>.
  *
  * @author Miciele Ghiorghis <m.ghiorghis@antoniusziekenhuis.nl>
  */
-public class JobSchedulerConfiguration extends BaseEntity implements
-        IHumanIdentifiable {
-
-    public static JobSchedulerConfiguration create() {
-        return create(new JobSchedulerConfiguration());
-    }
-
-    /**
-     * Constructor for Hibernate. Do not use!
-     */
-    protected JobSchedulerConfiguration() {
-    }
+public class JobSchedulerConfiguration extends BaseEntity implements IHumanIdentifiable {
 
     private String jobGroup;
 
@@ -62,6 +50,15 @@ public class JobSchedulerConfiguration extends BaseEntity implements
     private boolean schedule;
 
     private String connectorName;
+
+    /**
+     * Constructor for Hibernate. Do not use!
+     */
+    protected JobSchedulerConfiguration() {}
+
+    public static JobSchedulerConfiguration create() {
+        return create(new JobSchedulerConfiguration());
+    }
 
     @NotNull(message = "job group not specified")
     public String getJobGroup() {
@@ -121,19 +118,19 @@ public class JobSchedulerConfiguration extends BaseEntity implements
     }
 
     @AssertTrue(message = "job group and name are already being used")
-    public boolean checkConstraintUniqueJobGroupAndName() {
-        if (StringUtils.isBlank(jobGroup) && StringUtils.isBlank(jobName)) {
+    public boolean isUniqueJobGroupAndNameConstraint() {
+        if ( StringUtils.isBlank(jobGroup) && StringUtils.isBlank(jobName) ) {
             return true;
         }
-        IJobSchedulerConfigurationDAO jobSchedulerConfigurationDAO = Registry
-                .getJobSchedulerConfigurationDAO();
-        if (isNewObject()) {
-            return !jobSchedulerConfigurationDAO
-                    .existsByJobGroupAndJobNameAnotherTransaction(this);
+
+        IJobSchedulerConfigurationDAO jobSchedulerConfigurationDAO = Registry.getJobSchedulerConfigurationDAO();
+
+        if ( isNewObject() ) {
+            return !jobSchedulerConfigurationDAO.existsByJobGroupAndJobNameAnotherTransaction(this);
         } else {
-            JobSchedulerConfiguration found = jobSchedulerConfigurationDAO
-                    .findUniqueByJobGroupAndJobNameAnotherTransaction(jobGroup,
-                            jobName);
+            JobSchedulerConfiguration found =
+                    jobSchedulerConfigurationDAO.findUniqueByJobGroupAndJobNameAnotherTransaction(jobGroup, jobName);
+
             return found == null || found.getId().equals(getId());
         }
     }

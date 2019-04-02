@@ -39,7 +39,6 @@ import javax.annotation.Resource;
 
 import org.hibernate.SessionFactory;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.libreplan.business.IDataBootstrap;
@@ -71,7 +70,6 @@ import org.springframework.transaction.annotation.Transactional;
         WEBAPP_SPRING_CONFIG_FILE, WEBAPP_SPRING_CONFIG_TEST_FILE,
         WEBAPP_SPRING_SECURITY_CONFIG_FILE,
         WEBAPP_SPRING_SECURITY_CONFIG_TEST_FILE })
-@Transactional
 public class ScenarioModelTest {
 
     @Resource
@@ -84,7 +82,7 @@ public class ScenarioModelTest {
     private IDataBootstrap scenariosBootstrap;
 
     @Before
-    public void loadRequiredaData() {
+    public void loadRequiredData() {
         defaultAdvanceTypesBootstrapListener.loadRequiredData();
         configurationBootstrap.loadRequiredData();
         scenariosBootstrap.loadRequiredData();
@@ -124,8 +122,8 @@ public class ScenarioModelTest {
     }
 
     public static Order givenStoredOrderInScenario(Scenario scenario,
-            IConfigurationDAO configurationDAO, IOrderDAO orderDAO,
-            SessionFactory sessionFactory) {
+                                                   IConfigurationDAO configurationDAO, IOrderDAO orderDAO,
+                                                   SessionFactory sessionFactory) {
         Order order = Order.create();
         order.setCode(UUID.randomUUID().toString());
         order.setName(randomize("order-name"));
@@ -164,7 +162,7 @@ public class ScenarioModelTest {
     }
 
     public static Scenario givenStoredScenario(Scenario predecessor,
-            IScenarioDAO scenarioDAO, SessionFactory sessionFactory) {
+                                               IScenarioDAO scenarioDAO, SessionFactory sessionFactory) {
         Scenario scenario = predecessor.newDerivedScenario();
         scenario.setName("scenario-name-" + UUID.randomUUID());
 
@@ -181,13 +179,14 @@ public class ScenarioModelTest {
     }
 
     @Test
+    @Transactional
     @Rollback(false)
     public void testNotRollback() {
         // Just to do not make rollback in order to have the default scenario
     }
 
     @Test
-    @Ignore("FIXME: test was causing problems in Debian Wheezy")
+    @Transactional
     public void testCreateAndSaveScenarioWithoutOrders() {
         int previous = scenarioModel.getScenarios().size();
 
@@ -204,7 +203,7 @@ public class ScenarioModelTest {
     }
 
     @Test
-    @Ignore("FIXME: test was causing problems in Debian Wheezy")
+    @Transactional
     public void testCreateAndSaveScenarioWithOrders() {
         Order order = givenStoredOrderInDefaultScenario();
 
@@ -228,12 +227,14 @@ public class ScenarioModelTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
+    @Transactional
     public void testRemoveDefaultScenario() {
         Scenario defaultScenario = PredefinedScenarios.MASTER.getScenario();
         scenarioModel.remove(defaultScenario);
     }
 
     @Test
+    @Transactional
     public void testRemoveScenarioWithoutOrders() {
         Scenario scenario = givenStoredScenario();
 
@@ -244,6 +245,7 @@ public class ScenarioModelTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
+    @Transactional
     public void testRemoveScenarioWithDerivedScenraios() {
         Scenario scenario = givenStoredScenario();
         givenStoredScenario(scenario);
@@ -251,7 +253,7 @@ public class ScenarioModelTest {
     }
 
     @Test
-    @Ignore("FIXME: test was causing problems in Debian Wheezy")
+    @Transactional
     public void testRemoveScenarioWithOrders() throws InstanceNotFoundException {
         Order order = givenStoredOrderInDefaultScenario();
         Scenario scenario = givenStoredScenario();
@@ -268,6 +270,7 @@ public class ScenarioModelTest {
     }
 
     @Test
+    @Transactional
     public void testRemoveScenarioWithOrdersJustInThisScenario()
             throws InstanceNotFoundException {
         Scenario scenario = givenStoredScenario();
@@ -287,14 +290,14 @@ public class ScenarioModelTest {
         try {
             orderDAO.find(order.getId());
             fail("Order should be removed");
-        } catch (InstanceNotFoundException e) {
+        } catch (InstanceNotFoundException ignored) {
             // Ok
         }
 
         try {
             orderVersionDAO.find(orderVersion.getId());
             fail("Order version should be removed");
-        } catch (InstanceNotFoundException e) {
+        } catch (InstanceNotFoundException ignored) {
             // Ok
         }
     }

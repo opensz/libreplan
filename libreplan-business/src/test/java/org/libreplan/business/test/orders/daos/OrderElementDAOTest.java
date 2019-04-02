@@ -21,7 +21,7 @@
 
 package org.libreplan.business.test.orders.daos;
 
-import static junit.framework.Assert.assertNotNull;
+import static org.junit.Assert.assertNotNull;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -88,21 +88,14 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(locations = { BUSINESS_SPRING_CONFIG_FILE,
-        BUSINESS_SPRING_CONFIG_TEST_FILE })
-/*
+@ContextConfiguration(locations = {BUSINESS_SPRING_CONFIG_FILE, BUSINESS_SPRING_CONFIG_TEST_FILE })
+/**
  * @author Diego Pino García <dpino@igalia.com>
  */
-@Transactional
 public class OrderElementDAOTest {
 
     @Resource
     private IDataBootstrap defaultAdvanceTypesBootstrapListener;
-
-    @Before
-    public void loadRequiredaData() {
-        defaultAdvanceTypesBootstrapListener.loadRequiredData();
-    }
 
     @Autowired
     IQualityFormDAO qualityFormDAO;
@@ -134,9 +127,11 @@ public class OrderElementDAOTest {
     @Before
     public void loadRequiredData() {
         scenariosBootstrap.loadRequiredData();
+        defaultAdvanceTypesBootstrapListener.loadRequiredData();
     }
 
     @Test
+    @Transactional
     public void testInSpringContainer() {
         assertNotNull(orderElementDAO);
     }
@@ -167,8 +162,7 @@ public class OrderElementDAOTest {
 
     private OrderLineGroup createValidOrderLineGroup() {
         String unique = UUID.randomUUID().toString();
-        OrderLineGroup result = createValidOrderLineGroup(unique, unique);
-        return result;
+        return createValidOrderLineGroup(unique, unique);
     }
 
     private OrderLineGroup createValidOrderLineGroup(String name, String code) {
@@ -181,6 +175,7 @@ public class OrderElementDAOTest {
         orderLineGroup.add(line);
         line.setName(UUID.randomUUID().toString());
         line.setCode(UUID.randomUUID().toString());
+
         return orderLineGroup;
     }
 
@@ -192,15 +187,16 @@ public class OrderElementDAOTest {
         BaseCalendar basicCalendar = BaseCalendarTest.createBasicCalendar();
         calendarDAO.save(basicCalendar);
         order.setCalendar(basicCalendar);
-        OrderVersion orderVersion = ResourceAllocationDAOTest
-                .setupVersionUsing(scenarioManager, order);
+        OrderVersion orderVersion = ResourceAllocationDAOTest.setupVersionUsing(scenarioManager, order);
         orderElementDAO.save(order);
         orderElementDAO.flush();
         order.useSchedulingDataFor(orderVersion);
+
         return order;
     }
 
     @Test
+    @Transactional
     public void testSaveOrderLine() {
         OrderLine orderLine = createValidOrderLine();
         orderElementDAO.save(orderLine);
@@ -208,61 +204,59 @@ public class OrderElementDAOTest {
     }
 
     @Test
+    @Transactional
     public void testFindUniqueByCode() throws InstanceNotFoundException {
         OrderLine orderLine = createValidOrderLine();
         orderElementDAO.save(orderLine);
-        orderLine.setCode(((Long) orderLine.getId()).toString());
+        orderLine.setCode(orderLine.getId().toString());
         orderElementDAO.save(orderLine);
 
-        OrderLine found = (OrderLine) orderElementDAO
-                .findUniqueByCode(orderLine
-                .getCode());
+        OrderLine found = (OrderLine) orderElementDAO.findUniqueByCode(orderLine.getCode());
         assertTrue(found != null && found.getCode().equals(orderLine.getCode()));
     }
 
     @Test
-    public void testFindUniqueByCodeAndOrderLineGroup()
-            throws InstanceNotFoundException {
+    @Transactional
+    public void testFindUniqueByCodeAndOrderLineGroup() throws InstanceNotFoundException {
         // Create OrderLineGroupLine
         OrderLineGroup orderLineGroup = createValidOrderLineGroup();
         orderElementDAO.save(orderLineGroup.getOrder());
         orderElementDAO.flush();
 
-        orderLineGroup.setCode(((Long) orderLineGroup.getId()).toString());
+        orderLineGroup.setCode(orderLineGroup.getId().toString());
         orderElementDAO.save(orderLineGroup.getOrder());
 
         // Create OrderLineGroup
         OrderLine orderLine = createStandAloneLine();
         orderElementDAO.save(orderLine);
-        orderLine.setCode(((Long) orderLine.getId()).toString());
+        orderLine.setCode(orderLine.getId().toString());
         orderLineGroup.add(orderLine);
 
-        OrderLine found = (OrderLine) orderElementDAO
-                .findUniqueByCodeAndParent(
-                orderLineGroup, orderLine.getCode());
+        OrderLine found = (OrderLine) orderElementDAO.findUniqueByCodeAndParent(orderLineGroup, orderLine.getCode());
         assertTrue(found != null && found.getCode().equals(orderLine.getCode()));
     }
 
     @Test
+    @Transactional
     public void testFindByCodeInRoot() throws InstanceNotFoundException {
         // Create OrderLineGroupLine
         Order order = createValidOrder();
 
-        List<OrderElement> list = orderElementDAO.findByCodeAndParent(null,
-                order.getCode());
+        List<OrderElement> list = orderElementDAO.findByCodeAndParent(null, order.getCode());
         assertFalse(list.isEmpty());
     }
 
     @Test
+    @Transactional
     public void testSaveOrderLineWithAdvanceAssignments()
             throws DuplicateValueTrueReportGlobalAdvanceException,
             DuplicateAdvanceAssignmentForOrderElementException,
             InstanceNotFoundException {
+
         OrderLine orderLine = createValidOrderLine();
 
-        OrderElementTest.addAvanceAssignmentWithMeasurement(orderLine,
-                PredefinedAdvancedTypes.UNITS.getType(), new BigDecimal(1000),
-                new BigDecimal(400), true);
+        OrderElementTest.addAdvanceAssignmentWithMeasurement(
+                orderLine, PredefinedAdvancedTypes.UNITS.getType(), new BigDecimal(1000), new BigDecimal(400), true);
 
         orderElementDAO.save(orderLine);
         orderElementDAO.flush();
@@ -273,46 +267,42 @@ public class OrderElementDAOTest {
         Set<DirectAdvanceAssignment> directAdvanceAssignments = found.getDirectAdvanceAssignments();
         assertThat(directAdvanceAssignments.size(), equalTo(1));
 
-        SortedSet<AdvanceMeasurement> advanceMeasurements = directAdvanceAssignments
-                .iterator().next().getAdvanceMeasurements();
+        SortedSet<AdvanceMeasurement> advanceMeasurements =
+                directAdvanceAssignments.iterator().next().getAdvanceMeasurements();
+
         assertThat(advanceMeasurements.size(), equalTo(1));
 
-        assertThat(advanceMeasurements.iterator().next().getValue(),
-                equalTo(new BigDecimal(400)));
+        assertThat(advanceMeasurements.iterator().next().getValue(), equalTo(new BigDecimal(400)));
     }
 
     @Test
+    @Transactional
     public void testSaveOrderLineGroupWithAdvanceAssignments()
             throws DuplicateValueTrueReportGlobalAdvanceException,
             DuplicateAdvanceAssignmentForOrderElementException,
             InstanceNotFoundException {
+
         Order order = createValidOrder();
-        OrderVersion orderVersion = order.getOrderVersionFor(scenarioManager
-                .getCurrent());
-        OrderElement orderElement = OrderElementTest
-                .givenOrderLineGroupWithTwoOrderLines(orderVersion,
-                        2000, 3000);
+        OrderVersion orderVersion = order.getOrderVersionFor(scenarioManager.getCurrent());
+        OrderElement orderElement = OrderElementTest.givenOrderLineGroupWithTwoOrderLines(orderVersion, 2000, 3000);
         order.add(orderElement);
 
         List<OrderElement> children = orderElement.getChildren();
 
         AdvanceType advanceType = PredefinedAdvancedTypes.UNITS.getType();
 
-        OrderElementTest.addAvanceAssignmentWithMeasurement(children.get(0),
-                advanceType,
-                new BigDecimal(1000), new BigDecimal(100), true);
+        OrderElementTest.addAdvanceAssignmentWithMeasurement(
+                children.get(0), advanceType, new BigDecimal(1000), new BigDecimal(100), true);
 
-        OrderElementTest.addAvanceAssignmentWithMeasurement(children.get(1),
-                advanceType,
-                new BigDecimal(1000), new BigDecimal(300), true);
+        OrderElementTest.addAdvanceAssignmentWithMeasurement(
+                children.get(1), advanceType, new BigDecimal(1000), new BigDecimal(300), true);
 
         orderElementDAO.save(orderElement);
         orderElementDAO.flush();
 
         assertTrue(orderElementDAO.exists(orderElement.getId()));
 
-        OrderLineGroup found = (OrderLineGroup) orderElementDAO
-                .find(orderElement.getId());
+        OrderLineGroup found = (OrderLineGroup) orderElementDAO.find(orderElement.getId());
         assertThat(found.getDirectAdvanceAssignments().size(), equalTo(0));
 
         assertThat(found.getIndirectAdvanceAssignments().size(), equalTo(2));
@@ -320,27 +310,25 @@ public class OrderElementDAOTest {
         Set<DirectAdvanceAssignment> directAdvanceAssignments = found.getChildren().get(0).getDirectAdvanceAssignments();
         assertThat(directAdvanceAssignments.size(), equalTo(1));
 
-        DirectAdvanceAssignment directAdvanceAssignment = directAdvanceAssignments
-                .iterator().next();
-        assertThat(directAdvanceAssignment.getMaxValue(),
-                equalTo(new BigDecimal(1000)));
+        DirectAdvanceAssignment directAdvanceAssignment = directAdvanceAssignments.iterator().next();
+        assertThat(directAdvanceAssignment.getMaxValue(), equalTo(new BigDecimal(1000)));
 
         SortedSet<AdvanceMeasurement> advanceMeasurements = directAdvanceAssignment.getAdvanceMeasurements();
         assertThat(advanceMeasurements.size(), equalTo(1));
-        assertThat(advanceMeasurements.iterator().next().getValue(),
-                equalTo(new BigDecimal(100)));
+        assertThat(advanceMeasurements.iterator().next().getValue(), equalTo(new BigDecimal(100)));
     }
 
     @Test
+    @Transactional
     public void testRemoveOrderLineWithAdvanceAssignments()
             throws DuplicateValueTrueReportGlobalAdvanceException,
             DuplicateAdvanceAssignmentForOrderElementException,
             InstanceNotFoundException {
+
         OrderLine orderLine = createValidOrderLine();
 
-        OrderElementTest.addAvanceAssignmentWithMeasurement(orderLine,
-                PredefinedAdvancedTypes.UNITS.getType(), new BigDecimal(1000),
-                new BigDecimal(400), true);
+        OrderElementTest.addAdvanceAssignmentWithMeasurement(
+                orderLine, PredefinedAdvancedTypes.UNITS.getType(), new BigDecimal(1000), new BigDecimal(400), true);
 
         orderElementDAO.save(orderLine);
         orderElementDAO.flush();
@@ -355,34 +343,33 @@ public class OrderElementDAOTest {
         try {
             orderElementDAO.find(id);
             fail("It should throw an exception");
-        } catch (InstanceNotFoundException e) {
+        } catch (InstanceNotFoundException ignored) {
             // ok
         }
     }
 
     @Test
+    @Transactional
     public void testRemoveOrderLineGroupWithAdvanceAssignments()
             throws DuplicateValueTrueReportGlobalAdvanceException,
             DuplicateAdvanceAssignmentForOrderElementException,
             InstanceNotFoundException {
+
         Order order = createValidOrder();
-        OrderVersion orderVersion = order.getOrderVersionFor(scenarioManager
-                .getCurrent());
-        OrderElement orderElement = OrderElementTest
-                .givenOrderLineGroupWithTwoOrderLines(orderVersion, 2000, 3000);
+        OrderVersion orderVersion = order.getOrderVersionFor(scenarioManager.getCurrent());
+        OrderElement orderElement = OrderElementTest.givenOrderLineGroupWithTwoOrderLines(orderVersion, 2000, 3000);
         order.add(orderElement);
-        order.useSchedulingDataFor(order.getOrderVersionFor(scenarioManager
-                .getCurrent()));
+        order.useSchedulingDataFor(order.getOrderVersionFor(scenarioManager.getCurrent()));
 
         List<OrderElement> children = orderElement.getChildren();
 
         AdvanceType advanceType = PredefinedAdvancedTypes.UNITS.getType();
 
-        OrderElementTest.addAvanceAssignmentWithMeasurement(children.get(0),
-                advanceType, new BigDecimal(1000), new BigDecimal(100), true);
+        OrderElementTest.addAdvanceAssignmentWithMeasurement(
+                children.get(0), advanceType, new BigDecimal(1000), new BigDecimal(100), true);
 
-        OrderElementTest.addAvanceAssignmentWithMeasurement(children.get(1),
-                advanceType, new BigDecimal(1000), new BigDecimal(300), true);
+        OrderElementTest.addAdvanceAssignmentWithMeasurement(
+                children.get(1), advanceType, new BigDecimal(1000), new BigDecimal(300), true);
 
         orderElementDAO.save(orderElement);
         orderElementDAO.flush();
@@ -395,22 +382,20 @@ public class OrderElementDAOTest {
         orderElementDAO.flush();
 
         try {
-            found = (OrderLineGroup) orderElementDAO.find(id);
+            orderElementDAO.find(id);
             fail("It should throw an exception");
-        } catch (InstanceNotFoundException e) {
-            // ok
+        } catch (InstanceNotFoundException ignored) {
+            // OK
         }
     }
 
     @Test
+    @Transactional
     public void testSaveAndRemoveTaskQualityForm() {
-        OrderElement orderElement = OrderElementTest
-                .givenOrderLineGroupWithTwoOrderLines(2000, 3000);
-        QualityForm qualityForm = QualityForm.create(UUID.randomUUID()
-                .toString(), UUID.randomUUID().toString());
+        OrderElement orderElement = OrderElementTest.givenOrderLineGroupWithTwoOrderLines(2000, 3000);
+        QualityForm qualityForm = QualityForm.create(UUID.randomUUID().toString(), UUID.randomUUID().toString());
 
-        TaskQualityForm taskQualityForm = orderElement
-                .addTaskQualityForm(qualityForm);
+        TaskQualityForm taskQualityForm = orderElement.addTaskQualityForm(qualityForm);
         assertThat(orderElement.getTaskQualityForms().size(), equalTo(1));
 
         orderElement.removeTaskQualityForm(taskQualityForm);
@@ -418,11 +403,10 @@ public class OrderElementDAOTest {
     }
 
     @Test
+    @Transactional
     public void testCheckUniqueQualityForm() {
-        OrderElement orderElement = OrderElementTest
-                .givenOrderLineGroupWithTwoOrderLines(2000, 3000);
-        QualityForm qualityForm = QualityForm.create(UUID.randomUUID()
-                .toString(), UUID.randomUUID().toString());
+        OrderElement orderElement = OrderElementTest.givenOrderLineGroupWithTwoOrderLines(2000, 3000);
+        QualityForm qualityForm = QualityForm.create(UUID.randomUUID().toString(), UUID.randomUUID().toString());
         orderElement.addTaskQualityForm(qualityForm);
 
         assertThat(orderElement.getTaskQualityForms().size(), equalTo(1));
@@ -430,37 +414,34 @@ public class OrderElementDAOTest {
         try {
             orderElement.addTaskQualityForm(null);
             fail("It should throw an exception");
-        } catch (IllegalArgumentException e) {
-            // ok
+        } catch (NullPointerException ignored) {
+            // OK
         }
 
         try {
             orderElement.addTaskQualityForm(qualityForm);
             fail("It should throw an exception");
-        } catch (ValidationException e) {
-            // ok
+        } catch (ValidationException ignored) {
+            // OK
         }
     }
 
     @Test
+    @Transactional
     public void testSumChargedHoursRelation() throws InstanceNotFoundException {
         OrderLine orderLine = createValidOrderLine();
         orderLine.setSumChargedEffort(SumChargedEffort.create(orderLine));
 
-        orderLine.getSumChargedEffort().addDirectChargedEffort(
-                EffortDuration.hours(8));
-        orderLine.getSumChargedEffort().addIndirectChargedEffort(
-                EffortDuration.hours(10));
+        orderLine.getSumChargedEffort().addDirectChargedEffort(EffortDuration.hours(8));
+        orderLine.getSumChargedEffort().addIndirectChargedEffort(EffortDuration.hours(10));
 
         orderElementDAO.save(orderLine);
 
         OrderElement orderLineCopy = orderElementDAO.find(orderLine.getId());
 
-        assertEquals(orderLine.getSumChargedEffort().getId(),
-                orderLineCopy.getSumChargedEffort().getId());
+        assertEquals(orderLine.getSumChargedEffort().getId(), orderLineCopy.getSumChargedEffort().getId());
 
-        assertEquals(orderLineCopy.getSumChargedEffort()
-                .getTotalChargedEffort(), EffortDuration.hours(18));
+        assertEquals(orderLineCopy.getSumChargedEffort().getTotalChargedEffort(), EffortDuration.hours(18));
     }
 
     private Label givenStoredLabel() {
@@ -475,6 +456,7 @@ public class OrderElementDAOTest {
     }
 
     @Test
+    @Transactional
     public void testFindByLabels1() throws InstanceNotFoundException {
         Label label = givenStoredLabel();
 
@@ -486,14 +468,14 @@ public class OrderElementDAOTest {
         OrderLine orderLine3 = createValidOrderLine();
         orderElementDAO.save(orderLine3);
 
-        List<OrderElement> orderELements = orderElementDAO
-                .findByLabelsAndCriteria(Collections.singleton(label), null);
+        List<OrderElement> orderElements = orderElementDAO.findByLabelsAndCriteria(Collections.singleton(label), null);
 
-        assertEquals(1, orderELements.size());
-        assertEquals(orderLine1.getId(), orderELements.get(0).getId());
+        assertEquals(1, orderElements.size());
+        assertEquals(orderLine1.getId(), orderElements.get(0).getId());
     }
 
     @Test
+    @Transactional
     public void testFindByLabels2() throws InstanceNotFoundException {
         Label label1 = givenStoredLabel();
         Label label2 = givenStoredLabel();
@@ -502,32 +484,32 @@ public class OrderElementDAOTest {
         orderLine1.addLabel(label1);
         orderLine1.addLabel(label2);
         orderElementDAO.save(orderLine1);
+
         OrderLine orderLine2 = createValidOrderLine();
         orderElementDAO.save(orderLine2);
+
         OrderLine orderLine3 = createValidOrderLine();
         orderLine3.addLabel(label2);
         orderElementDAO.save(orderLine3);
 
-        List<OrderElement> orderELements = orderElementDAO
-                .findByLabelsAndCriteria(Collections.singleton(label1), null);
-        assertEquals(1, orderELements.size());
-        assertEquals(orderLine1.getId(), orderELements.get(0).getId());
+        List<OrderElement> orderElements = orderElementDAO.findByLabelsAndCriteria(Collections.singleton(label1), null);
+        assertEquals(1, orderElements.size());
+        assertEquals(orderLine1.getId(), orderElements.get(0).getId());
 
-        orderELements = orderElementDAO.findByLabelsAndCriteria(
-                Collections.singleton(label2), null);
-        assertEquals(2, orderELements.size());
-        for (OrderElement each : orderELements) {
-            assertTrue(each.getId().equals(orderLine1.getId())
-                    || each.getId().equals(orderLine3.getId()));
+        orderElements = orderElementDAO.findByLabelsAndCriteria(Collections.singleton(label2), null);
+        assertEquals(2, orderElements.size());
+
+        for (OrderElement each : orderElements) {
+            assertTrue(each.getId().equals(orderLine1.getId()) || each.getId().equals(orderLine3.getId()));
         }
 
-        orderELements = orderElementDAO.findByLabelsAndCriteria(
-                new HashSet<Label>(Arrays.asList(label1, label2)), null);
-        assertEquals(1, orderELements.size());
-        assertEquals(orderLine1.getId(), orderELements.get(0).getId());
+        orderElements = orderElementDAO.findByLabelsAndCriteria(new HashSet<>(Arrays.asList(label1, label2)), null);
+        assertEquals(1, orderElements.size());
+        assertEquals(orderLine1.getId(), orderElements.get(0).getId());
     }
 
     @Test
+    @Transactional
     public void testFindByLabelsOnTree() throws InstanceNotFoundException {
         Label label1 = givenStoredLabel();
         Label label2 = givenStoredLabel();
@@ -538,19 +520,16 @@ public class OrderElementDAOTest {
         child.addLabel(label2);
         orderElementDAO.save(orderLineGroup);
 
-        List<OrderElement> orderELements = orderElementDAO
-                .findByLabelsAndCriteria(Collections.singleton(label1), null);
-        assertEquals(1, orderELements.size());
-        assertEquals(orderLineGroup.getId(), orderELements.get(0).getId());
+        List<OrderElement> orderElements = orderElementDAO.findByLabelsAndCriteria(Collections.singleton(label1), null);
+        assertEquals(1, orderElements.size());
+        assertEquals(orderLineGroup.getId(), orderElements.get(0).getId());
 
-        orderELements = orderElementDAO.findByLabelsAndCriteria(
-                Collections.singleton(label2), null);
-        assertEquals(1, orderELements.size());
-        assertEquals(child.getId(), orderELements.get(0).getId());
+        orderElements = orderElementDAO.findByLabelsAndCriteria(Collections.singleton(label2), null);
+        assertEquals(1, orderElements.size());
+        assertEquals(child.getId(), orderElements.get(0).getId());
 
-        orderELements = orderElementDAO.findByLabelsAndCriteria(
-                new HashSet<Label>(Arrays.asList(label1, label2)), null);
-        assertEquals(0, orderELements.size());
+        orderElements = orderElementDAO.findByLabelsAndCriteria(new HashSet<>(Arrays.asList(label1, label2)), null);
+        assertEquals(0, orderElements.size());
     }
 
     private Criterion givenStoredCriterion() {
@@ -568,92 +547,93 @@ public class OrderElementDAOTest {
     }
 
     @Test
+    @Transactional
     public void testFindByCriteria1() throws InstanceNotFoundException {
         Criterion criterion = givenStoredCriterion();
 
         OrderLine orderLine1 = createValidOrderLine();
-        orderLine1.addCriterionRequirement(new DirectCriterionRequirement(
-                criterion));
+        orderLine1.addCriterionRequirement(new DirectCriterionRequirement(criterion));
         orderElementDAO.save(orderLine1);
         OrderLine orderLine2 = createValidOrderLine();
         orderElementDAO.save(orderLine2);
         OrderLine orderLine3 = createValidOrderLine();
         orderElementDAO.save(orderLine3);
 
-        List<OrderElement> orderELements = orderElementDAO
-                .findByLabelsAndCriteria(null, Collections.singleton(criterion));
+        List<OrderElement> orderElements = orderElementDAO.findByLabelsAndCriteria(null, Collections.singleton(criterion));
 
-        assertEquals(1, orderELements.size());
-        assertEquals(orderLine1.getId(), orderELements.get(0).getId());
+        assertEquals(1, orderElements.size());
+        assertEquals(orderLine1.getId(), orderElements.get(0).getId());
     }
 
     @Test
+    @Transactional
     public void testFindByCriteria2() throws InstanceNotFoundException {
         Criterion criterion1 = givenStoredCriterion();
         Criterion criterion2 = givenStoredCriterion();
 
         OrderLine orderLine1 = createValidOrderLine();
-        orderLine1.addCriterionRequirement(new DirectCriterionRequirement(
-                criterion1));
-        orderLine1.addCriterionRequirement(new DirectCriterionRequirement(
-                criterion2));
+        orderLine1.addCriterionRequirement(new DirectCriterionRequirement(criterion1));
+        orderLine1.addCriterionRequirement(new DirectCriterionRequirement(criterion2));
         orderElementDAO.save(orderLine1);
+
         OrderLine orderLine2 = createValidOrderLine();
         orderElementDAO.save(orderLine2);
+
         OrderLine orderLine3 = createValidOrderLine();
-        orderLine3.addCriterionRequirement(new DirectCriterionRequirement(
-                criterion2));
+        orderLine3.addCriterionRequirement(new DirectCriterionRequirement(criterion2));
         orderElementDAO.save(orderLine3);
 
-        List<OrderElement> orderELements = orderElementDAO
-                .findByLabelsAndCriteria(null, Collections.singleton(criterion1));
-        assertEquals(1, orderELements.size());
-        assertEquals(orderLine1.getId(), orderELements.get(0).getId());
+        List<OrderElement> orderElements =
+                orderElementDAO.findByLabelsAndCriteria(null, Collections.singleton(criterion1));
 
-        orderELements = orderElementDAO.findByLabelsAndCriteria(null,
-                Collections.singleton(criterion2));
-        assertEquals(2, orderELements.size());
-        for (OrderElement each : orderELements) {
-            assertTrue(each.getId().equals(orderLine1.getId())
-                    || each.getId().equals(orderLine3.getId()));
+        assertEquals(1, orderElements.size());
+        assertEquals(orderLine1.getId(), orderElements.get(0).getId());
+
+        orderElements = orderElementDAO.findByLabelsAndCriteria(null, Collections.singleton(criterion2));
+        assertEquals(2, orderElements.size());
+
+        for (OrderElement each : orderElements) {
+            assertTrue(each.getId().equals(orderLine1.getId()) || each.getId().equals(orderLine3.getId()));
         }
 
-        orderELements = orderElementDAO.findByLabelsAndCriteria(null,
-                new HashSet<Criterion>(Arrays.asList(criterion1, criterion2)));
-        assertEquals(1, orderELements.size());
-        assertEquals(orderLine1.getId(), orderELements.get(0).getId());
+        orderElements =
+                orderElementDAO.findByLabelsAndCriteria(null, new HashSet<>(Arrays.asList(criterion1, criterion2)));
+
+        assertEquals(1, orderElements.size());
+        assertEquals(orderLine1.getId(), orderElements.get(0).getId());
 
     }
 
     @Test
+    @Transactional
     public void testFindByCriteriaOnTree() throws InstanceNotFoundException {
         Criterion criterion1 = givenStoredCriterion();
         Criterion criterion2 = givenStoredCriterion();
 
         OrderLineGroup orderLineGroup = createValidOrderLineGroup();
-        orderLineGroup.addCriterionRequirement(new DirectCriterionRequirement(
-                criterion1));
+        orderLineGroup.addCriterionRequirement(new DirectCriterionRequirement(criterion1));
         OrderElement child = orderLineGroup.getChildren().get(0);
         child.addCriterionRequirement(new DirectCriterionRequirement(criterion2));
         orderElementDAO.save(orderLineGroup);
 
-        List<OrderElement> orderELements = orderElementDAO
-                .findByLabelsAndCriteria(null,
-                        Collections.singleton(criterion1));
-        assertEquals(1, orderELements.size());
-        assertEquals(orderLineGroup.getId(), orderELements.get(0).getId());
+        List<OrderElement> orderElements =
+                orderElementDAO.findByLabelsAndCriteria(null, Collections.singleton(criterion1));
 
-        orderELements = orderElementDAO.findByLabelsAndCriteria(null,
-                Collections.singleton(criterion2));
-        assertEquals(1, orderELements.size());
-        assertEquals(child.getId(), orderELements.get(0).getId());
+        assertEquals(1, orderElements.size());
+        assertEquals(orderLineGroup.getId(), orderElements.get(0).getId());
 
-        orderELements = orderElementDAO.findByLabelsAndCriteria(null,
-                new HashSet<Criterion>(Arrays.asList(criterion1, criterion2)));
-        assertEquals(0, orderELements.size());
+        orderElements = orderElementDAO.findByLabelsAndCriteria(null, Collections.singleton(criterion2));
+        assertEquals(1, orderElements.size());
+        assertEquals(child.getId(), orderElements.get(0).getId());
+
+        orderElements =
+                orderElementDAO.findByLabelsAndCriteria(null, new HashSet<>(Arrays.asList(criterion1, criterion2)));
+
+        assertEquals(0, orderElements.size());
     }
 
     @Test
+    @Transactional
     public void testFindByLabelsAndCriteria1() throws InstanceNotFoundException {
         Label label = givenStoredLabel();
         Criterion criterion = givenStoredCriterion();
@@ -662,24 +642,23 @@ public class OrderElementDAOTest {
         orderLine1.addLabel(label);
         orderElementDAO.save(orderLine1);
         OrderLine orderLine2 = createValidOrderLine();
-        orderLine2.addCriterionRequirement(new DirectCriterionRequirement(
-                criterion));
+        orderLine2.addCriterionRequirement(new DirectCriterionRequirement(criterion));
         orderElementDAO.save(orderLine2);
         OrderLine orderLine3 = createValidOrderLine();
         orderLine3.addLabel(label);
-        orderLine3.addCriterionRequirement(new DirectCriterionRequirement(
-                criterion));
+        orderLine3.addCriterionRequirement(new DirectCriterionRequirement(criterion));
 
         orderElementDAO.save(orderLine3);
 
-        List<OrderElement> orderELements = orderElementDAO
-                .findByLabelsAndCriteria(Collections.singleton(label),
-                        Collections.singleton(criterion));
-        assertEquals(1, orderELements.size());
-        assertEquals(orderLine3.getId(), orderELements.get(0).getId());
+        List<OrderElement> orderElements =
+                orderElementDAO.findByLabelsAndCriteria(Collections.singleton(label), Collections.singleton(criterion));
+
+        assertEquals(1, orderElements.size());
+        assertEquals(orderLine3.getId(), orderElements.get(0).getId());
     }
 
     @Test
+    @Transactional
     public void testFindByLabelsAndCriteria2() throws InstanceNotFoundException {
         Label label1 = givenStoredLabel();
         Label label2 = givenStoredLabel();
@@ -688,49 +667,41 @@ public class OrderElementDAOTest {
 
         OrderLine orderLine1 = createValidOrderLine();
         orderLine1.addLabel(label1);
-        orderLine1.addCriterionRequirement(new DirectCriterionRequirement(
-                criterion2));
+        orderLine1.addCriterionRequirement(new DirectCriterionRequirement(criterion2));
         orderElementDAO.save(orderLine1);
         OrderLine orderLine2 = createValidOrderLine();
         orderLine2.addLabel(label2);
-        orderLine2.addCriterionRequirement(new DirectCriterionRequirement(
-                criterion1));
+        orderLine2.addCriterionRequirement(new DirectCriterionRequirement(criterion1));
         orderElementDAO.save(orderLine2);
         OrderLine orderLine3 = createValidOrderLine();
         orderLine3.addLabel(label1);
         orderLine3.addLabel(label2);
-        orderLine3.addCriterionRequirement(new DirectCriterionRequirement(
-                criterion1));
-        orderLine3.addCriterionRequirement(new DirectCriterionRequirement(
-                criterion2));
+        orderLine3.addCriterionRequirement(new DirectCriterionRequirement(criterion1));
+        orderLine3.addCriterionRequirement(new DirectCriterionRequirement(criterion2));
 
         orderElementDAO.save(orderLine3);
 
-        List<OrderElement> orderELements = orderElementDAO
-                .findByLabelsAndCriteria(Collections.singleton(label2),
-                        Collections.singleton(criterion1));
-        assertEquals(2, orderELements.size());
-        for (OrderElement each : orderELements) {
-            assertTrue(each.getId().equals(orderLine2.getId())
-                    || each.getId().equals(orderLine3.getId()));
+        List<OrderElement> orderElements = orderElementDAO
+                .findByLabelsAndCriteria(Collections.singleton(label2), Collections.singleton(criterion1));
+
+        assertEquals(2, orderElements.size());
+        for (OrderElement each : orderElements) {
+            assertTrue(each.getId().equals(orderLine2.getId()) || each.getId().equals(orderLine3.getId()));
         }
 
-        orderELements = orderElementDAO
-                .findByLabelsAndCriteria(Collections.singleton(label1),
-                        Collections.singleton(criterion2));
-        assertEquals(2, orderELements.size());
-        for (OrderElement each : orderELements) {
-            assertTrue(each.getId().equals(orderLine1.getId())
-                    || each.getId().equals(orderLine3.getId()));
+        orderElements = orderElementDAO
+                .findByLabelsAndCriteria(Collections.singleton(label1), Collections.singleton(criterion2));
+
+        assertEquals(2, orderElements.size());
+        for (OrderElement each : orderElements) {
+            assertTrue(each.getId().equals(orderLine1.getId()) || each.getId().equals(orderLine3.getId()));
         }
 
-        orderELements = orderElementDAO
-                .findByLabelsAndCriteria(
-                        new HashSet<Label>(Arrays.asList(label1, label2)),
-                        new HashSet<Criterion>(Arrays.asList(criterion1,
-                                criterion2)));
-        assertEquals(1, orderELements.size());
-        assertEquals(orderLine3.getId(), orderELements.get(0).getId());
+        orderElements = orderElementDAO.findByLabelsAndCriteria(
+                new HashSet<>(Arrays.asList(label1, label2)), new HashSet<>(Arrays.asList(criterion1, criterion2)));
+
+        assertEquals(1, orderElements.size());
+        assertEquals(orderLine3.getId(), orderElements.get(0).getId());
     }
 
 }

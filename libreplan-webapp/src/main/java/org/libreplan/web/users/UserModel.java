@@ -24,7 +24,7 @@ package org.libreplan.web.users;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.lang.Validate;
+import org.apache.commons.lang3.Validate;
 import org.libreplan.business.common.Configuration;
 import org.libreplan.business.common.daos.IConfigurationDAO;
 import org.libreplan.business.common.exceptions.InstanceNotFoundException;
@@ -50,6 +50,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @author Jacobo Aragunde Perez <jaragunde@igalia.com>
  * @author Susana Montes Pedreira <smontes@wirelessgalicia.com>
  * @author Manuel Rego Casasnovas <rego@igalia.com>
+ * @author Vova Perebykivskyi <vova@libreplan-enterprise.com>
  */
 @Service
 @Scope(BeanDefinition.SCOPE_PROTOTYPE)
@@ -181,7 +182,7 @@ public class UserModel implements IUserModel {
 
     @Override
     public List<UserRole> getRoles() {
-        List<UserRole> list = new ArrayList<UserRole>();
+        List<UserRole> list = new ArrayList<>();
         if (user != null) {
             list.addAll(user.getRoles());
         }
@@ -200,7 +201,7 @@ public class UserModel implements IUserModel {
 
     @Override
     public List<Profile> getProfiles() {
-        List<Profile> list = new ArrayList<Profile>();
+        List<Profile> list = new ArrayList<>();
         if (user != null) {
             list.addAll(user.getProfiles());
         }
@@ -273,6 +274,13 @@ public class UserModel implements IUserModel {
     @Transactional(readOnly = true)
     public List<Profile> getAllProfiles() {
         return profileDAO.listSorted();
+    }
+
+
+    @Override
+    @Transactional(readOnly = true)
+    public Number getRowCount() {
+        return userDAO.getRowCount();
     }
 
 }

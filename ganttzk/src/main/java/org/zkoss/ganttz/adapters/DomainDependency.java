@@ -33,30 +33,12 @@ import org.zkoss.ganttz.data.IDependency;
 
 /**
  * Represents a dependency in the domain.
+ *
  * @author Óscar González Fernández <ogonzalez@igalia.com>
  */
 public class DomainDependency<T> implements IDependency<T> {
 
     private static final Log LOG = LogFactory.getLog(DomainDependency.class);
-
-    public static <T> List<Dependency> toDependencies(
-            IDomainAndBeansMapper<T> mapper,
-            Collection<DomainDependency<T>> dependencies) {
-        List<Dependency> result = new ArrayList<Dependency>();
-        for (DomainDependency<T> domainDependency : dependencies) {
-            try {
-                result.add(domainDependency.toDependency(mapper));
-            } catch (Exception e) {
-                LOG.error("error creating dependency from domainDependency", e);
-            }
-        }
-        return result;
-    }
-
-    public static <T> DomainDependency<T> createDependency(T source,
-            T destination, DependencyType type) {
-        return new DomainDependency<T>(source, destination, type);
-    }
 
     private final T source;
 
@@ -69,6 +51,25 @@ public class DomainDependency<T> implements IDependency<T> {
         this.source = source;
         this.destination = destination;
         this.type = type;
+    }
+
+    public static <T> List<Dependency> toDependencies(
+            IDomainAndBeansMapper<T> mapper, Collection<DomainDependency<T>> dependencies) {
+
+        List<Dependency> result = new ArrayList<>();
+        for (DomainDependency<T> domainDependency : dependencies) {
+            try {
+                result.add(domainDependency.toDependency(mapper));
+            } catch (Exception e) {
+                LOG.error("error creating dependency from domainDependency", e);
+            }
+        }
+
+        return result;
+    }
+
+    public static <T> DomainDependency<T> createDependency(T source, T destination, DependencyType type) {
+        return new DomainDependency<>(source, destination, type);
     }
 
     public T getSource() {
@@ -84,7 +85,6 @@ public class DomainDependency<T> implements IDependency<T> {
     }
 
     public Dependency toDependency(IDomainAndBeansMapper<T> mapper) {
-        return new Dependency(mapper.findAssociatedBean(source), mapper
-                .findAssociatedBean(destination), type);
+        return new Dependency(mapper.findAssociatedBean(source), mapper.findAssociatedBean(destination), type);
     }
 }

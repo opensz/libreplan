@@ -26,8 +26,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.commons.lang.StringUtils;
-import org.hibernate.Criteria;
+import org.apache.commons.lang3.StringUtils;
 import org.hibernate.criterion.Restrictions;
 import org.libreplan.business.common.daos.GenericDAOHibernate;
 import org.libreplan.business.common.exceptions.InstanceNotFoundException;
@@ -46,11 +45,11 @@ import org.springframework.transaction.annotation.Transactional;
  * DAO implementation for {@link Scenario}.
  *
  * @author Manuel Rego Casasnovas <mrego@igalia.com>
+ * @author Vova Perebykivskyi <vova@libreplan-enterprise.com>
  */
 @Repository
 @Scope(BeanDefinition.SCOPE_SINGLETON)
-public class ScenarioDAO extends GenericDAOHibernate<Scenario, Long> implements
-        IScenarioDAO {
+public class ScenarioDAO extends GenericDAOHibernate<Scenario, Long> implements IScenarioDAO {
 
     @Autowired
     private IOrderVersionDAO orderVersionDAO;
@@ -70,7 +69,7 @@ public class ScenarioDAO extends GenericDAOHibernate<Scenario, Long> implements
 
     private List<OrderVersion> getNewOrders(Scenario scenario) {
         Collection<OrderVersion> values = scenario.getOrders().values();
-        List<OrderVersion> newOrders = new ArrayList<OrderVersion>();
+        List<OrderVersion> newOrders = new ArrayList<>();
         for (OrderVersion each : values) {
             if (each.isNewObject()) {
                 newOrders.add(each);
@@ -86,9 +85,9 @@ public class ScenarioDAO extends GenericDAOHibernate<Scenario, Long> implements
             throw new InstanceNotFoundException(null, Scenario.class.getName());
         }
 
-        Scenario scenario = (Scenario) getSession().createCriteria(
-                Scenario.class).add(
-                Restrictions.eq("name", name.trim()).ignoreCase())
+        Scenario scenario = (Scenario) getSession()
+                .createCriteria(Scenario.class)
+                .add(Restrictions.eq("name", name.trim()).ignoreCase())
                 .uniqueResult();
 
         if (scenario == null) {
@@ -120,6 +119,14 @@ public class ScenarioDAO extends GenericDAOHibernate<Scenario, Long> implements
         return list(Scenario.class);
     }
 
+    @Override
+    public List<Scenario> getAllExcept(Scenario scenario) {
+        return getSession()
+                .createCriteria(Scenario.class)
+                .add(Restrictions.ne("name", scenario.getName()))
+                .list();
+    }
+
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true)
     @Override
     public boolean thereIsOtherWithSameName(Scenario scenario) {
@@ -132,26 +139,22 @@ public class ScenarioDAO extends GenericDAOHibernate<Scenario, Long> implements
     }
 
     private boolean areDifferentInDB(Scenario one, Scenario other) {
-        if ((one.getId() == null) || (other.getId() == null)) {
-            return true;
-        }
-        return !one.getId().equals(other.getId());
+        return (one.getId() == null) || (other.getId() == null) || !one.getId().equals(other.getId());
     }
 
     @Override
     public List<Scenario> findByPredecessor(Scenario scenario) {
-        if (scenario == null) {
-            return Collections.emptyList();
-        }
-
-        Criteria c = getSession().createCriteria(Scenario.class).add(
-                Restrictions.eq("predecessor", scenario));
-        return (List<Scenario>) c.list();
+        return scenario == null
+                ? Collections.emptyList()
+                : getSession()
+                    .createCriteria(Scenario.class)
+                    .add(Restrictions.eq("predecessor", scenario))
+                    .list();
     }
 
     @Override
     public List<Scenario> getDerivedScenarios(Scenario scenario) {
-        List<Scenario> result = new ArrayList<Scenario>();
+        List<Scenario> result = new ArrayList<>();
 
         List<Scenario> children = findByPredecessor(scenario);
         result.addAll(children);
@@ -165,8 +168,11 @@ public class ScenarioDAO extends GenericDAOHibernate<Scenario, Long> implements
 
     @Override
     public void updateDerivedScenariosWithNewVersion(
-            OrderVersion previousOrderVersion, Order order,
-            Scenario currentScenario, OrderVersion newOrderVersion) {
+            OrderVersion previousOrderVersion,
+            Order order,
+            Scenario currentScenario,
+            OrderVersion newOrderVersion) {
+
         for (Scenario each : getDerivedScenarios(currentScenario)) {
             if (each.usesVersion(previousOrderVersion, order)) {
                 if (newOrderVersion == null) {

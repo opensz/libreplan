@@ -30,7 +30,7 @@ import org.junit.runner.RunWith;
 import org.libreplan.business.common.exceptions.ValidationException;
 import org.libreplan.business.test.workreports.daos.AbstractWorkReportTest;
 import org.libreplan.business.workreports.daos.IWorkReportTypeDAO;
-import org.libreplan.business.workreports.entities.WorkReportLabelTypeAssigment;
+import org.libreplan.business.workreports.entities.WorkReportLabelTypeAssignment;
 import org.libreplan.business.workreports.entities.WorkReportType;
 import org.libreplan.business.workreports.valueobjects.DescriptionField;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,17 +44,15 @@ import org.springframework.transaction.annotation.Transactional;
  * @author Susana Montes Pedreira <smontes@wirelessgalicia.com>
  */
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(locations = { BUSINESS_SPRING_CONFIG_FILE,
-        BUSINESS_SPRING_CONFIG_TEST_FILE })
-@Transactional
+@ContextConfiguration(locations = { BUSINESS_SPRING_CONFIG_FILE, BUSINESS_SPRING_CONFIG_TEST_FILE })
 public class WorkReportTypeTest extends AbstractWorkReportTest {
 
     @Autowired
     IWorkReportTypeDAO workReportTypeDAO;
 
     @Test
-    public void checkInvalidNameWorkReportType()
-            throws ValidationException {
+    @Transactional
+    public void checkInvalidNameWorkReportType() throws ValidationException {
         WorkReportType workReportType = createValidWorkReportType();
         workReportType.setName("");
         try {
@@ -75,6 +73,7 @@ public class WorkReportTypeTest extends AbstractWorkReportTest {
     }
 
     @Test
+    @Transactional
     public void checkInvalidCodeWorkReportType() throws ValidationException {
         WorkReportType workReportType = createValidWorkReportType();
         workReportType.setCode("");
@@ -105,8 +104,9 @@ public class WorkReportTypeTest extends AbstractWorkReportTest {
     }
 
     @Test
+    @Transactional
     public void checkIfCodeWorkReportTypeIsUnique() throws ValidationException {
-        String code = new String("A");
+        String code = "A";
         WorkReportType workReportTypeA = createValidWorkReportType();
         workReportTypeA.setCode(code);
         workReportTypeDAO.save(workReportTypeA);
@@ -125,6 +125,7 @@ public class WorkReportTypeTest extends AbstractWorkReportTest {
     }
 
     @Test
+    @Transactional
     public void checkIfNameWorkReportTypeIsUnique() throws ValidationException {
         WorkReportType workReportTypeA = createValidWorkReportType();
         workReportTypeA.setName("A");
@@ -144,6 +145,7 @@ public class WorkReportTypeTest extends AbstractWorkReportTest {
     }
 
     @Test
+    @Transactional
     public void checkSaveDescriptionFieldsWorkReportType() {
         WorkReportType workReportType = createValidWorkReportType();
 
@@ -161,6 +163,7 @@ public class WorkReportTypeTest extends AbstractWorkReportTest {
     }
 
     @Test
+    @Transactional
     public void checkIfFieldNameDescriptionFieldsIsUnique() {
         WorkReportType workReportType = createValidWorkReportType();
 
@@ -175,11 +178,12 @@ public class WorkReportTypeTest extends AbstractWorkReportTest {
         try {
             workReportTypeDAO.save(workReportType);
             fail("It should throw an exception");
-        } catch (ValidationException e) {
+        } catch (ValidationException ignored) {
         }
     }
 
     @Test
+    @Transactional
     public void checkInvalidFieldNameDescriptionFields() {
         WorkReportType workReportType = createValidWorkReportType();
 
@@ -190,14 +194,14 @@ public class WorkReportTypeTest extends AbstractWorkReportTest {
         try {
             workReportTypeDAO.save(workReportType);
             fail("It should throw an exception");
-        } catch (ValidationException e) {
+        } catch (ValidationException ignored) {
         }
 
         descriptionFieldHead.setFieldName(null);
         try {
             workReportTypeDAO.save(workReportType);
             fail("It should throw an exception");
-        } catch (ValidationException e) {
+        } catch (ValidationException ignored) {
         }
 
         descriptionFieldHead.setFieldName("XXX");
@@ -209,7 +213,8 @@ public class WorkReportTypeTest extends AbstractWorkReportTest {
     }
 
     @Test
-    public void checkInvalidLenghtDescriptionFields() {
+    @Transactional
+    public void checkInvalidLengthDescriptionFields() {
         WorkReportType workReportType = createValidWorkReportType();
 
         DescriptionField descriptionFieldHead = createValidDescriptionField();
@@ -219,14 +224,14 @@ public class WorkReportTypeTest extends AbstractWorkReportTest {
         try {
             workReportTypeDAO.save(workReportType);
             fail("It should throw an exception");
-        } catch (ValidationException e) {
+        } catch (ValidationException ignored) {
         }
 
         descriptionFieldHead.setLength(0);
         try {
             workReportTypeDAO.save(workReportType);
             fail("It should throw an exception");
-        } catch (ValidationException e) {
+        } catch (ValidationException ignored) {
         }
 
         descriptionFieldHead.setLength(1);
@@ -237,15 +242,14 @@ public class WorkReportTypeTest extends AbstractWorkReportTest {
         }
     }
 
-    @Test
-    public void checkSaveWorkReportLabelTypeAssigment() {
+    public void checkSaveWorkReportLabelTypeAssignment() {
         WorkReportType workReportType = createValidWorkReportType();
 
-        WorkReportLabelTypeAssigment labelAssigmentHead = createValidWorkReportLabelTypeAssigment();
-        workReportType.addLabelAssigmentToEndHead(labelAssigmentHead);
+        WorkReportLabelTypeAssignment labelAssignmentHead = createValidWorkReportLabelTypeAssignment();
+        workReportType.addLabelAssignmentToEndHead(labelAssignmentHead);
 
-        WorkReportLabelTypeAssigment labelAssigmentLine = createValidWorkReportLabelTypeAssigment();
-        workReportType.addLabelAssigmentToEndLine(labelAssigmentLine);
+        WorkReportLabelTypeAssignment labelAssignmentLine = createValidWorkReportLabelTypeAssignment();
+        workReportType.addLabelAssignmentToEndLine(labelAssignmentLine);
 
         try {
             workReportTypeDAO.save(workReportType);
@@ -254,106 +258,109 @@ public class WorkReportTypeTest extends AbstractWorkReportTest {
         }
     }
 
-    @Test
-    public void checkIfLabelTypeWorkReportLabelTypeAssigmentIsNull() {
+    public void checkIfLabelTypeWorkReportLabelTypeAssignmentIsNull() {
         WorkReportType workReportType = createValidWorkReportType();
-        WorkReportLabelTypeAssigment labelAssigment = createValidWorkReportLabelTypeAssigment();
-        labelAssigment.setLabelType(null);
-        workReportType.addLabelAssigmentToEndLine(labelAssigment);
+        WorkReportLabelTypeAssignment labelAssignment = createValidWorkReportLabelTypeAssignment();
+        labelAssignment.setLabelType(null);
+        workReportType.addLabelAssignmentToEndLine(labelAssignment);
 
         try {
             workReportTypeDAO.save(workReportType);
             fail("It should throw an exception");
-        } catch (ValidationException e) {
+        } catch (ValidationException ignored) {
         }
     }
 
     @Test
-    public void checkIfLabelWorkReportLabelTypeAssigmentIsNull() {
+    @Transactional
+    public void checkIfLabelWorkReportLabelTypeAssignmentIsNull() {
         WorkReportType workReportType = createValidWorkReportType();
-        WorkReportLabelTypeAssigment labelAssigment = createValidWorkReportLabelTypeAssigment();
-        labelAssigment.setDefaultLabel(null);
-        workReportType.addLabelAssigmentToEndLine(labelAssigment);
+        WorkReportLabelTypeAssignment labelAssignment = createValidWorkReportLabelTypeAssignment();
+        labelAssignment.setDefaultLabel(null);
+        workReportType.addLabelAssignmentToEndLine(labelAssignment);
 
         try {
             workReportTypeDAO.save(workReportType);
             fail("It should throw an exception");
-        } catch (ValidationException e) {
+        } catch (ValidationException ignored) {
         }
     }
 
     @Test
+    @Transactional
     public void checkIfIndexLabelsAndFieldsAreConsecutive() {
         WorkReportType workReportType = createValidWorkReportType();
 
-        WorkReportLabelTypeAssigment labelAssigment_1 = createValidWorkReportLabelTypeAssigment();
-        workReportType.addLabelAssigmentToEndLine(labelAssigment_1);
+        WorkReportLabelTypeAssignment labelAssignment_1 = createValidWorkReportLabelTypeAssignment();
+        workReportType.addLabelAssignmentToEndLine(labelAssignment_1);
 
-        WorkReportLabelTypeAssigment labelAssigment_2 = createValidWorkReportLabelTypeAssigment();
-        workReportType.addLabelAssigmentToEndLine(labelAssigment_2);
+        WorkReportLabelTypeAssignment labelAssignment_2 = createValidWorkReportLabelTypeAssignment();
+        workReportType.addLabelAssignmentToEndLine(labelAssignment_2);
 
-        WorkReportLabelTypeAssigment labelAssigment_3 = createValidWorkReportLabelTypeAssigment();
-        workReportType.addLabelAssigmentToEndLine(labelAssigment_3);
+        WorkReportLabelTypeAssignment labelAssignment_3 = createValidWorkReportLabelTypeAssignment();
+        workReportType.addLabelAssignmentToEndLine(labelAssignment_3);
 
         // Set not consecutives index labels
-        labelAssigment_1.setPositionNumber(3);
-        labelAssigment_2.setPositionNumber(0);
-        labelAssigment_3.setPositionNumber(2);
+        labelAssignment_1.setPositionNumber(3);
+        labelAssignment_2.setPositionNumber(0);
+        labelAssignment_3.setPositionNumber(2);
 
         try {
             workReportTypeDAO.save(workReportType);
             fail("It should throw an exception");
-        } catch (ValidationException e) {
+        } catch (ValidationException ignored) {
         }
     }
 
     @Test
+    @Transactional
     public void checkIfIndexLabelsAndFieldsInitInZero() {
         WorkReportType workReportType = createValidWorkReportType();
 
-        WorkReportLabelTypeAssigment labelAssigment_1 = createValidWorkReportLabelTypeAssigment();
-        workReportType.addLabelAssigmentToEndLine(labelAssigment_1);
+        WorkReportLabelTypeAssignment labelAssignment_1 = createValidWorkReportLabelTypeAssignment();
+        workReportType.addLabelAssignmentToEndLine(labelAssignment_1);
 
-        WorkReportLabelTypeAssigment labelAssigment_2 = createValidWorkReportLabelTypeAssigment();
-        workReportType.addLabelAssigmentToEndLine(labelAssigment_2);
+        WorkReportLabelTypeAssignment labelAssignment_2 = createValidWorkReportLabelTypeAssignment();
+        workReportType.addLabelAssignmentToEndLine(labelAssignment_2);
 
-        WorkReportLabelTypeAssigment labelAssigment_3 = createValidWorkReportLabelTypeAssigment();
-        workReportType.addLabelAssigmentToEndLine(labelAssigment_3);
+        WorkReportLabelTypeAssignment labelAssignment_3 = createValidWorkReportLabelTypeAssignment();
+        workReportType.addLabelAssignmentToEndLine(labelAssignment_3);
 
-        // Set repeat indes labels
-        labelAssigment_1.setPositionNumber(1);
-        labelAssigment_2.setPositionNumber(2);
-        labelAssigment_3.setPositionNumber(3);
+        // Set repeat indexes labels
+        labelAssignment_1.setPositionNumber(1);
+        labelAssignment_2.setPositionNumber(2);
+        labelAssignment_3.setPositionNumber(3);
 
         try {
             workReportTypeDAO.save(workReportType);
             fail("It should throw an exception");
-        } catch (ValidationException e) {
+        } catch (ValidationException ignored) {
         }
     }
 
     @Test
+    @Transactional
     public void checkIfIndexLabelsAndFieldsAreUniques() {
         WorkReportType workReportType = createValidWorkReportType();
 
-        WorkReportLabelTypeAssigment labelAssigment_1 = createValidWorkReportLabelTypeAssigment();
-        workReportType.addLabelAssigmentToEndLine(labelAssigment_1);
+        WorkReportLabelTypeAssignment labelAssignment_1 = createValidWorkReportLabelTypeAssignment();
+        workReportType.addLabelAssignmentToEndLine(labelAssignment_1);
 
-        WorkReportLabelTypeAssigment labelAssigment_2 = createValidWorkReportLabelTypeAssigment();
-        workReportType.addLabelAssigmentToEndLine(labelAssigment_2);
+        WorkReportLabelTypeAssignment labelAssignment_2 = createValidWorkReportLabelTypeAssignment();
+        workReportType.addLabelAssignmentToEndLine(labelAssignment_2);
 
-        WorkReportLabelTypeAssigment labelAssigment_3 = createValidWorkReportLabelTypeAssigment();
-        workReportType.addLabelAssigmentToEndLine(labelAssigment_3);
+        WorkReportLabelTypeAssignment labelAssignment_3 = createValidWorkReportLabelTypeAssignment();
+        workReportType.addLabelAssignmentToEndLine(labelAssignment_3);
 
-        // Set repeat indes labels
-        labelAssigment_1.setPositionNumber(1);
-        labelAssigment_2.setPositionNumber(0);
-        labelAssigment_3.setPositionNumber(1);
+        // Set repeat indexes labels
+        labelAssignment_1.setPositionNumber(1);
+        labelAssignment_2.setPositionNumber(0);
+        labelAssignment_3.setPositionNumber(1);
 
         try {
             workReportTypeDAO.save(workReportType);
             fail("It should throw an exception");
-        } catch (ValidationException e) {
+        } catch (ValidationException ignored) {
         }
     }
 }

@@ -31,7 +31,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang.Validate;
+import org.apache.commons.lang3.Validate;
 import org.zkoss.ganttz.Planner;
 import org.zkoss.ganttz.data.GanttDate;
 import org.zkoss.ganttz.data.GanttDiagramGraph.IGraphChangeListener;
@@ -40,35 +40,37 @@ import org.zkoss.ganttz.extensions.ICommand;
 import org.zkoss.ganttz.extensions.ICommandOnTask;
 import org.zkoss.ganttz.extensions.IContext;
 import org.zkoss.ganttz.extensions.IContextWithPlannerTask;
-import org.zkoss.ganttz.timetracker.zoom.IDetailItemModificator;
-import org.zkoss.ganttz.timetracker.zoom.SeveralModificators;
+import org.zkoss.ganttz.timetracker.zoom.IDetailItemModifier;
+import org.zkoss.ganttz.timetracker.zoom.SeveralModifiers;
 import org.zkoss.zk.ui.Component;
 
 /**
- * A object that defines several extension points for gantt planner
+ * A object that defines several extension points for gantt planner.
  *
  * @author Óscar González Fernández <ogonzalez@igalia.com>
  * @author Manuel Rego Casasnovas <rego@igalia.com>
  */
 public class PlannerConfiguration<T> implements IDisabilityConfiguration {
 
+    private static final String PRINT_NOT_SUPPORTED = "print not supported";
+
     public interface IPrintAction {
-        public void doPrint();
+        void doPrint();
 
-        public void doPrint(Map<String, String> parameters);
+        void doPrint(Map<String, String> parameters);
 
-        public void doPrint(HashMap<String, String> parameters, Planner planner);
+        void doPrint(Map<String, String> parameters, Planner planner);
     }
 
     public interface IReloadChartListener {
-        public void reloadChart();
+        void reloadChart();
     }
 
     private static class NullCommand<T> implements ICommand<T> {
 
         @Override
         public void doAction(IContext<T> context) {
-            // do nothing
+            // Do nothing
         }
 
         @Override
@@ -97,7 +99,7 @@ public class PlannerConfiguration<T> implements IDisabilityConfiguration {
 
         @Override
         public void doAction(IContextWithPlannerTask<T> context, T task) {
-            // do nothing
+            // Do nothing
         }
 
         @Override
@@ -123,13 +125,13 @@ public class PlannerConfiguration<T> implements IDisabilityConfiguration {
 
     private List<? extends T> data;
 
-    private List<ICommand<T>> globalCommands = new ArrayList<ICommand<T>>();
+    private List<ICommand<T>> globalCommands = new ArrayList<>();
 
-    private List<ICommandOnTask<T>> commandsOnTasks = new ArrayList<ICommandOnTask<T>>();
+    private List<ICommandOnTask<T>> commandsOnTasks = new ArrayList<>();
 
-    private ICommand<T> goingDownInLastArrowCommand = new NullCommand<T>();
+    private ICommand<T> goingDownInLastArrowCommand = new NullCommand<>();
 
-    private ICommandOnTask<T> doubleClickCommand = new NullCommandOnTask<T>();
+    private ICommandOnTask<T> doubleClickCommand = new NullCommandOnTask<>();
 
     private Component chartComponent;
 
@@ -155,6 +157,10 @@ public class PlannerConfiguration<T> implements IDisabilityConfiguration {
 
     private boolean moneyCostBarEnabled = true;
 
+    private boolean labelsEnabled = true;
+
+    private boolean ResourcesEnabled = true;
+
     private boolean expandAllEnabled = true;
 
     private boolean flattenTreeEnabled = true;
@@ -165,28 +171,37 @@ public class PlannerConfiguration<T> implements IDisabilityConfiguration {
 
     private boolean treeEditable = true;
 
-    // private String identifier = null;
+    private boolean showResourcesOn = false;
 
-    private IDetailItemModificator firstLevelModificators = SeveralModificators
-            .empty();
+    private boolean showAdvancesOn = false;
 
-    private IDetailItemModificator secondLevelModificators = SeveralModificators
-            .empty();
+    private boolean showReportedHoursOn = false;
 
-    private List<IReloadChartListener> reloadChartListeners = new ArrayList<IReloadChartListener>();
+    private boolean showLabelsOn = false;
+
+    private boolean showMoneyCostBarOn = false;
+
+    private boolean filterExcludeFinishedProject = false;
+
+    private IDetailItemModifier firstLevelModifiers = SeveralModifiers.empty();
+
+    private IDetailItemModifier secondLevelModifiers = SeveralModifiers.empty();
+
+    private List<IReloadChartListener> reloadChartListeners = new ArrayList<>();
 
     private IPrintAction printAction;
 
     private boolean expandPlanningViewCharts;
 
-    private final List<IGraphChangeListener> preGraphChangeListeners = new ArrayList<IGraphChangeListener>();
+    private final List<IGraphChangeListener> preGraphChangeListeners = new ArrayList<>();
 
-    private final List<IGraphChangeListener> postGraphChangeListeners = new ArrayList<IGraphChangeListener>();
+    private final List<IGraphChangeListener> postGraphChangeListeners = new ArrayList<>();
 
     private boolean scheduleBackwards = false;
 
     public PlannerConfiguration(IAdapterToTaskFundamentalProperties<T> adapter,
-            IStructureNavigator<T> navigator, List<? extends T> data) {
+                                IStructureNavigator<T> navigator,
+                                List<? extends T> data) {
         this.adapter = adapter;
         this.navigator = navigator;
         this.data = data;
@@ -234,8 +249,7 @@ public class PlannerConfiguration<T> implements IDisabilityConfiguration {
         this.notAfterThan = GanttDate.createFrom(notAfterThan);
     }
 
-    public void setGoingDownInLastArrowCommand(
-            ICommand<T> goingDownInLastArrowCommand) {
+    public void setGoingDownInLastArrowCommand(ICommand<T> goingDownInLastArrowCommand) {
         Validate.notNull(goingDownInLastArrowCommand);
         this.goingDownInLastArrowCommand = goingDownInLastArrowCommand;
     }
@@ -293,24 +307,20 @@ public class PlannerConfiguration<T> implements IDisabilityConfiguration {
         this.editingDatesEnabled = editingDatesEnabled;
     }
 
-    public static List<Constraint<GanttDate>> getStartConstraintsGiven(
-            GanttDate notBeforeThan) {
-        if (notBeforeThan != null) {
-            return Collections.singletonList(biggerOrEqualThan(notBeforeThan));
-        }
-        return Collections.emptyList();
+    public static List<Constraint<GanttDate>> getStartConstraintsGiven(GanttDate notBeforeThan) {
+        return notBeforeThan != null
+                ? Collections.singletonList(biggerOrEqualThan(notBeforeThan))
+                : Collections.emptyList();
     }
 
     public List<Constraint<GanttDate>> getStartConstraints() {
         return getStartConstraintsGiven(notBeforeThan);
     }
 
-    public static List<Constraint<GanttDate>> getEndConstraintsGiven(
-            GanttDate notAfterThan) {
-        if (notAfterThan != null) {
-            return Collections.singletonList(lessOrEqualThan(notAfterThan));
-        }
-        return Collections.emptyList();
+    public static List<Constraint<GanttDate>> getEndConstraintsGiven(GanttDate notAfterThan) {
+        return notAfterThan != null
+                ? Collections.singletonList(lessOrEqualThan(notAfterThan))
+                : Collections.emptyList();
     }
 
     public List<Constraint<GanttDate>> getEndConstraints() {
@@ -361,6 +371,24 @@ public class PlannerConfiguration<T> implements IDisabilityConfiguration {
         return moneyCostBarEnabled;
     }
 
+    public void setLabelsEnabled(boolean labelsEnabled) {
+        this.labelsEnabled = labelsEnabled;
+    }
+
+    @Override
+    public boolean isLabelsEnabled() {
+        return labelsEnabled;
+    }
+
+    public void setResourcesEnabled(boolean ResourcesEnabled) {
+        this.ResourcesEnabled = ResourcesEnabled;
+    }
+
+    @Override
+    public boolean isResourcesEnabled() {
+        return ResourcesEnabled;
+    }
+
     public void setExpandAllEnabled(boolean expandAllEnabled) {
         this.expandAllEnabled = expandAllEnabled;
     }
@@ -397,24 +425,20 @@ public class PlannerConfiguration<T> implements IDisabilityConfiguration {
         return renamingTasksEnabled;
     }
 
-    public IDetailItemModificator getSecondLevelModificators() {
-        return secondLevelModificators;
+    public IDetailItemModifier getSecondLevelModifiers() {
+        return secondLevelModifiers;
     }
 
-    public void setSecondLevelModificators(
-            IDetailItemModificator... secondLevelModificators) {
-        this.secondLevelModificators = SeveralModificators
-                .create(secondLevelModificators);
+    public void setSecondLevelModifiers(IDetailItemModifier... secondLevelModifiers) {
+        this.secondLevelModifiers = SeveralModifiers.create(secondLevelModifiers);
     }
 
-    public IDetailItemModificator getFirstLevelModificators() {
-        return firstLevelModificators;
+    public IDetailItemModifier getFirstLevelModifiers() {
+        return firstLevelModifiers;
     }
 
-    public void setFirstLevelModificators(
-            IDetailItemModificator... firstLevelModificators) {
-        this.firstLevelModificators = SeveralModificators
-                .create(firstLevelModificators);
+    public void setFirstLevelModifiers(IDetailItemModifier... firstLevelModifiers) {
+        this.firstLevelModifiers = SeveralModifiers.create(firstLevelModifiers);
     }
 
     public void addReloadChartListener(IReloadChartListener reloadChartListener) {
@@ -437,22 +461,22 @@ public class PlannerConfiguration<T> implements IDisabilityConfiguration {
     }
 
     public void print() {
-        if (!isPrintEnabled()) {
-            throw new UnsupportedOperationException("print not supported");
+        if ( !isPrintEnabled() ) {
+            throw new UnsupportedOperationException(PRINT_NOT_SUPPORTED);
         }
         printAction.doPrint();
     }
 
     public void print(Map<String, String> parameters) {
-        if (!isPrintEnabled()) {
-            throw new UnsupportedOperationException("print not supported");
+        if ( !isPrintEnabled() ) {
+            throw new UnsupportedOperationException(PRINT_NOT_SUPPORTED);
         }
         printAction.doPrint(parameters);
     }
 
     public void print(HashMap<String, String> parameters, Planner planner) {
-        if (!isPrintEnabled()) {
-            throw new UnsupportedOperationException("print not supported");
+        if ( !isPrintEnabled() ) {
+            throw new UnsupportedOperationException(PRINT_NOT_SUPPORTED);
         }
         printAction.doPrint(parameters, planner);
     }
@@ -466,18 +490,16 @@ public class PlannerConfiguration<T> implements IDisabilityConfiguration {
         return expandPlanningViewCharts;
     }
 
-    public void addPreGraphChangeListener(
-            IGraphChangeListener preGraphChangeListener) {
+    public void addPreGraphChangeListener(IGraphChangeListener preGraphChangeListener) {
         Validate.notNull(preGraphChangeListener);
-        if (!preGraphChangeListeners.contains(preGraphChangeListener)) {
+        if ( !preGraphChangeListeners.contains(preGraphChangeListener) ) {
             preGraphChangeListeners.add(preGraphChangeListener);
         }
     }
 
-    public void addPostGraphChangeListener(
-            IGraphChangeListener postGraphChangeListener) {
+    public void addPostGraphChangeListener(IGraphChangeListener postGraphChangeListener) {
         Validate.notNull(postGraphChangeListener);
-        if (!postGraphChangeListeners.contains(postGraphChangeListener)) {
+        if ( !postGraphChangeListeners.contains(postGraphChangeListener) ) {
             postGraphChangeListeners.add(postGraphChangeListener);
         }
     }
@@ -505,6 +527,54 @@ public class PlannerConfiguration<T> implements IDisabilityConfiguration {
 
     public void setScheduleBackwards(boolean scheduleBackwards) {
         this.scheduleBackwards = scheduleBackwards;
+    }
+
+    public boolean isShowResourcesOn() {
+        return showResourcesOn;
+    }
+
+    public void setShowResourcesOn(boolean showResourcesOn) {
+        this.showResourcesOn = showResourcesOn;
+    }
+
+    public boolean isShowAdvancesOn() {
+        return showAdvancesOn;
+    }
+
+    public void setShowAdvancesOn(boolean showAdvancesOn) {
+        this.showAdvancesOn = showAdvancesOn;
+    }
+
+    public boolean isShowReportedHoursOn() {
+        return showReportedHoursOn;
+    }
+
+    public void setShowReportedHoursOn(boolean showReportedHoursOn) {
+        this.showReportedHoursOn = showReportedHoursOn;
+    }
+
+    public boolean isShowLabelsOn() {
+        return showLabelsOn;
+    }
+
+    public void setShowLabelsOn(boolean showLabelsOn) {
+        this.showLabelsOn = showLabelsOn;
+    }
+
+    public boolean isShowMoneyCostBarOn() {
+        return showMoneyCostBarOn;
+    }
+
+    public void setShowMoneyCostBarOn(boolean showMoneyCostBarOn) {
+        this.showMoneyCostBarOn = showMoneyCostBarOn;
+    }
+
+    public boolean isFilterExcludeFinishedProject() {
+        return filterExcludeFinishedProject;
+    }
+
+    public void setFilterExcludeFinishedProject(boolean filterExcludeFinishedProject) {
+        this.filterExcludeFinishedProject = filterExcludeFinishedProject;
     }
 
 }

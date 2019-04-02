@@ -25,9 +25,9 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 
 import org.hibernate.NonUniqueResultException;
-import org.hibernate.validator.AssertTrue;
-import org.hibernate.validator.NotEmpty;
-import org.hibernate.validator.NotNull;
+import javax.validation.constraints.AssertTrue;
+import org.hibernate.validator.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import org.libreplan.business.common.BaseEntity;
 import org.libreplan.business.common.IntegrationEntity;
 import org.libreplan.business.common.Registry;
@@ -36,11 +36,13 @@ import org.libreplan.business.common.exceptions.InstanceNotFoundException;
 
 /**
  * Sequence for {@link IntegrationEntity} codes.
+ *
  * @author Susana Montes Pedreira <smontes@wirelessgalicia.com>
  */
 public class EntitySequence extends BaseEntity {
 
     public static final Integer MIN_NUMBER_OF_DIGITS = 2;
+
     public static final Integer MAX_NUMBER_OF_DIGITS = 9;
 
     public static final String CODE_SEPARATOR_CHILDREN = "-";
@@ -49,8 +51,7 @@ public class EntitySequence extends BaseEntity {
         return create(new EntitySequence(prefix, entityName));
     }
 
-    public static EntitySequence create(String prefix,
-            EntityNameEnum entityName, Integer digits) {
+    public static EntitySequence create(String prefix, EntityNameEnum entityName, Integer digits) {
         return create(new EntitySequence(prefix, entityName, digits));
     }
 
@@ -65,8 +66,7 @@ public class EntitySequence extends BaseEntity {
         this.entityName = entityName;
     }
 
-    public EntitySequence(String prefix, EntityNameEnum entityName,
-            Integer digits) {
+    public EntitySequence(String prefix, EntityNameEnum entityName, Integer digits) {
         this.prefix = prefix;
         this.entityName = entityName;
         this.setNumberOfDigits(digits);
@@ -104,7 +104,7 @@ public class EntitySequence extends BaseEntity {
     }
 
     @AssertTrue(message = "Prefix cannot contain whitespaces")
-    public boolean checkConstraintPrefixWithoutWhiteSpaces() {
+    public boolean isPrefixWithoutWhiteSpacesConstraint() {
         if ((prefix == null) || (prefix.isEmpty())) {
             return false;
         }
@@ -120,20 +120,20 @@ public class EntitySequence extends BaseEntity {
         return active;
     }
 
-    public void setNumberOfDigits(Integer numberOfDigits)
-            throws IllegalArgumentException {
+    public void setNumberOfDigits(Integer numberOfDigits) throws IllegalArgumentException {
         if (isAlreadyInUse()) {
             throw new IllegalArgumentException("You cannot modifiy this entity sequence, it is already in use");
         }
 
-        if ((numberOfDigits != null)
+        if ( (numberOfDigits != null)
                 && (numberOfDigits >= MIN_NUMBER_OF_DIGITS)
-                && (numberOfDigits <= MAX_NUMBER_OF_DIGITS)) {
+                && (numberOfDigits <= MAX_NUMBER_OF_DIGITS) ) {
+
             this.numberOfDigits = numberOfDigits;
+
         } else {
             throw new IllegalArgumentException(
-                    "number of digits must be between " + MIN_NUMBER_OF_DIGITS
-                            + " and " + MAX_NUMBER_OF_DIGITS);
+                    "number of digits must be between " + MIN_NUMBER_OF_DIGITS + " and " + MAX_NUMBER_OF_DIGITS);
         }
     }
 
@@ -143,17 +143,14 @@ public class EntitySequence extends BaseEntity {
     }
 
     @AssertTrue(message = "number of digits out of range")
-    public boolean checkConstraintNumberOfDigitsInRange() {
-        if ((numberOfDigits != null)
+    public boolean isNumberOfDigitsInRangeConstraint() {
+        return (numberOfDigits != null)
                 && (numberOfDigits >= MIN_NUMBER_OF_DIGITS)
-                && (numberOfDigits <= MAX_NUMBER_OF_DIGITS)) {
-            return true;
-        }
-        return false;
+                && (numberOfDigits <= MAX_NUMBER_OF_DIGITS);
     }
 
     @AssertTrue(message = "format sequence code invalid. It must not contain '_'")
-    public boolean checkConstraintWithoutLowBar() {
+    public boolean isWithoutLowBarConstraint() {
         if ((prefix == null) || (prefix.isEmpty())) {
             return false;
         }
@@ -199,20 +196,17 @@ public class EntitySequence extends BaseEntity {
     }
 
     @AssertTrue(message = "Only one sequence per entity can be active at the same time.")
-    public boolean checkConstraintOnlyOneSequenceForEachEntityIsActive() {
+    public boolean isOnlyOneSequenceForEachEntityIsActiveConstraint() {
         if (!isActive()) {
             return true;
         }
 
         IEntitySequenceDAO entitySequenceDAO = Registry.getEntitySequenceDAO();
         if (isNewObject()) {
-            return !entitySequenceDAO
-                    .existOtherActiveSequenceByEntityNameForNewObject(this);
+            return !entitySequenceDAO.existOtherActiveSequenceByEntityNameForNewObject(this);
         } else {
             try {
-                EntitySequence c = entitySequenceDAO
-                        .getActiveEntitySequence(this.entityName);
-                return c.getId().equals(getId());
+                return entitySequenceDAO.getActiveEntitySequence(this.entityName).getId().equals(getId());
             } catch (NonUniqueResultException e) {
                 return false;
             } catch (InstanceNotFoundException e) {

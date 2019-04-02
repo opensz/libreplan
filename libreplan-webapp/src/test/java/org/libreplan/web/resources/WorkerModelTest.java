@@ -36,7 +36,6 @@ import java.util.List;
 
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.libreplan.business.common.exceptions.InstanceNotFoundException;
@@ -54,7 +53,8 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Some test cases for {@link WorkerModel}. <br />
+ * Some test cases for {@link WorkerModel}.
+ * <br />
  * @author Óscar González Fernández <ogonzalez@igalia.com>
  */
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -62,15 +62,13 @@ import org.springframework.transaction.annotation.Transactional;
         WEBAPP_SPRING_CONFIG_FILE, WEBAPP_SPRING_CONFIG_TEST_FILE,
         WEBAPP_SPRING_SECURITY_CONFIG_FILE,
         WEBAPP_SPRING_SECURITY_CONFIG_TEST_FILE })
-@Transactional
 public class WorkerModelTest {
 
     @Autowired
     private IResourceDAO resourceDAO;
 
     @Test
-    public void testWorkerValid() throws ValidationException,
-            InstanceNotFoundException {
+    public void testWorkerValid() throws ValidationException, InstanceNotFoundException {
 
         IResourceDAO resourceDAOMock = createMock(IResourceDAO.class);
         ICriterionDAO criterionServiceMock = createMock(ICriterionDAO.class);
@@ -78,41 +76,34 @@ public class WorkerModelTest {
         workerToReturn.setFirstName("firstName");
         workerToReturn.setSurname("surname");
         workerToReturn.setNif("232344243");
+
         // expectations
         List<Criterion> criterions = new ArrayList<Criterion>();
-        expect(
-                criterionServiceMock
-                        .findByType(PredefinedCriterionTypes.LOCATION))
-                .andReturn(criterions).anyTimes();
-        expect(resourceDAOMock.find(workerToReturn.getId()))
-                .andReturn(workerToReturn);
+        expect(criterionServiceMock.findByType(PredefinedCriterionTypes.LOCATION)).andReturn(criterions).anyTimes();
+        expect(resourceDAOMock.find(workerToReturn.getId())).andReturn(workerToReturn);
         resourceDAOMock.save(workerToReturn);
         workerToReturn.checkNotOverlaps();
         replay(resourceDAOMock, criterionServiceMock);
+
         // perform actions
-        WorkerModel workerModel = new WorkerModel(resourceDAOMock,
-                criterionServiceMock);
+        WorkerModel workerModel = new WorkerModel(resourceDAOMock, criterionServiceMock);
 
         workerModel.prepareEditFor(workerToReturn);
         workerModel.save();
     }
 
-    @Ignore
-    @Test(expected = IllegalStateException.class)
-    public void testWorkerInvalid() throws ValidationException,
-            InstanceNotFoundException, IllegalStateException {
+    @Test(expected = ValidationException.class)
+    @Transactional
+    public void testWorkerInvalid() throws ValidationException, InstanceNotFoundException, IllegalStateException {
 
         IResourceDAO resourceDAOMock = createMock(IResourceDAO.class);
         ICriterionDAO criterionServiceMock = createMock(ICriterionDAO.class);
         final Worker workerToReturn = Worker.create();
-        // expectations
-        List<Criterion> criterions = new ArrayList<Criterion>();
-        expect(
-                criterionServiceMock
-                        .findByType(PredefinedCriterionTypes.LOCATION))
-                .andReturn(criterions).anyTimes();
-        expect(resourceDAOMock.find(workerToReturn.getId())).andReturn(
-                workerToReturn);
+
+        // Expectations
+        List<Criterion> criterions = new ArrayList<>();
+        expect(criterionServiceMock.findByType(PredefinedCriterionTypes.LOCATION)).andReturn(criterions).anyTimes();
+        expect(resourceDAOMock.find(workerToReturn.getId())).andReturn(workerToReturn);
         resourceDAOMock.save(workerToReturn);
         expectLastCall().andAnswer(new IAnswer<Object>() {
             @Override
@@ -123,9 +114,9 @@ public class WorkerModelTest {
             }
         });
         replay(resourceDAOMock, criterionServiceMock);
-        // perform actions
-        WorkerModel workerModel = new WorkerModel(resourceDAOMock,
-                criterionServiceMock);
+
+        // Perform actions
+        WorkerModel workerModel = new WorkerModel(resourceDAOMock, criterionServiceMock);
         workerModel.prepareEditFor(workerToReturn);
         workerModel.save();
     }

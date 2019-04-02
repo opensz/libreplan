@@ -26,7 +26,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.util.List;
 
-import org.apache.commons.lang.Validate;
+import org.apache.commons.lang3.Validate;
 import org.hibernate.Hibernate;
 import org.hibernate.LockMode;
 import org.hibernate.Session;
@@ -41,25 +41,24 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * An implementation of <code>IGenericDao</code> based on Hibernate's native
- * API. Concrete DAOs must extend directly from this class. This constraint is
- * imposed by the constructor of this class that must infer the type of the
+ * An implementation of <code>IGenericDao</code> based on Hibernate's native API.
+ * Concrete DAOs must extend directly from this class.
+ * This constraint is imposed by the constructor of this class that must infer the type of the
  * entity from the declaration of the concrete DAO.
- * <p/>
- * This class autowires a <code>SessionFactory</code> bean and allows to
- * implement DAOs with Hibernate's native API. Subclasses access Hibernate's
- * <code>Session</code> by calling on <code>getSession()</code> method.
+ *
+ * This class autowires a <code>SessionFactory</code> bean and allows to implement DAOs with Hibernate's native API.
+ * Subclasses access Hibernate's <code>Session</code> by calling on <code>getSession()</code> method.
  * Operations must be implemented by catching <code>HibernateException</code>
- * and rethrowing it by using <code>convertHibernateAccessException()</code>
- * method. See source code of this class for an example.
+ * and rethrowing it by using <code>convertHibernateAccessException()</code> method.
+ * See source code of this class for an example.
+ *
  * @author Fernando Bellas Permuy <fbellas@udc.es>
  * @param <E>
  *            Entity class
  * @param <PK>
  *            Primary key class
  */
-public class GenericDAOHibernate<E extends BaseEntity,
-        PK extends Serializable> implements IGenericDAO<E, PK> {
+public class GenericDAOHibernate<E extends BaseEntity, PK extends Serializable> implements IGenericDAO<E, PK> {
 
     private Class<E> entityClass;
 
@@ -68,8 +67,8 @@ public class GenericDAOHibernate<E extends BaseEntity,
 
     @SuppressWarnings("unchecked")
     public GenericDAOHibernate() {
-        this.entityClass = (Class<E>) ((ParameterizedType) getClass()
-                .getGenericSuperclass()).getActualTypeArguments()[0];
+        this.entityClass =
+                (Class<E>) ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0];
     }
 
     public GenericDAOHibernate(Class<E> entityClass) {
@@ -89,34 +88,33 @@ public class GenericDAOHibernate<E extends BaseEntity,
      * It's necessary to save and validate later.
      *
      * Validate may retrieve the entity from DB and put it into the Session, which can eventually lead to
-     * a NonUniqueObject exception. Save works here to reattach the object as well as saving.
+     * a NonUniqueObject exception.
+     * Save works here to reattach the object as well as saving.
      */
     public void save(E entity) throws ValidationException {
         getSession().saveOrUpdate(entity);
         entity.validate();
     }
 
-   public void saveWithoutValidating(E entity) {
-       getSession().saveOrUpdate(entity);
-   }
+    public void saveWithoutValidating(E entity) {
+        getSession().saveOrUpdate(entity);
+    }
 
     public void reattachUnmodifiedEntity(E entity) {
-        if (Hibernate.isInitialized(entity) && entity.isNewObject()) {
+        if ( Hibernate.isInitialized(entity) && entity.isNewObject() ) {
             return;
         }
+        // TODO resolve deprecated
         getSession().lock(entity, LockMode.NONE);
-
     }
 
     public E merge(E entity) {
-
         return entityClass.cast(getSession().merge(entity));
-
     }
 
     public void checkVersion(E entity) {
 
-        /* Get id and version from entity. */
+        /* Get id and version from entity */
         Serializable id;
         Long versionValueInMemory;
 
@@ -125,14 +123,14 @@ public class GenericDAOHibernate<E extends BaseEntity,
             Method getIdMethod = entityClass.getMethod("getId");
             id = (Serializable) getIdMethod.invoke(entity);
 
-            if (id == null) {
+            if ( id == null ) {
                 return;
             }
 
             Method getVersionMethod = entityClass.getMethod("getVersion");
             versionValueInMemory = (Long) getVersionMethod.invoke(entity);
 
-            if (versionValueInMemory == null) {
+            if ( versionValueInMemory == null ) {
                 return;
             }
 
@@ -140,29 +138,27 @@ public class GenericDAOHibernate<E extends BaseEntity,
             throw new RuntimeException(e);
         }
 
-        /* Check version. */
-        Long versionValueInDB = (Long) getSession().createCriteria(entityClass)
-                .add(Restrictions.idEq(id)).setProjection(
-                        Projections.property("version")).uniqueResult();
+        /* Check version */
+        Long versionValueInDB = (Long) getSession()
+                .createCriteria(entityClass)
+                .add(Restrictions.idEq(id))
+                .setProjection(Projections.property("version"))
+                .uniqueResult();
 
-        if (versionValueInDB == null) {
+        if ( versionValueInDB == null ) {
             return;
         }
 
-        if (!versionValueInMemory.equals(versionValueInDB)) {
+        if ( !versionValueInMemory.equals(versionValueInDB) ) {
             throw new StaleObjectStateException(entityClass.getName(), id);
         }
 
     }
 
     public void lock(E entity) {
-
+        // TODO resolve deprecated
         getSession().lock(entity, LockMode.UPGRADE);
 
-    }
-
-    public void associateToSession(E entity) {
-        getSession().lock(entity, LockMode.NONE);
     }
 
     @SuppressWarnings("unchecked")
@@ -171,7 +167,7 @@ public class GenericDAOHibernate<E extends BaseEntity,
 
         E entity = (E) getSession().get(entityClass, id);
 
-        if (entity == null) {
+        if ( entity == null ) {
             throw new InstanceNotFoundException(id, entityClass.getName());
         }
 
@@ -190,8 +186,10 @@ public class GenericDAOHibernate<E extends BaseEntity,
 
     public boolean exists(final PK id) {
 
-        return getSession().createCriteria(entityClass).add(
-                Restrictions.idEq(id)).setProjection(Projections.id())
+        return getSession()
+                .createCriteria(entityClass)
+                .add(Restrictions.idEq(id))
+                .setProjection(Projections.id())
                 .uniqueResult() != null;
 
     }
@@ -213,6 +211,7 @@ public class GenericDAOHibernate<E extends BaseEntity,
     }
 
     @Override
+    @Transactional
     public void reattach(E entity) {
         getSession().saveOrUpdate(entity);
     }

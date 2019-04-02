@@ -23,13 +23,12 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import org.hibernate.validator.NotNull;
+import javax.validation.constraints.NotNull;
 import org.libreplan.business.common.BaseEntity;
 import org.libreplan.business.externalcompanies.entities.CommunicationType;
-import org.libreplan.business.qualityforms.entities.QualityFormItem;
 
 /**
- *  Entity {@link SubcontractorCommunication}.
+ * Entity {@link SubcontractorCommunication}.
  *
  * @author Susana Montes Pedreira <smontes@wirelessgalicia>
  */
@@ -43,14 +42,18 @@ public class SubcontractorCommunication extends BaseEntity {
 
     private Boolean reviewed = false;
 
-    private List<SubcontractorCommunicationValue> subcontractorCommunicationValues = new ArrayList<SubcontractorCommunicationValue>();
+    private List<SubcontractorCommunicationValue> subcontractorCommunicationValues = new ArrayList<>();
 
-    // Default constructor, needed by Hibernate
-    protected SubcontractorCommunication() {
+    /**
+     * Default constructor, needed by Hibernate.
+     */
+    protected SubcontractorCommunication() {}
 
-    }
+    private SubcontractorCommunication(SubcontractedTaskData subcontractedTaskData,
+                                       CommunicationType communicationType,
+                                       Date communicationDate,
+                                       Boolean reviewed){
 
-    private SubcontractorCommunication ( SubcontractedTaskData subcontractedTaskData, CommunicationType communicationType, Date communicationDate, Boolean reviewed){
         this.setSubcontractedTaskData(subcontractedTaskData);
         this.setCommunicationType(communicationType);
         this.setCommunicationDate(communicationDate);
@@ -61,8 +64,9 @@ public class SubcontractorCommunication extends BaseEntity {
             SubcontractedTaskData subcontractedTaskData,
             CommunicationType communicationType, Date communicationDate,
             Boolean reviewed) {
-        return create(new SubcontractorCommunication(subcontractedTaskData,
-                communicationType, communicationDate, reviewed));
+
+        return create(
+                new SubcontractorCommunication(subcontractedTaskData, communicationType, communicationDate, reviewed));
     }
 
     public static SubcontractorCommunication create() {
@@ -73,7 +77,7 @@ public class SubcontractorCommunication extends BaseEntity {
         this.subcontractedTaskData = subcontractedTaskData;
     }
 
-    @NotNull(message="subcontrated task data not specified")
+    @NotNull(message="subcontracted task data not specified")
     public SubcontractedTaskData getSubcontractedTaskData() {
         return subcontractedTaskData;
     }
@@ -104,6 +108,7 @@ public class SubcontractorCommunication extends BaseEntity {
 
     public void setSubcontractorCommunicationValues(
             List<SubcontractorCommunicationValue> subcontractorCommunicationValues) {
+
         this.subcontractorCommunicationValues = subcontractorCommunicationValues;
     }
 
@@ -111,11 +116,10 @@ public class SubcontractorCommunication extends BaseEntity {
         return subcontractorCommunicationValues;
     }
 
-    public SubcontractorCommunicationValue getLastSubcontractorCommunicationValues(){
-        if (subcontractorCommunicationValues.isEmpty()){
-            return null;
-        }
-        return subcontractorCommunicationValues.get(subcontractorCommunicationValues.size()-1);
+    public SubcontractorCommunicationValue getLastSubcontractorCommunicationValues() {
+        return subcontractorCommunicationValues.isEmpty()
+                ? null
+                : subcontractorCommunicationValues.get(subcontractorCommunicationValues.size() - 1);
     }
 
     public Date getLastSubcontractorCommunicationValueDate(){

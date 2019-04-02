@@ -30,9 +30,10 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Set;
 
-import org.apache.commons.lang.Validate;
-import org.hibernate.validator.AssertTrue;
-import org.hibernate.validator.Valid;
+import javax.validation.Valid;
+import javax.validation.constraints.AssertTrue;
+
+import org.apache.commons.lang3.Validate;
 import org.libreplan.business.common.entities.ProgressType;
 import org.libreplan.business.orders.entities.TaskSource;
 import org.libreplan.business.resources.daos.IResourcesSearcher;
@@ -42,6 +43,9 @@ import org.libreplan.business.workingday.EffortDuration;
 import org.libreplan.business.workingday.IntraDayDate;
 
 /**
+ * Represents a parent task which can hold child tasks.
+ * The project itself is also an {@link TaskGroup}.
+ *
  * @author Óscar González Fernández <ogonzalez@igalia.com>
  * @author Javier Moran Rua <jmoran@igalia.com>
  * @author Manuel Rego Casasnovas <rego@igalia.com>
@@ -108,7 +112,7 @@ public class TaskGroup extends TaskElement {
 
     @SuppressWarnings("unused")
     @AssertTrue(message = "element associated to a task group have to be defined")
-    private boolean theOrderElementMustBeNotNull() {
+    private boolean isTheOrderElementMustBeNotNullConstraint() {
         return getOrderElement() != null;
     }
 
@@ -122,8 +126,8 @@ public class TaskGroup extends TaskElement {
             setIntraDayEndDate(newPossibleEndDate);
         }
         IntraDayDate newPossibleStart = task.getIntraDayStartDate();
-        if (getIntraDayStartDate() == null
-                || getIntraDayStartDate().compareTo(newPossibleStart) > 0) {
+        if ( getIntraDayStartDate() == null
+                || getIntraDayStartDate().compareTo(newPossibleStart) > 0 ) {
             setIntraDayStartDate(newPossibleStart);
         }
     }
@@ -193,17 +197,21 @@ public class TaskGroup extends TaskElement {
     public void setTaskChildrenTo(List<TaskElement> children) {
         Validate.noNullElements(children);
         int positionOnTaskElements = 0;
+
         for (int i = 0; i < children.size(); i++) {
             TaskElement element = children.get(i);
             element.setParent(this);
-            if (positionOnTaskElements >= taskElements.size()) {
+
+            if ( positionOnTaskElements >= taskElements.size() ) {
                 taskElements.add(element);
             } else {
-                while (positionOnTaskElements < taskElements.size()
-                        && isMilestone(taskElements.get(positionOnTaskElements))) {
+                while (positionOnTaskElements < taskElements.size() &&
+                        isMilestone(taskElements.get(positionOnTaskElements))) {
+
                     positionOnTaskElements++;
                 }
-                if (positionOnTaskElements >= taskElements.size()) {
+
+                if ( positionOnTaskElements >= taskElements.size() ) {
                     taskElements.add(element);
                 } else {
                     taskElements.set(positionOnTaskElements, element);
@@ -211,11 +219,10 @@ public class TaskGroup extends TaskElement {
             }
             positionOnTaskElements++;
         }
-        ListIterator<TaskElement> listIterator = taskElements
-                .listIterator(positionOnTaskElements);
+        ListIterator<TaskElement> listIterator = taskElements.listIterator(positionOnTaskElements);
         while (listIterator.hasNext()) {
             TaskElement current = listIterator.next();
-            if (!isMilestone(current)) {
+            if ( !isMilestone(current) ) {
                 listIterator.remove();
             }
         }
@@ -343,10 +350,10 @@ public class TaskGroup extends TaskElement {
 
     @Override
     public boolean isFinished() {
-        if (this.isFinished == null) {
+        if ( this.isFinished == null ) {
             this.isFinished = new Boolean(true);
             for (TaskElement each: taskElements) {
-                if (!each.isFinished()) {
+                if ( !each.isFinished() ) {
                     this.isFinished = new Boolean(false);
                     break;
                 }
@@ -389,4 +396,8 @@ public class TaskGroup extends TaskElement {
         return false;
     }
 
+    @Override
+    public void setTaskSource(TaskSource taskSource) {
+        super.setTaskSource(taskSource);
+    }
 }

@@ -30,7 +30,6 @@ import static org.libreplan.business.BusinessGlobalNames.BUSINESS_SPRING_CONFIG_
 import static org.libreplan.business.test.BusinessGlobalNames.BUSINESS_SPRING_CONFIG_TEST_FILE;
 
 import java.util.HashSet;
-import java.util.Set;
 import java.util.UUID;
 
 import javax.annotation.Resource;
@@ -47,23 +46,18 @@ import org.libreplan.business.externalcompanies.daos.IExternalCompanyDAO;
 import org.libreplan.business.externalcompanies.entities.ExternalCompany;
 import org.libreplan.business.users.daos.IUserDAO;
 import org.libreplan.business.users.entities.User;
-import org.libreplan.business.users.entities.UserRole;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.annotation.NotTransactional;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
-@RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(locations = { BUSINESS_SPRING_CONFIG_FILE,
-        BUSINESS_SPRING_CONFIG_TEST_FILE })
 /**
- * Test for {@link ExternalCompanyDAO}
+ * Test for {@link org.libreplan.business.externalcompanies.daos.ExternalCompanyDAO}.
  *
  * @author Jacobo Aragunde Perez <jaragunde@igalia.com>
- *
  */
-@Transactional
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration(locations = { BUSINESS_SPRING_CONFIG_FILE, BUSINESS_SPRING_CONFIG_TEST_FILE })
 public class ExternalCompanyDAOTest {
 
     @Autowired
@@ -79,16 +73,18 @@ public class ExternalCompanyDAOTest {
     private IDataBootstrap configurationBootstrap;
 
     @Before
-    public void loadRequiredaData() {
+    public void loadRequiredData() {
         configurationBootstrap.loadRequiredData();
     }
 
     @Test
+    @Transactional
     public void testInSpringContainer() {
         assertNotNull(externalCompanyDAO);
     }
 
     @Test
+    @Transactional
     public void testSaveExternalCompany() {
         ExternalCompany externalCompany = createValidExternalCompany();
         externalCompanyDAO.save(externalCompany);
@@ -96,6 +92,7 @@ public class ExternalCompanyDAOTest {
     }
 
     @Test
+    @Transactional
     public void testRemoveExternalCompany() throws InstanceNotFoundException {
         ExternalCompany externalCompany = createValidExternalCompany();
         externalCompanyDAO.save(externalCompany);
@@ -104,6 +101,7 @@ public class ExternalCompanyDAOTest {
     }
 
     @Test
+    @Transactional
     public void testListExternalCompanies() {
         int previous = externalCompanyDAO.list(ExternalCompany.class).size();
         ExternalCompany externalCompany = createValidExternalCompany();
@@ -112,14 +110,12 @@ public class ExternalCompanyDAOTest {
     }
 
     @Test
-    @NotTransactional
     public void testRelationWithUser() throws InstanceNotFoundException {
         final User user = createValidUser();
         final ExternalCompany externalCompany = createValidExternalCompany();
         externalCompany.setCompanyUser(user);
 
         IOnTransaction<Void> saveEntities = new IOnTransaction<Void>() {
-
             @Override
             public Void execute() {
                 userDAO.save(user);
@@ -127,10 +123,10 @@ public class ExternalCompanyDAOTest {
                 return null;
             }
         };
+
         transactionService.runOnTransaction(saveEntities);
 
         IOnTransaction<Void> retrieveEntitiesInOtherTransaction = new IOnTransaction<Void>() {
-
             @Override
             public Void execute() {
                 try{
@@ -143,18 +139,20 @@ public class ExternalCompanyDAOTest {
                 return null;
             }
         };
+
         transactionService.runOnTransaction(retrieveEntitiesInOtherTransaction);
     }
 
     @Test
+    @Transactional
     public void testFindUniqueByName() throws InstanceNotFoundException {
         ExternalCompany externalCompany = createValidExternalCompany();
         externalCompanyDAO.save(externalCompany);
-        assertEquals(externalCompany.getId(),
-                externalCompanyDAO.findUniqueByName(externalCompany.getName()).getId());
+        assertEquals(externalCompany.getId(), externalCompanyDAO.findUniqueByName(externalCompany.getName()).getId());
     }
 
     @Test
+    @Transactional
     public void testExistsByName() throws InstanceNotFoundException {
         ExternalCompany externalCompany = createValidExternalCompany();
         assertFalse(externalCompanyDAO.existsByName(externalCompany.getName()));
@@ -163,25 +161,24 @@ public class ExternalCompanyDAOTest {
     }
 
     @Test(expected=ValidationException.class)
-    @NotTransactional
     public void testUniqueCompanyNameCheck() throws ValidationException {
         final ExternalCompany externalCompany1 = createValidExternalCompany();
 
         IOnTransaction<Void> createCompanyWithRepeatedName = new IOnTransaction<Void>() {
-
             @Override
             public Void execute() {
                 externalCompanyDAO.save(externalCompany1);
                 return null;
             }
         };
+
         transactionService.runOnTransaction(createCompanyWithRepeatedName);
-        //the second time we save the same object, a exception is thrown
+
+        // The second time we save the same object, a exception is thrown
         transactionService.runOnTransaction(createCompanyWithRepeatedName);
     }
 
     @Test(expected=ValidationException.class)
-    @NotTransactional
     public void testUniqueCompanyNifCheck() throws ValidationException {
         final ExternalCompany externalCompany1 = createValidExternalCompany();
 
@@ -192,6 +189,7 @@ public class ExternalCompanyDAOTest {
                 return null;
             }
         };
+
         IOnTransaction<Void> createCompanyWithRepeatedNif = new IOnTransaction<Void>() {
             @Override
             public Void execute() {
@@ -201,19 +199,18 @@ public class ExternalCompanyDAOTest {
                 return null;
             }
         };
+
         transactionService.runOnTransaction(createCompany);
-        //the second object has the same cif, a exception is thrown when saving it
+
+        // The second object has the same cif, a exception is thrown when saving it
         transactionService.runOnTransaction(createCompanyWithRepeatedNif);
     }
 
     public static ExternalCompany createValidExternalCompany() {
-        return ExternalCompany.create(UUID.randomUUID().toString(),
-                UUID.randomUUID().toString());
+        return ExternalCompany.create(UUID.randomUUID().toString(), UUID.randomUUID().toString());
     }
 
     private User createValidUser() {
-        Set<UserRole> roles = new HashSet<UserRole>();
-        return User.create(UUID.randomUUID().toString(),
-        UUID.randomUUID().toString(), roles);
+        return User.create(UUID.randomUUID().toString(), UUID.randomUUID().toString(), new HashSet<>());
     }
 }

@@ -27,11 +27,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.hibernate.validator.AssertTrue;
-import org.hibernate.validator.NotEmpty;
+import javax.validation.constraints.AssertTrue;
+import org.hibernate.validator.constraints.NotEmpty;
 import org.libreplan.business.common.BaseEntity;
 import org.libreplan.business.common.IHumanIdentifiable;
-import org.libreplan.business.common.IOnTransaction;
 import org.libreplan.business.common.Registry;
 import org.libreplan.business.common.entities.Configuration;
 import org.libreplan.business.common.exceptions.InstanceNotFoundException;
@@ -61,9 +60,9 @@ public class User extends BaseEntity implements IHumanIdentifiable{
 
     private Language applicationLanguage = Language.BROWSER_LANGUAGE;
 
-    private Set<UserRole> roles = new HashSet<UserRole>();
+    private Set<UserRole> roles = new HashSet<>();
 
-    private Set<Profile> profiles = new HashSet<Profile>();
+    private Set<Profile> profiles = new HashSet<>();
 
     private String email;
 
@@ -71,7 +70,9 @@ public class User extends BaseEntity implements IHumanIdentifiable{
 
     private Scenario lastConnectedScenario;
 
-    // if a user is a LibrePlan user or not (ldap)
+    /**
+     * If a user is a LibrePlan user or not (LDAP).
+     */
     private Boolean librePlanUser = true;
 
     private boolean expandCompanyPlanningViewCharts = false;
@@ -92,20 +93,32 @@ public class User extends BaseEntity implements IHumanIdentifiable{
 
     private Integer projectsFilterPeriodTo;
 
+    private Boolean projectsFilterFinishedOn = false;
+
     private Criterion resourcesLoadFilterCriterion = null;
 
     private Integer resourcesLoadFilterPeriodSince;
 
     private Integer resourcesLoadFilterPeriodTo;
 
+    private boolean showResourcesOn = false;
+
+    private boolean showAdvancesOn = false;
+
+    private boolean showReportedHoursOn = false;
+
+    private boolean showLabelsOn = false;
+
+    private boolean showMoneyCostBarOn = false;
+
     /**
      * Necessary for Hibernate. Please, do not call it.
      */
     public User() {
+
     }
 
-    private User(String loginName, String password, Set<UserRole> roles,
-            Set<Profile> profiles) {
+    private User(String loginName, String password, Set<UserRole> roles, Set<Profile> profiles) {
         this.loginName = loginName;
         this.password = password;
         this.roles = roles;
@@ -118,13 +131,11 @@ public class User extends BaseEntity implements IHumanIdentifiable{
         this.email = email;
     }
 
-    public static User create(String loginName, String password,
-            Set<UserRole> roles) {
-        return create(loginName, password, roles, new HashSet<Profile>());
+    public static User create(String loginName, String password, Set<UserRole> roles) {
+        return create(loginName, password, roles, new HashSet<>());
     }
 
-    public static User create(String loginName, String password,
-            Set<UserRole> roles, Set<Profile> profiles) {
+    public static User create(String loginName, String password, Set<UserRole> roles, Set<Profile> profiles) {
         return create(new User(loginName, password, roles, profiles));
     }
 
@@ -175,30 +186,33 @@ public class User extends BaseEntity implements IHumanIdentifiable{
 
     /**
      * Retrieves UserRoles from related Profiles and returns them together with
-     * the UserRoles related directly to the User entity
+     * the UserRoles related directly to the User entity.
      *
      * @return A list of UserRole objects
      */
     public Set<UserRole> getAllRoles() {
-        Set<UserRole> allRoles = new HashSet<UserRole>(roles);
+        Set<UserRole> allRoles = new HashSet<>(roles);
         for (Profile profile : getProfiles()) {
             allRoles.addAll(profile.getRoles());
         }
+
         return allRoles;
     }
 
     /**
-     * Checks if current user is in the requested role
+     * Checks if current user is in the requested role.
      */
     public boolean isInRole(UserRole role) {
-        if (roles.contains(role)) {
+        if ( roles.contains(role) ) {
             return true;
         }
+
         for (Profile profile : profiles) {
-            if (profile.getRoles().contains(role)) {
+            if ( profile.getRoles().contains(role) ) {
                 return true;
             }
         }
+
         return false;
     }
 
@@ -215,17 +229,18 @@ public class User extends BaseEntity implements IHumanIdentifiable{
     }
 
     public void addProfile(Profile profile) {
-        if (!containsProfile(profile)) {
+        if ( !containsProfile(profile) ) {
             profiles.add(profile);
         }
     }
 
     private boolean containsProfile(Profile profile) {
         for (Profile assignedProfile : profiles) {
-            if (assignedProfile.getId().equals(profile.getId())) {
+            if ( assignedProfile.getId().equals(profile.getId()) ) {
                 return true;
             }
         }
+
         return false;
     }
 
@@ -246,16 +261,15 @@ public class User extends BaseEntity implements IHumanIdentifiable{
     }
 
     @AssertTrue(message = "username is already being used by another user")
-    public boolean checkConstraintUniqueLoginName() {
+    public boolean isUniqueLoginNameConstraint() {
 
         IUserDAO userDAO = Registry.getUserDAO();
 
-        if (isNewObject()) {
+        if ( isNewObject() ) {
             return !userDAO.existsByLoginNameAnotherTransaction(loginName);
         } else {
             try {
-                User u = userDAO.findByLoginNameAnotherTransaction(loginName);
-                return u.getId().equals(getId());
+                return userDAO.findByLoginNameAnotherTransaction(loginName).getId().equals(getId());
             } catch (InstanceNotFoundException e) {
                 return true;
             }
@@ -292,8 +306,7 @@ public class User extends BaseEntity implements IHumanIdentifiable{
         return expandCompanyPlanningViewCharts;
     }
 
-    public void setExpandOrderPlanningViewCharts(
-            boolean expandOrderPlanningViewCharts) {
+    public void setExpandOrderPlanningViewCharts(boolean expandOrderPlanningViewCharts) {
         this.expandOrderPlanningViewCharts = expandOrderPlanningViewCharts;
     }
 
@@ -301,8 +314,7 @@ public class User extends BaseEntity implements IHumanIdentifiable{
         return expandOrderPlanningViewCharts;
     }
 
-    public void setExpandResourceLoadViewCharts(
-            boolean expandResourceLoadViewCharts) {
+    public void setExpandResourceLoadViewCharts(boolean expandResourceLoadViewCharts) {
         this.expandResourceLoadViewCharts = expandResourceLoadViewCharts;
     }
 
@@ -310,8 +322,7 @@ public class User extends BaseEntity implements IHumanIdentifiable{
         return expandResourceLoadViewCharts;
     }
 
-    public void setExpandCompanyPlanningViewCharts(
-            boolean expandCompanyPlanningViewCharts) {
+    public void setExpandCompanyPlanningViewCharts(boolean expandCompanyPlanningViewCharts) {
         this.expandCompanyPlanningViewCharts = expandCompanyPlanningViewCharts;
     }
 
@@ -342,7 +353,7 @@ public class User extends BaseEntity implements IHumanIdentifiable{
 
     public void setWorker(Worker worker) {
         this.worker = worker;
-        if (worker == null) {
+        if ( worker == null ) {
             roles.remove(UserRole.ROLE_BOUND_USER);
         } else {
             roles.add(UserRole.ROLE_BOUND_USER);
@@ -359,50 +370,48 @@ public class User extends BaseEntity implements IHumanIdentifiable{
 
     public enum UserAuthenticationType {
 
-        DATABASE(_("Database")), LDAP(_("LDAP"));
+        DATABASE(_("Database")),
+        LDAP(_("LDAP"));
 
         private String name;
 
-        private UserAuthenticationType(String name) {
+        UserAuthenticationType(String name) {
             this.name = name;
         }
 
+        @Override
         public String toString() {
             return name;
         }
     }
 
     public UserAuthenticationType getUserType() {
-        return isLibrePlanUser() ? UserAuthenticationType.DATABASE
-                : UserAuthenticationType.LDAP;
+        return isLibrePlanUser() ? UserAuthenticationType.DATABASE : UserAuthenticationType.LDAP;
     }
 
     @AssertTrue(message = "You have exceeded the maximum limit of users")
-    public boolean checkMaxUsers() {
-        return Registry.getTransactionService()
-                .runOnAnotherReadOnlyTransaction(new IOnTransaction<Boolean>() {
-                    @Override
-                    public Boolean execute() {
-                        Configuration configuration = Registry
-                                .getConfigurationDAO().getConfiguration();
-                        if (configuration == null) {
-                            return true;
-                        }
+    public boolean isMaxUsersConstraint() {
+        return Registry.getTransactionService().runOnAnotherReadOnlyTransaction(() -> {
+            Configuration configuration = Registry.getConfigurationDAO().getConfiguration();
+            if ( configuration == null ) {
+                return true;
+            }
 
-                        Integer maxUsers = configuration.getMaxUsers();
-                        if (maxUsers != null && maxUsers > 0) {
-                            List<User> users = Registry.getUserDAO().findAll();
-                            int usersNumber = users.size();
-                            if (isNewObject()) {
-                                usersNumber++;
-                            }
-                            if (usersNumber > maxUsers) {
-                                return false;
-                            }
-                        }
-                        return true;
-                    }
-                });
+            Integer maxUsers = configuration.getMaxUsers();
+            if ( maxUsers != null && maxUsers > 0 ) {
+                List<User> users = Registry.getUserDAO().findAll();
+                int usersNumber = users.size();
+
+                if ( isNewObject() ) {
+                    usersNumber++;
+                }
+
+                if ( usersNumber > maxUsers ) {
+                    return false;
+                }
+            }
+            return true;
+        });
     }
 
     public Label getProjectsFilterLabel() {
@@ -424,6 +433,7 @@ public class User extends BaseEntity implements IHumanIdentifiable{
     public Integer getProjectsFilterPeriodSince() {
         return projectsFilterPeriodSince;
     }
+
     public void setProjectsFilterPeriodSince(Integer period) {
         projectsFilterPeriodSince = period;
     }
@@ -434,6 +444,14 @@ public class User extends BaseEntity implements IHumanIdentifiable{
 
     public void setProjectsFilterPeriodTo(Integer period) {
         projectsFilterPeriodTo = period;
+    }
+
+    public boolean isProjectsFilterFinishedOn() {
+        return projectsFilterFinishedOn;
+    }
+
+    public void setProjectsFilterFinishedOn(boolean projectsFilterFinishedOn) {
+        this.projectsFilterFinishedOn = projectsFilterFinishedOn;
     }
 
     public Integer getResourcesLoadFilterPeriodSince() {
@@ -450,6 +468,46 @@ public class User extends BaseEntity implements IHumanIdentifiable{
 
     public void setResourcesLoadFilterPeriodTo(Integer period) {
         resourcesLoadFilterPeriodTo = period;
+    }
+
+    public boolean isShowResourcesOn() {
+        return showResourcesOn;
+    }
+
+    public void setShowResourcesOn(boolean showResourcesOn) {
+        this.showResourcesOn = showResourcesOn;
+    }
+
+    public boolean isShowAdvancesOn() {
+        return showAdvancesOn;
+    }
+
+    public void setShowAdvancesOn(boolean showAdvancesOn) {
+        this.showAdvancesOn = showAdvancesOn;
+    }
+
+    public boolean isShowReportedHoursOn() {
+        return showReportedHoursOn;
+    }
+
+    public void setShowReportedHoursOn(boolean showReportedHoursOn) {
+        this.showReportedHoursOn = showReportedHoursOn;
+    }
+
+    public boolean isShowLabelsOn() {
+        return showLabelsOn;
+    }
+
+    public void setShowLabelsOn(boolean showLabelsOn) {
+        this.showLabelsOn = showLabelsOn;
+    }
+
+    public boolean isShowMoneyCostBarOn() {
+        return showMoneyCostBarOn;
+    }
+
+    public void setShowMoneyCostBarOn(boolean showMoneyCostBarOn) {
+            this.showMoneyCostBarOn = showMoneyCostBarOn;
     }
 
 }

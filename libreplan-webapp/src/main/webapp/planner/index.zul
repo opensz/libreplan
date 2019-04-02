@@ -19,7 +19,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -->
 
-<?page title="${i18n:_('LibrePlan: Planning')}"?>
+<?page title="${i18n:_('LibrePlan: Planning')}"  contentType="text/html;charset=UTF-8"?>
 <?init class="org.zkoss.zkplus.databind.AnnotateDataBinderInit" ?>
 <?init class="org.zkoss.zk.ui.util.Composition" arg0="/common/layout/template.zul"?>
 <?taglib uri="/WEB-INF/tld/i18n.tld" prefix="i18n"?>
@@ -31,14 +31,15 @@
 
 <?variable-resolver class="org.zkoss.zkplus.spring.DelegatingVariableResolver"?>
 <zk>
-
-<zscript><![CDATA[
-    multipleTabsPlanner = multipleTabsPlannerController;
-]]>
-</zscript>
+    <zscript>
+        <![CDATA[
+            multipleTabsPlanner = multipleTabsPlannerController;
+        ]]>
+    </zscript>
     <div id="idContextMenuTaskAssignment">
-        <div></div>
+        <div/>
     </div>
-    <tabSwitcher self="@{define(content)}" apply="${multipleTabsPlanner}">
+    <tabSwitcher self="@{define(content)}" sclass="contentTabSwitcher" style="display: block; height: 100%; width: 100%;"
+                 apply="${multipleTabsPlanner}">
     </tabSwitcher>
 </zk>

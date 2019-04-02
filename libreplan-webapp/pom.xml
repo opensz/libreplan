@@ -1,16 +1,19 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.libreplan</groupId>
         <artifactId>libreplan</artifactId>
-        <version>1.4.0</version>
+        <version>1.6.0</version>
     </parent>
     <artifactId>libreplan-webapp</artifactId>
     <packaging>war</packaging>
     <name>LibrePlan Web Client Module</name>
 
     <profiles>
+
         <profile>
             <id>reports</id>
             <activation>
@@ -57,7 +60,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-source-plugin</artifactId>
-                        <version>2.1.2</version>
+                        <version>3.0.0</version>
                         <executions>
                             <execution>
                                 <id>default</id>
@@ -71,6 +74,7 @@
                 </plugins>
             </build>
         </profile>
+
         <profile>
             <id>userguide</id>
             <activation>
@@ -80,108 +84,135 @@
                 <plugins>
                     <plugin>
                         <artifactId>maven-antrun-plugin</artifactId>
-                        <version>1.1</version>
+                        <version>1.8</version>
                         <executions>
-                          <execution>
-                          <id>user-doc-generation</id>
-                          <goals>
-                           <goal>run</goal>
-                          </goals>
-                         <phase>process-resources</phase>
-                         <inherited>false</inherited>
-                         <configuration>
-                          <tasks>
-                            <echo>Executing make html</echo>
-                            <exec executable="make" failifexecutionfails="false">
-                                <arg value="-C"/>
-                                <arg value="../doc/src/user/gl/"/>
-                                <arg value="html"/>
-                            </exec>
-                            <copy todir="src/main/webapp/help/gl" failonerror="false">
-                                <fileset dir="../doc/src/user/gl/html"/>
-                            </copy>
-                            <exec executable="make" failifexecutionfails="false">
-                                <arg value="-C"/>
-                                <arg value="../doc/src/user/es/"/>
-                                <arg value="html"/>
-                            </exec>
-                            <copy todir="src/main/webapp/help/es" failonerror="false">
-                                <fileset dir="../doc/src/user/es/html"/>
-                            </copy>
-                            <exec executable="make" failifexecutionfails="false">
-                                <arg value="-C"/>
-                                <arg value="../doc/src/user/en/"/>
-                                <arg value="html"/>
-                            </exec>
-                            <copy todir="src/main/webapp/help/en" failonerror="false">
-                                <fileset dir="../doc/src/user/en/html"/>
-                            </copy>
-                            <copy todir="src/main/webapp/help/ru" failonerror="false">
-                                <fileset dir="../doc/src/user/en/html"/>
-                            </copy>
-                            <copy todir="src/main/webapp/help/pt" failonerror="false">
-                                <fileset dir="../doc/src/user/en/html"/>
-                            </copy>
-                            <copy todir="src/main/webapp/help/it" failonerror="false">
-                                <fileset dir="../doc/src/user/en/html"/>
-                            </copy>
-                            <copy todir="src/main/webapp/help/fr" failonerror="false">
-                                <fileset dir="../doc/src/user/en/html"/>
-                            </copy>
-                            <copy todir="src/main/webapp/help/nl" failonerror="false">
-                                <fileset dir="../doc/src/user/en/html"/>
-                            </copy>
-                            <copy todir="src/main/webapp/help/pl" failonerror="false">
-                                <fileset dir="../doc/src/user/en/html"/>
-                            </copy>
-                            <copy todir="src/main/webapp/help/cs" failonerror="false">
-                                <fileset dir="../doc/src/user/en/html"/>
-                            </copy>
-                            <copy todir="src/main/webapp/help/de" failonerror="false">
-                                <fileset dir="../doc/src/user/en/html"/>
-                            </copy>
-                            <copy todir="src/main/webapp/help/ca" failonerror="false">
-                                <fileset dir="../doc/src/user/es/html"/>
-                            </copy>
-                            <copy todir="src/main/webapp/help/zh" failonerror="false">
-                                <fileset dir="../doc/src/user/en/html"/>
-                            </copy>
-                          </tasks>
-                         </configuration>
-                        </execution>
-                          <execution>
-                          <id>user-doc-clean</id>
-                          <goals>
-                           <goal>run</goal>
-                          </goals>
-                         <phase>clean</phase>
-                         <inherited>false</inherited>
-                         <configuration>
-                          <tasks>
-                            <exec executable="make" failifexecutionfails="false">
-                                <arg value="-C"/>
-                                <arg value="../doc/src/user/gl/"/>
-                                <arg value="clean"/>
-                            </exec>
-                            <exec executable="make" failifexecutionfails="false">
-                                <arg value="-C"/>
-                                <arg value="../doc/src/user/es/"/>
-                                <arg value="clean"/>
-                            </exec>
-                            <exec executable="make" failifexecutionfails="false">
-                                <arg value="-C"/>
-                                <arg value="../doc/src/user/en/"/>
-                                <arg value="clean"/>
-                            </exec>
-                            <delete dir="src/main/webapp/help" failonerror="false" />
-                          </tasks>
-                         </configuration>
-                        </execution>
-                       </executions>
+                            <execution>
+                                <id>user-doc-generation</id>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <phase>process-resources</phase>
+                                <inherited>false</inherited>
+                                <configuration>
+                                    <tasks>
+                                        <echo>Executing make html</echo>
+                                        <exec executable="make" failifexecutionfails="false">
+                                            <arg value="-C"/>
+                                            <arg value="../doc/src/user/gl/"/>
+                                            <arg value="html"/>
+                                        </exec>
+                                        <copy todir="src/main/webapp/help/gl" failonerror="false">
+                                            <fileset dir="../doc/src/user/gl/html"/>
+                                        </copy>
+                                        <exec executable="make" failifexecutionfails="false">
+                                            <arg value="-C"/>
+                                            <arg value="../doc/src/user/es/"/>
+                                            <arg value="html"/>
+                                        </exec>
+                                        <copy todir="src/main/webapp/help/es" failonerror="false">
+                                            <fileset dir="../doc/src/user/es/html"/>
+                                        </copy>
+                                        <exec executable="make" failifexecutionfails="false">
+                                            <arg value="-C"/>
+                                            <arg value="../doc/src/user/en/"/>
+                                            <arg value="html"/>
+                                        </exec>
+                                        <copy todir="src/main/webapp/help/en" failonerror="false">
+                                            <fileset dir="../doc/src/user/en/html"/>
+                                        </copy>
+                                        <copy todir="src/main/webapp/help/ru" failonerror="false">
+                                            <fileset dir="../doc/src/user/en/html"/>
+                                        </copy>
+                                        <copy todir="src/main/webapp/help/pt" failonerror="false">
+                                            <fileset dir="../doc/src/user/en/html"/>
+                                        </copy>
+                                        <copy todir="src/main/webapp/help/it" failonerror="false">
+                                            <fileset dir="../doc/src/user/en/html"/>
+                                        </copy>
+                                        <exec executable="make" failifexecutionfails="false">
+                                            <arg value="-C"/>
+                                            <arg value="../doc/src/user/fr/"/>
+                                            <arg value="html"/>
+                                        </exec>
+                                        <copy todir="src/main/webapp/help/fr" failonerror="false">
+                                            <fileset dir="../doc/src/user/fr/html"/>
+                                        </copy>
+                                        <copy todir="src/main/webapp/help/nl" failonerror="false">
+                                            <fileset dir="../doc/src/user/en/html"/>
+                                        </copy>
+                                        <copy todir="src/main/webapp/help/pl" failonerror="false">
+                                            <fileset dir="../doc/src/user/en/html"/>
+                                        </copy>
+                                        <copy todir="src/main/webapp/help/cs" failonerror="false">
+                                            <fileset dir="../doc/src/user/en/html"/>
+                                        </copy>
+                                        <copy todir="src/main/webapp/help/de" failonerror="false">
+                                            <fileset dir="../doc/src/user/en/html"/>
+                                        </copy>
+                                        <copy todir="src/main/webapp/help/ca" failonerror="false">
+                                            <fileset dir="../doc/src/user/es/html"/>
+                                        </copy>
+                                        <copy todir="src/main/webapp/help/zh" failonerror="false">
+                                            <fileset dir="../doc/src/user/en/html"/>
+                                        </copy>
+                                        <copy todir="src/main/webapp/help/nb" failonerror="false">
+                                            <fileset dir="../doc/src/user/en/html"/>
+                                        </copy>
+                                        <copy todir="src/main/webapp/help/fa_IR" failonerror="false">
+                                          <fileset dir="../doc/src/user/en/html"/>
+                                        </copy>
+                                        <copy todir="src/main/webapp/help/pt_BR" failonerror="false">
+                                          <fileset dir="../doc/src/user/en/html"/>
+                                        </copy>
+                                        <copy todir="src/main/webapp/help/sv_SE" failonerror="false">
+                                          <fileset dir="../doc/src/user/en/html"/>
+                                        </copy>
+                                        <copy todir="src/main/webapp/help/zh_CN" failonerror="false">
+                                          <fileset dir="../doc/src/user/en/html"/>
+                                        </copy>
+                                    </tasks>
+                                </configuration>
+                            </execution>
+
+                            <execution>
+                                <id>user-doc-clean</id>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <phase>clean</phase>
+                                <inherited>false</inherited>
+                                <configuration>
+                                    <tasks>
+                                        <exec executable="make" failifexecutionfails="false">
+                                            <arg value="-C"/>
+                                            <arg value="../doc/src/user/gl/"/>
+                                            <arg value="clean"/>
+                                        </exec>
+                                        <exec executable="make" failifexecutionfails="false">
+                                            <arg value="-C"/>
+                                            <arg value="../doc/src/user/es/"/>
+                                            <arg value="clean"/>
+                                        </exec>
+                                        <exec executable="make" failifexecutionfails="false">
+                                            <arg value="-C"/>
+                                            <arg value="../doc/src/user/en/"/>
+                                            <arg value="clean"/>
+                                        </exec>
+                                        <exec executable="make" failifexecutionfails="false">
+                                            <arg value="-C"/>
+                                            <arg value="../doc/src/user/fr/"/>
+                                            <arg value="clean"/>
+                                        </exec>
+                                        <delete dir="src/main/webapp/help" failonerror="false" />
+                                    </tasks>
+                                </configuration>
+                            </execution>
+                        </executions>
                     </plugin>
                 </plugins>
             </build>
         </profile>
+
         <profile>
             <id>i18n</id>
             <activation>
@@ -196,8 +227,8 @@
                 -->
                 <plugins>
                     <plugin>
-                        <groupId>org.xnap.commons</groupId>
-                        <artifactId>maven-gettext-plugin</artifactId>
+                        <groupId>com.googlecode.gettext-commons</groupId>
+                        <artifactId>gettext-maven-plugin</artifactId>
                         <configuration>
                             <targetBundle>i18n.Messages</targetBundle>
                             <poDirectory>${project.build.sourceDirectory}/../resources/i18n</poDirectory>
@@ -219,282 +250,251 @@
 
     <build>
         <finalName>libreplan-webapp</finalName>
-
-        <pluginManagement>
-            <plugins>
-              <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
-              <plugin>
-                  <groupId>org.eclipse.m2e</groupId>
-                  <artifactId>lifecycle-mapping</artifactId>
-                  <version>1.0.0</version>
-                  <configuration>
-                  <lifecycleMappingMetadata>
-                      <pluginExecutions>
-                        <pluginExecution>
-                          <pluginExecutionFilter>
-                            <groupId>org.apache.maven.plugins</groupId>
-                            <artifactId>maven-antrun-plugin</artifactId>
-                            <versionRange>[1.1,)</versionRange>
-                            <goals>
-                              <goal>run</goal>
-                            </goals>
-                          </pluginExecutionFilter>
-                          <action>
-                            <ignore/>
-                          </action>
-                        </pluginExecution>
-                        <pluginExecution>
-                          <pluginExecutionFilter>
-                            <groupId>org.codehaus.mojo</groupId>
-                            <artifactId>jasperreports-maven-plugin</artifactId>
-                            <versionRange>[1.0-beta-2,)</versionRange>
-                            <goals>
-                              <goal>compile-reports</goal>
-                            </goals>
-                          </pluginExecutionFilter>
-                          <action>
-                            <ignore/>
-                          </action>
-                        </pluginExecution>
-                        <pluginExecution>
-                          <pluginExecutionFilter>
-                            <groupId>org.xnap.commons</groupId>
-                            <artifactId>maven-gettext-plugin</artifactId>
-                            <versionRange>[1.2.0,)</versionRange>
-                            <goals>
-                              <goal>dist</goal>
-                            </goals>
-                          </pluginExecutionFilter>
-                          <action>
-                            <ignore></ignore>
-                          </action>
-                        </pluginExecution>
-                      </pluginExecutions>
-                    </lifecycleMappingMetadata>
-                </configuration>
-              </plugin>
-          </plugins>
-        </pluginManagement>
     </build>
 
     <dependencies>
         <!-- Jasper Reports -->
         <dependency>
-          <groupId>net.sf.jasperreports</groupId>
-          <artifactId>jasperreports</artifactId>
+            <groupId>net.sf.jasperreports</groupId>
+            <artifactId>jasperreports</artifactId>
         </dependency>
+
         <dependency>
             <groupId>net.sf.jasperreports</groupId>
             <artifactId>jasperreports-fonts</artifactId>
         </dependency>
+
         <!-- GPL Jasperreport Component for ZK -->
         <dependency>
-          <groupId>com.igalia.java.zk.components</groupId>
-          <artifactId>jasperreportcomponent</artifactId>
+            <groupId>com.libreplan.java.zk.components</groupId>
+            <artifactId>jasperreportcomponent</artifactId>
         </dependency>
+
         <!-- GPL Jasperreport Component for ZK -->
         <dependency>
-          <groupId>com.igalia.java.zk.components</groupId>
-          <artifactId>jfreechartengine</artifactId>
+            <groupId>com.libreplan.java.zk.components</groupId>
+            <artifactId>jfreechartengine</artifactId>
         </dependency>
+
         <!-- GPL detailrow Component for ZK -->
         <dependency>
-          <groupId>com.igalia.java.zk.components</groupId>
-          <artifactId>customdetailrowcomponent</artifactId>
+            <groupId>com.libreplan.java.zk.components</groupId>
+            <artifactId>customdetailrowcomponent</artifactId>
         </dependency>
-        <!-- Gettext commons -->
-        <dependency>
-            <groupId>org.xnap.commons</groupId>
-            <artifactId>gettext-commons</artifactId>
-        </dependency>
-        <!-- JDBC driver -->
-        <dependency>
-            <groupId>${jdbcDriver.groupId}</groupId>
-            <artifactId>${jdbcDriver.artifactId}</artifactId>
-        </dependency>
-        <!-- Hibernate -->
-        <dependency>
-            <groupId>org.hibernate</groupId>
-            <artifactId>hibernate</artifactId>
-        </dependency>
-        <!-- Spring -->
+
+        <!-- Spring Framework -->
         <dependency>
             <groupId>org.springframework</groupId>
-            <artifactId>spring</artifactId>
+            <artifactId>spring-web</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.apache.geronimo.specs</groupId>
-            <artifactId>geronimo-jta_1.0.1B_spec</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-test</artifactId>
-        </dependency>
-        <!-- QuartzJobBean in spring-context-support.jar -->
+
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-context-support</artifactId>
         </dependency>
-        <!--  Spring security -->
+
+        <!-- Spring Dependency LDAP -->
         <dependency>
             <groupId>org.springframework.security</groupId>
-            <artifactId>spring-security-core</artifactId>
+            <artifactId>spring-security-ldap</artifactId>
         </dependency>
+
+        <!-- Spring security -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-web</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-acl</artifactId>
         </dependency>
+
         <dependency>
             <groupId>org.springframework.security</groupId>
-            <artifactId>spring-security-core-tiger</artifactId>
+            <artifactId>spring-security-config</artifactId>
         </dependency>
-        <!-- Spring Dependency LDAP -->
+
+        <!-- Spring Test -->
         <dependency>
-            <groupId>org.springframework.ldap</groupId>
-            <artifactId>spring-ldap-core</artifactId>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-test</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.springframework.ldap</groupId>
-            <artifactId>spring-ldap-core-tiger</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.ldap</groupId>
-            <artifactId>spring-ldap-odm</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.ldap</groupId>
-            <artifactId>spring-ldap-ldif-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.ldap</groupId>
-            <artifactId>spring-ldap-ldif-batch</artifactId>
-        </dependency>
-        <!--  AspectJ (required by Spring Security) -->
-        <dependency>
-            <groupId>org.aspectj</groupId>
-            <artifactId>aspectjrt</artifactId>
-        </dependency>
+
+        <!-- BSH -->
         <dependency>
             <groupId>org.beanshell</groupId>
             <artifactId>bsh</artifactId>
         </dependency>
+
+        <!-- JFreeChart -->
         <dependency>
-            <groupId>jfree</groupId>
+            <groupId>org.jfree</groupId>
             <artifactId>jfreechart</artifactId>
         </dependency>
+
+        <!-- JCommon -->
         <dependency>
-            <groupId>jfree</groupId>
+            <groupId>org.jfree</groupId>
             <artifactId>jcommon</artifactId>
         </dependency>
+
         <!-- Apache Commons Fileupload (required by ZK) -->
         <dependency>
             <groupId>commons-fileupload</groupId>
             <artifactId>commons-fileupload</artifactId>
         </dependency>
+
         <!-- ZK  -->
         <dependency>
             <groupId>org.zkoss.zk</groupId>
             <artifactId>zul</artifactId>
         </dependency>
+
         <dependency>
             <groupId>org.zkoss.zk</groupId>
             <artifactId>zkplus</artifactId>
         </dependency>
+
+        <dependency>
+            <groupId>org.zkoss.zk</groupId>
+            <artifactId>zkbind</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.zkoss.zk</groupId>
             <artifactId>zk</artifactId>
         </dependency>
+
         <!-- LibrePlan ZK Components  -->
         <dependency>
             <groupId>org.libreplan</groupId>
             <artifactId>ganttzk</artifactId>
         </dependency>
+
         <!-- LibrePlan Business  -->
         <dependency>
             <groupId>org.libreplan</groupId>
             <artifactId>libreplan-business</artifactId>
         </dependency>
+
+        <!-- JUnit -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+        </dependency>
+
+        <!-- Datasource for testing -->
+        <dependency>
+            <groupId>com.jolbox</groupId>
+            <artifactId>bonecp</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- JDBC driver -->
+        <dependency>
+            <groupId>${jdbcDriver.groupId}</groupId>
+            <artifactId>${jdbcDriver.artifactId}</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Easymock -->
         <dependency>
             <groupId>org.easymock</groupId>
             <artifactId>easymock</artifactId>
+            <scope>test</scope>
         </dependency>
+
         <dependency>
             <groupId>org.easymock</groupId>
             <artifactId>easymockclassextension</artifactId>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-        </dependency>
-        <!-- datasource for testing -->
-        <dependency>
-           <groupId>com.jolbox</groupId>
-           <artifactId>bonecp</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.hibernate</groupId>
-            <artifactId>hibernate-validator</artifactId>
-        </dependency>
+
+        <!-- Servlet -->
         <dependency>
             <groupId>javax.servlet</groupId>
-            <artifactId>servlet-api</artifactId>
+            <artifactId>javax.servlet-api</artifactId>
         </dependency>
+
+        <!-- Java mail -->
+        <dependency>
+            <groupId>com.sun.mail</groupId>
+            <artifactId>javax.mail</artifactId>
+        </dependency>
+
         <!-- JAX-RS API -->
         <dependency>
             <groupId>javax.ws.rs</groupId>
-            <artifactId>jsr311-api</artifactId>
+            <artifactId>javax.ws.rs-api</artifactId>
         </dependency>
+
         <!-- CXF -->
         <dependency>
             <groupId>org.apache.cxf</groupId>
             <artifactId>cxf-rt-transports-http</artifactId>
         </dependency>
+
         <dependency>
             <groupId>org.apache.cxf</groupId>
             <artifactId>cxf-rt-frontend-jaxrs</artifactId>
         </dependency>
-         <dependency>
-            <groupId>org.codehaus.jackson</groupId>
-            <artifactId>jackson-jaxrs</artifactId>
-        </dependency>
+
         <dependency>
-            <groupId>org.codehaus.jackson</groupId>
-            <artifactId>jackson-xc</artifactId>
+            <groupId>org.apache.cxf</groupId>
+            <artifactId>cxf-rt-rs-client</artifactId>
         </dependency>
+
+        <!-- Jackson -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.jaxrs</groupId>
+            <artifactId>jackson-jaxrs-json-provider</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.module</groupId>
+            <artifactId>jackson-module-jaxb-annotations</artifactId>
+        </dependency>
+
         <!-- ZK Timeplot -->
         <dependency>
             <groupId>org.zkoss.zkforge</groupId>
             <artifactId>timelinez</artifactId>
         </dependency>
+
         <dependency>
             <groupId>org.zkoss.zkforge</groupId>
             <artifactId>timeplotz</artifactId>
         </dependency>
+
         <!-- JGraphT  -->
         <dependency>
             <groupId>org.jgrapht</groupId>
-            <artifactId>jgrapht-jdk1.5</artifactId>
+            <artifactId>jgrapht-core</artifactId>
         </dependency>
+
         <!-- jqPlot -->
         <dependency>
             <groupId>br.com.digilabs.jqplot</groupId>
             <artifactId>jqplot4java</artifactId>
         </dependency>
+
         <!-- MPXJ Library -->
         <dependency>
-            <groupId>net.sourceforge</groupId>
+            <groupId>net.sf.mpxj</groupId>
             <artifactId>mpxj</artifactId>
         </dependency>
+
         <!-- ZK fileupload -->
         <dependency>
-          <groupId>commons-io</groupId>
-          <artifactId>commons-io</artifactId>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
         </dependency>
+
         <!-- Quartz framework -->
         <dependency>
-           <groupId>org.quartz-scheduler</groupId>
-           <artifactId>quartz</artifactId>
+            <groupId>org.quartz-scheduler</groupId>
+            <artifactId>quartz</artifactId>
         </dependency>
-   </dependencies>
+    </dependencies>
 </project>

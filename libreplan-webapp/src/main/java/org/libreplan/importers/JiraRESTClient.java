@@ -26,10 +26,10 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import org.apache.commons.lang.StringUtils;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.cxf.jaxrs.client.WebClient;
-import org.codehaus.jackson.jaxrs.JacksonJaxbJsonProvider;
-import org.codehaus.jackson.map.DeserializationConfig.Feature;
+import com.fasterxml.jackson.jaxrs.json.JacksonJaxbJsonProvider;
 import org.libreplan.importers.jira.IssueDTO;
 import org.libreplan.importers.jira.SearchResultDTO;
 import org.libreplan.ws.cert.NaiveTrustProvider;
@@ -52,11 +52,6 @@ public class JiraRESTClient {
      * Path for authenticate session in JIRA REST API
      */
     public static final String PATH_AUTH_SESSION = "rest/auth/latest/session";
-
-    /**
-     * Path for issue operations in JIRA REST API
-     */
-    public static final String PATH_ISSUE = "/rest/api/latest/issue/";
 
     /**
      * Fields to include in the response of rest/api/latest/search.
@@ -82,6 +77,7 @@ public class JiraRESTClient {
      */
     public static String getAllLables(String url) {
         WebClient client = WebClient.create(url).accept(mediaTypes);
+
         return client.get(String.class);
     }
 
@@ -100,21 +96,23 @@ public class JiraRESTClient {
      *            the query
      * @return list of jira issues
      */
-    public static List<IssueDTO> getIssues(String url, String username,
-            String password, String path, String query) {
+    public static List<IssueDTO> getIssues(String url, String username, String password, String path, String query) {
 
         WebClient client = createClient(url);
 
         checkAutherization(client, username, password);
 
-        client.back(true);// Go to baseURI
+        // Go to baseURI
+        client.back(true);
+
         client.path(path);
-        if (!query.isEmpty()) {
+
+        if ( !query.isEmpty() ) {
             client.query("jql", query);
         }
+
         client.query("maxResults", MAX_RESULTS);
-        client.query("fields",
-                StringUtils.deleteWhitespace(FIELDS_TO_INCLUDE_IN_RESPONSE));
+        client.query("fields", StringUtils.deleteWhitespace(FIELDS_TO_INCLUDE_IN_RESPONSE));
 
         SearchResultDTO searchResult = client.get(SearchResultDTO.class);
 
@@ -131,12 +129,9 @@ public class JiraRESTClient {
     private static WebClient createClient(String url) {
 
         JacksonJaxbJsonProvider jacksonJaxbJsonProvider = new JacksonJaxbJsonProvider();
-        jacksonJaxbJsonProvider.configure(Feature.FAIL_ON_UNKNOWN_PROPERTIES,
-                false);
+        jacksonJaxbJsonProvider.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-        return WebClient.create(url,
-                Collections.singletonList(jacksonJaxbJsonProvider)).accept(
-                mediaTypes);
+        return WebClient.create(url, Collections.singletonList(jacksonJaxbJsonProvider)).accept(mediaTypes);
 
     }
 
@@ -150,8 +145,7 @@ public class JiraRESTClient {
      * @param password
      *            login password
      */
-    private static void checkAutherization(WebClient client, String login,
-            String password) {
+    private static void checkAutherization(WebClient client, String login, String password) {
         NaiveTrustProvider.setAlwaysTrust(true);
 
         client.path(PATH_AUTH_SESSION);
@@ -159,7 +153,7 @@ public class JiraRESTClient {
         Util.addAuthorizationHeader(client, login, password);
         Response response = client.get();
 
-        if (response.getStatus() != Status.OK.getStatusCode()) {
+        if ( response.getStatus() != Status.OK.getStatusCode() ) {
             throw new RuntimeException("Authorization failed");
         }
     }

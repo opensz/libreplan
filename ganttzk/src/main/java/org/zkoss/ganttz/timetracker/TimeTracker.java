@@ -23,49 +23,43 @@ package org.zkoss.ganttz.timetracker;
 
 import static org.zkoss.ganttz.i18n.I18nHelper._;
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.Collection;
 import java.util.Date;
 
-import org.apache.commons.lang.Validate;
+import org.apache.commons.lang3.Validate;
 import org.joda.time.LocalDate;
 import org.zkoss.ganttz.DatesMapperOnInterval;
 import org.zkoss.ganttz.IDatesMapper;
 import org.zkoss.ganttz.data.Task;
 import org.zkoss.ganttz.timetracker.zoom.DetailItem;
-import org.zkoss.ganttz.timetracker.zoom.IDetailItemModificator;
+import org.zkoss.ganttz.timetracker.zoom.IDetailItemModifier;
 import org.zkoss.ganttz.timetracker.zoom.IZoomLevelChangedListener;
-import org.zkoss.ganttz.timetracker.zoom.SeveralModificators;
+import org.zkoss.ganttz.timetracker.zoom.SeveralModifiers;
 import org.zkoss.ganttz.timetracker.zoom.TimeTrackerState;
 import org.zkoss.ganttz.timetracker.zoom.ZoomLevel;
 import org.zkoss.ganttz.util.Interval;
 import org.zkoss.ganttz.util.LongOperationFeedback;
 import org.zkoss.ganttz.util.WeakReferencedListeners;
 import org.zkoss.ganttz.util.LongOperationFeedback.ILongOperation;
-import org.zkoss.ganttz.util.WeakReferencedListeners.IListenerNotification;
 import org.zkoss.zk.ui.Component;
 
 public class TimeTracker {
 
     public interface IDetailItemFilter {
 
-        public Collection<DetailItem> selectsFirstLevel(
-                Collection<DetailItem> firstLevelDetails);
+        Collection<DetailItem> selectsFirstLevel(Collection<DetailItem> firstLevelDetails);
 
-        public Collection<DetailItem> selectsSecondLevel(
-                Collection<DetailItem> secondLevelDetails);
+        Collection<DetailItem> selectsSecondLevel(Collection<DetailItem> secondLevelDetails);
 
-        public Interval getCurrentPaginationInterval();
+        Interval getCurrentPaginationInterval();
 
-        public void resetInterval();
+        void resetInterval();
 
     }
 
     private ZoomLevel detailLevel = ZoomLevel.DETAIL_ONE;
 
-    private WeakReferencedListeners<IZoomLevelChangedListener> zoomListeners = WeakReferencedListeners
-            .create();
+    private WeakReferencedListeners<IZoomLevelChangedListener> zoomListeners = WeakReferencedListeners.create();
 
     private IDatesMapper datesMapper = null;
 
@@ -75,9 +69,9 @@ public class TimeTracker {
 
     private Interval interval;
 
-    private final IDetailItemModificator firstLevelModificator;
+    private final IDetailItemModifier firstLevelModifier;
 
-    private final IDetailItemModificator secondLevelModificator;
+    private final IDetailItemModifier secondLevelModifier;
 
     private final Component componentOnWhichGiveFeedback;
 
@@ -85,41 +79,46 @@ public class TimeTracker {
 
     private IDetailItemFilter filter = null;
 
-    public IDetailItemFilter getFilter() {
-        return filter;
-    }
+    private Interval realIntervalCached;
 
     public TimeTracker(Interval interval, ZoomLevel zoomLevel, Component parent) {
-        this(interval, zoomLevel, SeveralModificators.empty(),
-                SeveralModificators.empty(), parent);
+        this(interval, zoomLevel, SeveralModifiers.empty(), SeveralModifiers.empty(), parent);
     }
 
     public TimeTracker(Interval interval, Component componentOnWhichGiveFeedback) {
-        this(interval, SeveralModificators.empty(),
-                SeveralModificators.empty(), componentOnWhichGiveFeedback);
+        this(interval, SeveralModifiers.empty(), SeveralModifiers.empty(), componentOnWhichGiveFeedback);
     }
 
-    public TimeTracker(Interval interval,
-            IDetailItemModificator firstLevelModificator,
-            IDetailItemModificator secondLevelModificator,
+    public TimeTracker(
+            Interval interval,
+            IDetailItemModifier firstLevelModifier,
+            IDetailItemModifier secondLevelModifier,
             Component componentOnWhichGiveFeedback) {
+
         Validate.notNull(interval);
-        Validate.notNull(firstLevelModificator);
-        Validate.notNull(secondLevelModificator);
+        Validate.notNull(firstLevelModifier);
+        Validate.notNull(secondLevelModifier);
         Validate.notNull(componentOnWhichGiveFeedback);
+
         this.interval = interval;
-        this.firstLevelModificator = firstLevelModificator;
-        this.secondLevelModificator = secondLevelModificator;
+        this.firstLevelModifier = firstLevelModifier;
+        this.secondLevelModifier = secondLevelModifier;
         this.componentOnWhichGiveFeedback = componentOnWhichGiveFeedback;
     }
 
-    public TimeTracker(Interval interval, ZoomLevel zoomLevel,
-            IDetailItemModificator firstLevelModificator,
-            IDetailItemModificator secondLevelModificator,
+    public TimeTracker(
+            Interval interval,
+            ZoomLevel zoomLevel,
+            IDetailItemModifier firstLevelModifier,
+            IDetailItemModifier secondLevelModifier,
             Component componentOnWhichGiveFeedback) {
-        this(interval, firstLevelModificator, secondLevelModificator,
-                componentOnWhichGiveFeedback);
+
+        this(interval, firstLevelModifier, secondLevelModifier, componentOnWhichGiveFeedback);
         detailLevel = zoomLevel;
+    }
+
+    public IDetailItemFilter getFilter() {
+        return filter;
     }
 
     public void setFilter(IDetailItemFilter filter) {
@@ -136,60 +135,49 @@ public class TimeTracker {
     }
 
     public Collection<DetailItem> getDetailsFirstLevel() {
-        if (detailsFirstLevelCached == null) {
-            detailsFirstLevelCached = getTimeTrackerState()
-                    .getFirstLevelDetails(interval);
+        if ( detailsFirstLevelCached == null ) {
+            detailsFirstLevelCached = getTimeTrackerState().getFirstLevelDetails(interval);
         }
+
         return filterFirstLevel(detailsFirstLevelCached);
     }
 
-    private Collection<DetailItem> filterFirstLevel(
-            Collection<DetailItem> firstLevelDetails) {
-        if (filter == null) {
-            return firstLevelDetails;
-        }
-        return filter.selectsFirstLevel(firstLevelDetails);
+    private Collection<DetailItem> filterFirstLevel(Collection<DetailItem> firstLevelDetails) {
+        return filter == null ? firstLevelDetails : filter.selectsFirstLevel(firstLevelDetails);
     }
 
     public Collection<DetailItem> getDetailsSecondLevel() {
-        if (detailsSecondLevelCached == null) {
-            detailsSecondLevelCached = getTimeTrackerState()
-                    .getSecondLevelDetails(interval);
+        if ( detailsSecondLevelCached == null ) {
+            detailsSecondLevelCached = getTimeTrackerState().getSecondLevelDetails(interval);
         }
+
         return filterSecondLevel(detailsSecondLevelCached);
     }
 
-    private Collection<DetailItem> filterSecondLevel(
-            Collection<DetailItem> secondLevelDetails) {
-        if (filter == null) {
-            return secondLevelDetails;
-        }
-        return filter.selectsSecondLevel(secondLevelDetails);
+    private Collection<DetailItem> filterSecondLevel(Collection<DetailItem> secondLevelDetails) {
+        return filter == null ? secondLevelDetails : filter.selectsSecondLevel(secondLevelDetails);
     }
 
-    private Interval realIntervalCached;
-
     public Interval getRealInterval() {
-        if (realIntervalCached == null) {
-            realIntervalCached = getTimeTrackerState().getRealIntervalFor(
-                    interval);
+        if ( realIntervalCached == null ) {
+            realIntervalCached = getTimeTrackerState().getRealIntervalFor(interval);
         }
+
         return realIntervalCached;
     }
 
     public TimeTrackerState getTimeTrackerState() {
-        return detailLevel.getTimeTrackerState(firstLevelModificator,
-                secondLevelModificator);
+        return detailLevel.getTimeTrackerState(firstLevelModifier, secondLevelModifier);
     }
 
     private void fireZoomChanged() {
-        zoomListeners
-                .fireEvent(new IListenerNotification<IZoomLevelChangedListener>() {
-                    @Override
-                    public void doNotify(IZoomLevelChangedListener listener) {
-                        listener.zoomLevelChanged(detailLevel);
-                    }
-                });
+        /* Do not replace it with lambda */
+        zoomListeners.fireEvent(new WeakReferencedListeners.IListenerNotification<IZoomLevelChangedListener>() {
+            @Override
+            public void doNotify(IZoomLevelChangedListener listener) {
+                listener.zoomLevelChanged(detailLevel);
+            }
+        });
     }
 
     public int getHorizontalSize() {
@@ -197,6 +185,7 @@ public class TimeTracker {
         for (DetailItem detailItem : getDetailsSecondLevel()) {
             horizontalSize += detailItem.getSize();
         }
+
         return horizontalSize;
     }
 
@@ -212,15 +201,14 @@ public class TimeTracker {
     }
 
     public IDatesMapper getMapper() {
-        if (datesMapper == null) {
-            if (filter == null) {
-                datesMapper = new DatesMapperOnInterval(getHorizontalSize(),
-                        getRealInterval());
+        if ( datesMapper == null ) {
+            if ( filter == null ) {
+                datesMapper = new DatesMapperOnInterval(getHorizontalSize(), getRealInterval());
             } else {
-                datesMapper = new DatesMapperOnInterval(getHorizontalSize(),
-                        filter.getCurrentPaginationInterval());
+                datesMapper = new DatesMapperOnInterval(getHorizontalSize(), filter.getCurrentPaginationInterval());
             }
         }
+
         return datesMapper;
     }
 
@@ -230,19 +218,17 @@ public class TimeTracker {
     }
 
     private void invalidatingChangeHappenedWithFeedback() {
-        LongOperationFeedback.execute(componentOnWhichGiveFeedback,
-                new ILongOperation() {
+        LongOperationFeedback.execute(componentOnWhichGiveFeedback, new ILongOperation() {
+            @Override
+            public void doAction() {
+                invalidatingChangeHappened();
+            }
 
-                    @Override
-                    public void doAction() {
-                        invalidatingChangeHappened();
-                    }
-
-                    @Override
-                    public String getName() {
-                        return _("changing zoom");
-                    }
-                });
+            @Override
+            public String getName() {
+                return _("changing zoom");
+            }
+        });
     }
 
     public void setZoomLevel(ZoomLevel zoomLevel) {
@@ -261,40 +247,32 @@ public class TimeTracker {
     }
 
     public void trackPosition(final Task task) {
-        task
-                .addFundamentalPropertiesChangeListener(new PropertyChangeListener() {
-
-                    @Override
-                    public void propertyChange(PropertyChangeEvent evt) {
-                        updateIntervalIfNeeded(task);
-                    }
-                });
+        task.addFundamentalPropertiesChangeListener(evt -> updateIntervalIfNeeded(task));
         updateIntervalIfNeeded(task);
     }
 
     private void updateIntervalIfNeeded(Task task) {
-        if (registeredFirstTask == false) {
+        if ( !registeredFirstTask ) {
             registeredFirstTask = true;
-            interval = new Interval(startMinusTwoWeeks(task),
-                    endPlusOneMonth(task));
+            interval = new Interval(startMinusTwoWeeks(task), endPlusOneMonth(task));
             invalidatingChangeHappened();
         } else {
             LocalDate newStart = interval.getStart();
             LocalDate newFinish = interval.getFinish();
 
             boolean changed = false;
-            if (interval.getStart().compareTo(startMinusTwoWeeks(task)) > 0) {
+
+            if ( interval.getStart().compareTo(startMinusTwoWeeks(task) ) > 0) {
                 newStart = startMinusTwoWeeks(task);
                 changed = true;
             }
 
-            if (interval.getFinish()
-                    .compareTo(endPlusOneMonth(task)) < 0) {
+            if ( interval.getFinish().compareTo(endPlusOneMonth(task)) < 0 ) {
                 newFinish = endPlusOneMonth(task);
                 changed = true;
             }
 
-            if (changed) {
+            if ( changed ) {
                 interval = new Interval(newStart, newFinish);
                 invalidatingChangeHappened();
             }
@@ -302,39 +280,41 @@ public class TimeTracker {
     }
 
     private Date max(Date date1, Date date2) {
-        if (date1 == null) {
+        if ( date1 == null ) {
             return date2;
         }
-        if (date2 == null) {
+        if ( date2 == null ) {
             return date1;
         }
+
         return date1.compareTo(date2) > 0 ? date1 : date2;
     }
 
     private Date min(Date date1, Date date2) {
-        if (date1 == null) {
+        if ( date1 == null ) {
             return date2;
         }
-        if (date2 == null) {
+
+        if ( date2 == null ) {
             return date1;
         }
+
         return date1.compareTo(date2) <= 0 ? date1 : date2;
     }
 
     private LocalDate endPlusOneMonth(Task task) {
-        Date taskEnd = max(task.getEndDate().toDayRoundedDate(),
-                task.getDeadline());
-        return new LocalDate(taskEnd).plusMonths(1);
+        return new LocalDate(max(task.getEndDate().toDayRoundedDate(), task.getDeadline())).plusMonths(1);
     }
 
     private LocalDate startMinusTwoWeeks(Task task) {
-        // the deadline could be before the start
-        Date start = min(task.getBeginDate().toDayRoundedDate(),
-                task.getDeadline());
-        // the last consolidated value could be before the start
-        if (task.getConsolidatedline() != null) {
+        // The deadline could be before the start
+        Date start = min(task.getBeginDate().toDayRoundedDate(), task.getDeadline());
+
+        // The last consolidated value could be before the start
+        if ( task.getConsolidatedline() != null ) {
             start = min(start, task.getConsolidatedline().toDayRoundedDate());
         }
+
         return new LocalDate(start).minusWeeks(2);
     }
 

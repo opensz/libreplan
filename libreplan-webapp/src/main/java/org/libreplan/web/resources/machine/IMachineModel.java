@@ -34,14 +34,14 @@ import org.libreplan.business.resources.entities.Worker;
 import org.libreplan.web.common.IIntegrationEntityModel;
 import org.libreplan.web.resources.search.ResourcePredicate;
 
-/*
+/**
  * This interface contains the operations to create/edit a machine.
  *
  * Conversation state: the Machine instance and associated entities.
  * The MachineWorkersConfigurationUnit set of the machine,
- * the MachineWorkerAssigments of each MachineWorkersConfigurationUnit instance,
+ * the MachineWorkerAssignments of each MachineWorkersConfigurationUnit instance,
  * the Criterion set required by each MachineWorkersConfigurationUnit instance,
- * the calendar associated with the Machine instance
+ * the calendar associated with the Machine instance.
  *
  * <strong>Conversation protocol:</strong>
  *
@@ -65,29 +65,46 @@ import org.libreplan.web.resources.search.ResourcePredicate;
  * @author Javier Moran Rua <jmoran@igalia.com>
  */
 public interface IMachineModel extends IIntegrationEntityModel {
-    // Initial conversational steps
+
+    /**
+     * Initial conversational steps.
+     */
+
     void initCreate();
+
     void initEdit(Machine machine);
 
-    // Intermediate conversation steps
+    /**
+     * Intermediate conversation steps.
+     */
+
     Machine getMachine();
+
     ResourceCalendar getCalendarOfMachine();
+
     List<MachineWorkersConfigurationUnit> getConfigurationUnitsOfMachine();
+
     void setCalendarOfMachine(ResourceCalendar resourceCalendar);
-    void addWorkerAssigmentToConfigurationUnit(MachineWorkersConfigurationUnit
- machineWorkersConfigurationUnit,
-            Worker worker);
-    void addCriterionRequirementToConfigurationUnit(
-            MachineWorkersConfigurationUnit unit, Criterion criterion);
 
-    MachineWorkersConfigurationUnit getConfigurationUnitById(Long id)
-            throws InstanceNotFoundException;
+    void addWorkerAssignmentToConfigurationUnit(
+            MachineWorkersConfigurationUnit machineWorkersConfigurationUnit, Worker worker);
 
-    // Final conversational step
+    void addCriterionRequirementToConfigurationUnit(MachineWorkersConfigurationUnit unit, Criterion criterion);
+
+    MachineWorkersConfigurationUnit getConfigurationUnitById(Long id) throws InstanceNotFoundException;
+
+    /**
+     * Final conversational step.
+     */
+
     void confirmSave() throws ValidationException;
 
-    // Non conversational methods
+    /**
+     * Non conversational methods.
+     */
+
     List<Machine> getMachines();
+
     List<BaseCalendar> getBaseCalendars();
 
     void removeConfigurationUnit(MachineWorkersConfigurationUnit unit);
@@ -100,7 +117,7 @@ public interface IMachineModel extends IIntegrationEntityModel {
 
     List<Machine> getFilteredMachines(ResourcePredicate predicate);
 
-    public List<Machine> getAllMachines();
+    List<Machine> getAllMachines();
 
     boolean canRemove(Machine machine);
 
@@ -108,4 +125,5 @@ public interface IMachineModel extends IIntegrationEntityModel {
 
     void removeCalendar();
 
+    List<Worker> getWorkers();
 }

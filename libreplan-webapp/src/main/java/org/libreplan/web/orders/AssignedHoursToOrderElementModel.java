@@ -28,10 +28,8 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
-import org.apache.commons.lang.Validate;
+import org.apache.commons.lang3.Validate;
 import org.joda.time.LocalDate;
-import org.libreplan.business.common.Registry;
-import org.libreplan.business.common.daos.ConfigurationDAO;
 import org.libreplan.business.expensesheet.daos.IExpenseSheetLineDAO;
 import org.libreplan.business.expensesheet.entities.ExpenseSheetLine;
 import org.libreplan.business.expensesheet.entities.ExpenseSheetLineComparator;
@@ -48,7 +46,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Service to show the asigned hours of a selected order element
+ * Service to show the assigned hours of a selected order element.
  *
  * @author Susana Montes Pedreira <smontes@wirelessgalicia.com>
  * @author Ignacio Díaz Teijido <ignacio.diaz@comtecsf.es>
@@ -77,8 +75,7 @@ public class AssignedHoursToOrderElementModel implements IAssignedHoursToOrderEl
     private List<WorkReportLineDTO> listWRL;
 
     @Autowired
-    public AssignedHoursToOrderElementModel(IWorkReportLineDAO workReportLineDAO,
-            IExpenseSheetLineDAO expenseSheetLineDAO) {
+    public AssignedHoursToOrderElementModel(IWorkReportLineDAO workReportLineDAO, IExpenseSheetLineDAO expenseSheetLineDAO) {
         Validate.notNull(workReportLineDAO);
         Validate.notNull(expenseSheetLineDAO);
         this.workReportLineDAO = workReportLineDAO;
@@ -90,21 +87,19 @@ public class AssignedHoursToOrderElementModel implements IAssignedHoursToOrderEl
     @Transactional(readOnly = true)
     public List<WorkReportLineDTO> getWorkReportLines() {
         if (orderElement == null) {
-            return new ArrayList<WorkReportLineDTO>();
+            return new ArrayList<>();
         }
         orderElementDAO.reattach(orderElement);
         this.assignedDirectEffort = EffortDuration.zero();
-        this.listWRL = workReportLineDAO
-                .findByOrderElementGroupByResourceAndHourTypeAndDate(orderElement);
+        this.listWRL = workReportLineDAO.findByOrderElementGroupByResourceAndHourTypeAndDate(orderElement);
 
         this.listWRL = groupByDate(listWRL);
-        Iterator<WorkReportLineDTO> iterador = listWRL.iterator();
-        while (iterador.hasNext()) {
-            WorkReportLineDTO w = iterador.next();
+        Iterator<WorkReportLineDTO> iterator = listWRL.iterator();
+        while (iterator.hasNext()) {
+            WorkReportLineDTO w = iterator.next();
             w.getResource().getShortDescription();
             w.getTypeOfWorkHours().getName();
-            this.assignedDirectEffort = this.assignedDirectEffort.plus(w
-                    .getSumEffort());
+            this.assignedDirectEffort = this.assignedDirectEffort.plus(w.getSumEffort());
         }
         return sortByDate(listWRL);
     }
@@ -115,38 +110,38 @@ public class AssignedHoursToOrderElementModel implements IAssignedHoursToOrderEl
                 if (arg0.getDate() == null) {
                     return -1;
                 }
+
                 if (arg1.getDate() == null) {
                     return 1;
                 }
+
                 return arg0.getDate().compareTo(arg1.getDate());
             }
         });
         return listWRL;
     }
 
-    private List<WorkReportLineDTO> groupByDate(
-            List<WorkReportLineDTO> listWRL) {
-        List<WorkReportLineDTO> groupedByDateList = new ArrayList<WorkReportLineDTO>();
+    private List<WorkReportLineDTO> groupByDate(List<WorkReportLineDTO> listWRL) {
+        List<WorkReportLineDTO> groupedByDateList = new ArrayList<>();
 
         if (!listWRL.isEmpty()) {
-            Iterator<WorkReportLineDTO> iterador = listWRL.iterator();
-            WorkReportLineDTO currentWRL = iterador.next();
+            Iterator<WorkReportLineDTO> iterator = listWRL.iterator();
+            WorkReportLineDTO currentWRL = iterator.next();
             groupedByDateList.add(currentWRL);
 
-            while (iterador.hasNext()) {
-                WorkReportLineDTO nextWRL = iterador.next();
+            while (iterator.hasNext()) {
+                WorkReportLineDTO nextWRL = iterator.next();
 
                 LocalDate currentDate = currentWRL.getLocalDate();
                 LocalDate nextDate = nextWRL.getLocalDate();
 
-                if ((currentWRL.getResource().getId().equals(nextWRL
-                        .getResource().getId()))
-                        && (currentWRL.getTypeOfWorkHours().getId()
-                                .equals(nextWRL.getTypeOfWorkHours().getId()))
-                        && (currentDate.compareTo(nextDate) == 0)) {
-                    // sum the number of hours to the next WorkReportLineDTO
-                    currentWRL.setSumEffort(currentWRL.getSumEffort().plus(
-                            nextWRL.getSumEffort()));
+                if ( (currentWRL.getResource().getId()
+                        .equals(nextWRL.getResource().getId())) &&
+                        (currentWRL.getTypeOfWorkHours().getId().equals(nextWRL.getTypeOfWorkHours().getId())) &&
+                        (currentDate.compareTo(nextDate) == 0) ) {
+
+                    // Sum the number of hours to the next WorkReportLineDTO
+                    currentWRL.setSumEffort(currentWRL.getSumEffort().plus(nextWRL.getSumEffort()));
                 } else {
                     groupedByDateList.add(nextWRL);
                     currentWRL = nextWRL;
@@ -158,24 +153,21 @@ public class AssignedHoursToOrderElementModel implements IAssignedHoursToOrderEl
 
     @Override
     public EffortDuration getAssignedDirectEffort() {
-        if (orderElement == null) {
-            return EffortDuration.zero();
-        }
-        return this.assignedDirectEffort;
+        return orderElement == null ? EffortDuration.zero() : this.assignedDirectEffort;
     }
 
     @Override
     public EffortDuration getTotalAssignedEffort() {
-        if (orderElement == null || orderElement.getSumChargedEffort() == null) {
-            return EffortDuration.zero();
-        }
-        return this.orderElement.getSumChargedEffort().getTotalChargedEffort();
+        return orderElement == null || orderElement.getSumChargedEffort() == null
+                ? EffortDuration.zero()
+                : this.orderElement.getSumChargedEffort().getTotalChargedEffort();
     }
 
     @Override
     public String getTotalDirectExpenses() {
         if ((orderElement != null) && (orderElement.getSumExpenses() != null)
                 && (orderElement.getSumExpenses().getTotalDirectExpenses() != null)) {
+
             return orderElement.getSumExpenses().getTotalDirectExpenses().toPlainString();
         }
         return BigDecimal.ZERO.toPlainString();
@@ -185,6 +177,7 @@ public class AssignedHoursToOrderElementModel implements IAssignedHoursToOrderEl
     public String getTotalIndirectExpenses() {
         if ((orderElement != null) && (orderElement.getSumExpenses() != null)
                 && (orderElement.getSumExpenses().getTotalIndirectExpenses() != null)) {
+
             return orderElement.getSumExpenses().getTotalIndirectExpenses().toPlainString();
         }
         return BigDecimal.ZERO.toPlainString();
@@ -196,15 +189,14 @@ public class AssignedHoursToOrderElementModel implements IAssignedHoursToOrderEl
         if (orderElement == null) {
             return EffortDuration.zero();
         }
+
         if (orderElement.getChildren().isEmpty()) {
             return EffortDuration.zero();
         }
+
         EffortDuration totalAssignedEffort = getTotalAssignedEffort();
-        // FIXME Once we're able to reproduce and fix the cause of bugs like
-        // #1529, we could remove this if
         if (totalAssignedEffort.compareTo(assignedDirectEffort) < 0) {
-            orderElement.getOrder()
-                    .markAsNeededToRecalculateSumChargedEfforts();
+            orderElement.getOrder().markAsNeededToRecalculateSumChargedEfforts();
             return EffortDuration.zero();
         }
         return totalAssignedEffort.minus(this.assignedDirectEffort);
@@ -222,53 +214,39 @@ public class AssignedHoursToOrderElementModel implements IAssignedHoursToOrderEl
         if (orderElement == null) {
             return EffortDuration.zero();
         }
-        //TODO this must be changed when changing HoursGroup
+        // TODO this must be changed when changing HoursGroup
         return EffortDuration.hours(orderElement.getWorkHours());
     }
 
     @Override
     @Transactional(readOnly = true)
     public int getProgressWork() {
-        if (orderElement == null) {
-            return 0;
-        }
-        return orderElementDAO.getHoursAdvancePercentage(orderElement)
-                .multiply(new BigDecimal(100)).intValue();
+        return orderElement == null
+                ? 0
+                : orderElementDAO.getHoursAdvancePercentage(orderElement).multiply(new BigDecimal(100)).intValue();
     }
 
     @Override
     public BigDecimal getBudget() {
-        if (orderElement == null) {
-            return BigDecimal.ZERO;
-        }
-        return orderElement.getBudget();
+        return orderElement == null ? BigDecimal.ZERO : orderElement.getBudget();
     }
 
     @Override
     @Transactional(readOnly = true)
     public BigDecimal getCalculatedBudget() {
-        if (orderElement == null) {
-            return BigDecimal.ZERO;
-        }
-        return getBudget().subtract(getResourcesBudget());
+        return orderElement == null ? BigDecimal.ZERO : getBudget().subtract(getResourcesBudget());
     }
 
     @Override
     @Transactional(readOnly = true)
     public BigDecimal getResourcesBudget() {
-        if (orderElement == null) {
-            return BigDecimal.ZERO;
-        }
-        return orderElement.getResourcesBudget();
+        return orderElement == null ? BigDecimal.ZERO : orderElement.getResourcesBudget();
     }
 
     @Override
     @Transactional(readOnly = true)
     public BigDecimal getMoneyCost() {
-        if (orderElement == null) {
-            return BigDecimal.ZERO;
-        }
-        return moneyCostCalculator.getTotalMoneyCost(orderElement);
+        return orderElement == null ? BigDecimal.ZERO : moneyCostCalculator.getTotalMoneyCost(orderElement);
     }
 
     @Override
@@ -290,30 +268,23 @@ public class AssignedHoursToOrderElementModel implements IAssignedHoursToOrderEl
 
     @Override
     public BigDecimal getCostOfExpenses() {
-        if (orderElement == null) {
-            return BigDecimal.ZERO.setScale(2);
-        }
-        return moneyCostCalculator.getExpensesMoneyCost(orderElement);
+        return orderElement == null ? BigDecimal.ZERO.setScale(2) : moneyCostCalculator.getExpensesMoneyCost(orderElement);
     }
 
     @Override
     @Transactional(readOnly = true)
     public BigDecimal getCostOfHours() {
-        if (orderElement == null) {
-            return BigDecimal.ZERO.setScale(2);
-        }
-        return moneyCostCalculator.getHoursMoneyCost(orderElement);
+        return orderElement == null ? BigDecimal.ZERO.setScale(2) : moneyCostCalculator.getHoursMoneyCost(orderElement);
     }
 
     @Override
     @Transactional(readOnly = true)
     public BigDecimal getMoneyCostPercentage() {
-        if (orderElement == null) {
-            return BigDecimal.ZERO;
-        }
-        return MoneyCostCalculator.getMoneyCostProportion(
-                moneyCostCalculator.getTotalMoneyCost(orderElement),
-                orderElement.getTotalBudget()).multiply(new BigDecimal(100));
+        return orderElement == null
+                ? BigDecimal.ZERO
+                : MoneyCostCalculator.getMoneyCostProportion(
+                    moneyCostCalculator.getTotalMoneyCost(orderElement),
+                    orderElement.getTotalBudget()).multiply(new BigDecimal(100));
     }
 
     @Override
@@ -327,7 +298,7 @@ public class AssignedHoursToOrderElementModel implements IAssignedHoursToOrderEl
                 return result;
             }
         }
-        return new ArrayList<ExpenseSheetLine>();
+        return new ArrayList<>();
     }
 
     private void loadDataExpenseSheetLines(List<ExpenseSheetLine> expenseSheetLineList) {

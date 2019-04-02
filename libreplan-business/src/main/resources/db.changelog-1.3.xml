@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
-    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-2.0.xsd">
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
 
     <changeSet id="change-column-notes-in-task_element-to-text"
         author="jaragunde" dbms="postgresql">
@@ -379,6 +379,20 @@
             baseTableName="user_table" baseColumnNames="resources_load_filter_criterion_id"
             referencedTableName="criterion" referencedColumnNames="id"
             onDelete="SET NULL"/>
+    </changeSet>
+
+    <changeSet id="add-new-column-hours-margin" author="miciele" >
+        <comment>Add new column hours_margin in table order_table</comment>
+        <addColumn tableName="order_table">
+            <column name="hours_margin" type="INTEGER" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="add-new-column-budget-margin" author="miciele" >
+        <comment>Add new column budget_margin in table order_table</comment>
+        <addColumn tableName="order_table">
+            <column name="budget_margin" type="INTEGER" />
+        </addColumn>
     </changeSet>
 
 </databaseChangeLog>

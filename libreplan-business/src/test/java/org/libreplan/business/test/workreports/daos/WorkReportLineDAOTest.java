@@ -21,9 +21,9 @@
 
 package org.libreplan.business.test.workreports.daos;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertFalse;
-import static junit.framework.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.libreplan.business.BusinessGlobalNames.BUSINESS_SPRING_CONFIG_FILE;
 import static org.libreplan.business.test.BusinessGlobalNames.BUSINESS_SPRING_CONFIG_TEST_FILE;
 
@@ -44,12 +44,10 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(locations = { BUSINESS_SPRING_CONFIG_FILE,
-        BUSINESS_SPRING_CONFIG_TEST_FILE })
-/*
+@ContextConfiguration(locations = { BUSINESS_SPRING_CONFIG_FILE, BUSINESS_SPRING_CONFIG_TEST_FILE })
+/**
  * @author Diego Pino García <dpino@igalia.com>
  */
-@Transactional
 public class WorkReportLineDAOTest extends AbstractWorkReportTest {
 
     @Autowired
@@ -59,11 +57,12 @@ public class WorkReportLineDAOTest extends AbstractWorkReportTest {
     private IDataBootstrap configurationBootstrap;
 
     @Before
-    public void loadRequiredaData() {
+    public void loadRequiredData() {
         configurationBootstrap.loadRequiredData();
     }
 
     @Test
+    @Transactional
     public void testSaveWorkReportLine() {
         WorkReportLine workReportLine = createValidWorkReportLine();
         workReportLineDAO.save(workReportLine);
@@ -71,6 +70,7 @@ public class WorkReportLineDAOTest extends AbstractWorkReportTest {
     }
 
     @Test
+    @Transactional
     public void testRemoveWorkReportLine() throws InstanceNotFoundException {
         WorkReportLine workReportLine = createValidWorkReportLine();
         workReportLineDAO.save(workReportLine);
@@ -80,6 +80,7 @@ public class WorkReportLineDAOTest extends AbstractWorkReportTest {
     }
 
     @Test
+    @Transactional
     public void testListWorkReportLine() {
         int previous = workReportLineDAO.list(WorkReportLine.class).size();
 
@@ -89,8 +90,7 @@ public class WorkReportLineDAOTest extends AbstractWorkReportTest {
         workReportLineDAO.save(workReportType1);
         workReportLineDAO.save(workReportType2);
 
-        List<WorkReportLine> list = workReportLineDAO
-                .list(WorkReportLine.class);
+        List<WorkReportLine> list = workReportLineDAO.list(WorkReportLine.class);
         assertEquals(previous + 2, list.size());
     }
 }

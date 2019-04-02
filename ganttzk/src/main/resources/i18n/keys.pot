@@ -7,7 +7,7 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: libreplan-1.4.0\n"
+"Project-Id-Version: libreplan-1.6.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-04-22 12:09+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
@@ -244,4 +244,19 @@ msgstr ""
 
 #: ganttzk/src/main/java/org/zkoss/ganttz/Planner.java:617
 msgid "Show critical path"
+msgstr ""
+
+#: ganttzk/src/main/java/org/zkoss/ganttz/LeftTasksTreeRow.java:271
+#: ganttzk/src/main/java/org/zkoss/ganttz/LeftTasksTreeRow.java:278
+msgid "The date you entered is invalid"
+msgstr ""
+
+#: ganttzk/src/main/java/org/zkoss/ganttz/LeftTasksTreeRow.java:272
+#: ganttzk/src/main/java/org/zkoss/ganttz/LeftTasksTreeRow.java:279
+msgid "Please enter date not before"
+msgstr ""
+
+#: ganttzk/src/main/java/org/zkoss/ganttz/LeftTasksTreeRow.java:273
+#: ganttzk/src/main/java/org/zkoss/ganttz/LeftTasksTreeRow.java:280
+msgid "and no later than"
 msgstr ""
